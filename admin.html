@@ -4,51 +4,51 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Order Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#1C1B17;
-  --moss:#3A5428;
-  --moss-mid:#527A3B;
-  --moss-lt:#EDF2E8;
-  --earth:#7C5C3A;
-  --cream:#F5F0E8;
-  --parchment:#EDE6D6;
-  --rule:#C8BFA8;
-  --stone:#7A6F61;
-  --white:#FDFCF9;
-  --red:#B91C1C;
-  --red-lt:#FBECEC;
-  --amber:#9A6B0F;
-  --amber-lt:#FBF3E1;
+  --ink:#26241E;
+  --moss:#2F4A34;
+  --moss-mid:#41613F;
+  --moss-lt:#E7EEE1;
+  --earth:#B9812E;
+  --cream:#F6F2E9;
+  --parchment:#EFE7D3;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --white:#FCFAF4;
+  --red:#B14A3B;
+  --red-lt:#F7E9E5;
+  --amber:#8F631F;
+  --amber-lt:#F6ECD8;
   --wa:#25D366;
 }
 html{scroll-behavior:smooth}
-body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
 
 /* ── LAYOUT ── */
 .app{max-width:1400px;margin:0 auto;padding:0 24px 80px}
-.topbar{background:var(--ink);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar{background:var(--moss);color:var(--cream);padding:22px 24px;margin-bottom:28px}
 .topbar-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .brand{display:flex;align-items:baseline;gap:12px}
 .brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
-.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#A89E8E}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#B9CBAE}
 .topbar-actions{display:flex;gap:10px;align-items:center}
 .conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
 .conn-dot.ok{background:var(--wa)}
 .conn-dot.err{background:var(--red)}
-.conn-status{font-size:12px;color:#A89E8E;display:flex;align-items:center}
-.nav-link{color:#A89E8E;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.conn-status{font-size:12px;color:#B9CBAE;display:flex;align-items:center}
+.nav-link{color:#B9CBAE;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
 .nav-link:hover{color:var(--cream)}
 
 /* ── KEY SETUP BAR ── */
 .setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif}
 .setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
 
 /* ── BUTTONS ── */
-.btn{font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn-primary{background:var(--moss);color:#fff}
 .btn-primary:hover{background:#2d4020}
 .btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
@@ -73,7 +73,7 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 .search-row{margin-bottom:18px}
 .revenue-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;color:var(--stone)}
 .rev-num{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--moss)}
-.search-input{flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--parchment);border-radius:20px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:var(--white)}
+.search-input{flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--parchment);border-radius:20px;font-size:13px;font-family:'Inter',sans-serif;background:var(--white)}
 .search-input:focus{outline:none;border-color:var(--moss)}
 
 /* ── ORDER CARDS ── */
@@ -116,9 +116,9 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 .items-table td{padding:6px;border-bottom:1px solid var(--parchment);vertical-align:middle}
 .items-table td.num{text-align:right;font-variant-numeric:tabular-nums}
 .item-name-oos{text-decoration:line-through;color:var(--stone)}
-.qty-input{width:42px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
-.disc-input{width:60px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
-.mrp-input{width:70px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.qty-input{width:42px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Inter',sans-serif}
+.disc-input{width:60px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Inter',sans-serif}
+.mrp-input{width:70px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Inter',sans-serif}
 .oos-btn{font-size:11px;color:var(--red);background:none;border:1px solid var(--red);border-radius:4px;padding:3px 6px;cursor:pointer;white-space:nowrap}
 .oos-btn.active{background:var(--red);color:#fff}
 .oos-btn:hover{background:var(--red-lt)}
@@ -132,7 +132,7 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 .field-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .field-row:last-child{margin-bottom:0}
 .field-row label{font-size:12.5px;color:var(--stone);min-width:76px}
-.field-row input,.field-row select{flex:1;padding:6px 8px;border:1.5px solid var(--rule);border-radius:5px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.field-row input,.field-row select{flex:1;padding:6px 8px;border:1.5px solid var(--rule);border-radius:5px;font-size:13px;font-family:'Inter',sans-serif;background:#fff}
 .field-row > div{flex:1;font-size:13px;color:var(--ink)}
 .totals-box{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:10px 12px;font-size:13px}
 .totals-row{display:flex;justify-content:space-between;padding:4px 0}
@@ -167,7 +167,7 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 .field-hint{font-size:11px;color:var(--stone)}
 .add-item-toggle{margin-bottom:12px}
 .add-item-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:12px;background:var(--moss-lt);border-radius:8px}
-.add-item-form input{padding:7px 10px;border:1.5px solid var(--rule);border-radius:5px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.add-item-form input{padding:7px 10px;border:1.5px solid var(--rule);border-radius:5px;font-size:13px;font-family:'Inter',sans-serif;background:#fff}
 .add-item-form input[type=text]{flex:2;min-width:180px}
 .add-item-form input[type=number]{width:70px}
 
@@ -195,6 +195,11 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
     <div class="topbar-actions">
       <a class="nav-link" href="products.html">Products →</a>
       <a class="nav-link" href="invoices.html">Invoices →</a>
+      <a class="nav-link" href="finance.html">Finance →</a>
+      <!-- Multi-admin workflow (DEV-only) — shown only once whoAmI resolves
+           to Super Admin (see renderIdentityBar()). Exclusive to that role,
+           not even a locked-down view for anyone else (§13). -->
+      <a class="nav-link" href="orderAssignment.html" id="superAdminNavLink" style="display:none">Super Admin →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
       <button class="btn btn-secondary btn-sm" onclick="loadOrders()">↻ Refresh</button>
     </div>
@@ -209,11 +214,18 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
       <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbxCdUCpYoqY3Mg-UuGWuJswnbXsCTVIqaB891_ncDiBDrJvvPniOWnOVzAManjuhkE6/exec" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
     </div>
     <div style="flex:1;min-width:180px">
-      <label>Admin Key</label><br>
-      <input type="password" id="adminKey" placeholder="your admin key" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
+      <label>Password</label><br>
+      <input type="password" id="adminKey" placeholder="your password" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
     </div>
     <button class="btn btn-primary" onclick="loadOrders()" id="connectBtn">Connect</button>
   </div>
+
+  <!-- Multi-admin workflow (DEV-only) — hidden unless DEV_MODE; shows "Logged
+       in as X (Role)" once whoAmI resolves at connect time. Read-only — real
+       identity now comes from the password, not a self-picked dropdown (that
+       old dropdown/"Assigned to" filter model is superseded, see
+       MULTI_ADMIN_WORKFLOW_PLAN.md §13). -->
+  <div class="setup-bar" id="identityBar" style="display:none;gap:10px;align-items:center"></div>
 
   <div class="status-count-bar" id="statusCountBar" style="display:none">
     <!-- rendered by renderStatusBar() -->
@@ -234,7 +246,7 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
   <div id="listContainer">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter your Apps Script Web App URL and admin key above, then click Connect.</p>
+      <p>Enter your Apps Script Web App URL and password above, then click Connect.</p>
     </div>
   </div>
 
@@ -265,6 +277,20 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 </div>
 
 <script>
+// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
+// (e.g. admin.html?dev=1) to point at the DEV Catalog/Orders Apps Script
+// deployments instead of prod, and to activate the multi-admin workflow —
+// a real per-admin password (typed into the same field prod calls "Admin
+// Key") resolved server-side to an identity that scopes which orders this
+// page even receives (Super Admin's own bucket here; the full cross-admin
+// picture lives on the separate Super Admin page). With dev mode off, this
+// page behaves exactly as it always has — same shared ADMIN_KEY, full
+// unscoped visibility, no identity concept at all. See
+// MULTI_ADMIN_WORKFLOW_PLAN.md §13.
+const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
+const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbys7_tYwd4Oo5SKXvOsjCpcuI6uTzibMyhktgnUfdXUi543VqIYWlLJ1U1KDDeH5YQsEA/exec";
+const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
+
 // Live product catalog — pulled from the Catalog Google Sheet's Apps Script
 // deployment (same one used by products.html / index.html). This is a
 // SEPARATE deployment from the Orders webhook above; both share the same
@@ -272,14 +298,14 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 // endpoint) so pricing for items that have since gone inactive/out-of-stock
 // still resolves correctly on old orders — the public endpoint would drop
 // them and break historical pricing.
-const CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
+const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
 
 let CATALOG = [];        // full catalog (admin list) — used for price lookups on any item ever ordered
 let CATALOG_ACTIVE = []; // Active=Y && Stock>0 subset — used for the "Add item" picker
 
 async function loadCatalog() {
   try {
-    const res = await fetch(`${CATALOG_API_URL}?action=list&key=${encodeURIComponent(apiKey())}`);
+    const res = await fetch(`${CATALOG_API_URL}?action=list&${authQuery()}`);
     const data = await res.json();
     if (data.status === 'ok') {
       CATALOG = data.data;
@@ -290,6 +316,52 @@ async function loadCatalog() {
   } catch (e) {
     console.warn('Catalog load failed', e);
   }
+}
+
+// ─────────────────────────────────────────────
+//  MULTI-ADMIN WORKFLOW (DEV-only) — real per-admin password auth (§13).
+//  The backend now resolves the submitted password to an identity and scopes
+//  every response/write to that admin's own orders server-side — this page
+//  no longer picks an identity from a dropdown (superseded, see §13) or
+//  filters anything client-side; it just displays whatever the backend
+//  already scoped and shows who's logged in. Everything here is a no-op with
+//  DEV_MODE off: CURRENT_ADMIN stays null, the identity bar stays hidden.
+// ─────────────────────────────────────────────
+
+let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at Connect via ?action=whoAmI
+
+async function loadWhoAmI() {
+  if (!DEV_MODE) return;
+  try {
+    const res = await fetch(`${CATALOG_API_URL}?action=whoAmI&${authQuery()}`);
+    const data = await res.json();
+    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
+    else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
+  } catch (e) {
+    CURRENT_ADMIN = null;
+    console.warn('whoAmI failed', e);
+  }
+}
+
+// Resolves the VPA to snapshot for a confirmed order / show on its invoice.
+// Every order this page can even see already belongs to CURRENT_ADMIN (the
+// backend only ever returns their own bucket — see doGet's "list" action) so
+// this is simply their own UPI VPA, not a per-order lookup. Falls back to ''
+// (meaning: buildUpiPayLink uses the company UPI_VPA) outside dev mode/
+// before identity resolves.
+function assignedAdminUpi(o) {
+  if (!DEV_MODE || !CURRENT_ADMIN) return '';
+  return CURRENT_ADMIN.upiVpa || '';
+}
+
+function renderIdentityBar() {
+  const bar = document.getElementById('identityBar');
+  const navLink = document.getElementById('superAdminNavLink');
+  if (navLink) navLink.style.display = (DEV_MODE && CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? '' : 'none';
+  if (!bar) return;
+  if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
 }
 
 // Resolve a catalog product for an order's item name, preferring the
@@ -371,7 +443,7 @@ async function downloadPackingChecklist(rowIndex) {
   if (win) win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">Loading latest order details…</p>');
 
   try {
-    const res = await fetch(`${url}?action=list&key=${encodeURIComponent(key)}`);
+    const res = await fetch(`${url}?action=list&${authQuery()}`);
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message || 'Could not load latest order data');
     const fresh = data.data.find(x => (existing.orderRef && x.orderRef === existing.orderRef) || x.rowIndex === rowIndex);
@@ -425,23 +497,23 @@ const ORDER_STATUSES = {
   New:                { color:'#1D4ED8', bg:'#DBEAFE', label:'New',               next:['Confirmed','Cancelled'] },
   Confirmed:          { color:'#166534', bg:'#DCFCE7', label:'Confirmed',         next:['Invoiced'] },
   Invoiced:           { color:'#7C3AED', bg:'#EDE9FE', label:'Invoiced',          next:['Packed & Shipped'] },
-  'Packed & Shipped':  { color:'#7C5C3A', bg:'#EDE6D6', label:'Packed & Shipped',  next:['Delivered'] },
+  'Packed & Shipped':  { color:'#B9812E', bg:'#EFE7D3', label:'Packed & Shipped',  next:['Delivered'] },
   Delivered:          { color:'#14532D', bg:'#F0FDF4', label:'Delivered',         next:[] },
-  Cancelled:          { color:'#B91C1C', bg:'#FEE2E2', label:'Cancelled',         next:[] },
+  Cancelled:          { color:'#B14A3B', bg:'#FEE2E2', label:'Cancelled',         next:[] },
   // Legacy display only — "Update order" no longer creates versioned rows
   // marked Revised (removed per user request; it now edits in place). Kept
   // here only so any already-existing Revised row from before that change
   // still renders sensibly (locked, muted) until deleteRevisedOrderRows_()
   // cleans it up.
-  Revised:            { color:'#7A6F61', bg:'#EDE6D6', label:'Revised (superseded)', next:[] }
+  Revised:            { color:'#79715F', bg:'#EFE7D3', label:'Revised (superseded)', next:[] }
 };
 
 // Payment sub-states, shown only once an order has been invoiced (o.invoiceNo set).
 const PAYMENT_STATES = {
-  Unpaid:           { color:'#9A6B0F', bg:'#FBF3E1', label:'Unpaid' },
-  Paid:             { color:'#FDFCF9', bg:'#14532D', label:'Paid' },
-  'Partially Paid': { color:'#9A6B0F', bg:'#FBF3E1', label:'Partially Paid' },
-  Overdue:          { color:'#B91C1C', bg:'#FEF3C7', label:'Overdue' }
+  Unpaid:           { color:'#8F631F', bg:'#F6ECD8', label:'Unpaid' },
+  Paid:             { color:'#FCFAF4', bg:'#14532D', label:'Paid' },
+  'Partially Paid': { color:'#8F631F', bg:'#F6ECD8', label:'Partially Paid' },
+  Overdue:          { color:'#B14A3B', bg:'#FEF3C7', label:'Overdue' }
 };
 
 const STATUS_ACTION_LABELS = {
@@ -580,6 +652,16 @@ function apiUrl() {
 function apiKey() {
   return document.getElementById('adminKey').value.trim();
 }
+// Prod talks to catalog_code.gs/orders_code.gs, which still check a shared
+// "key" — DEV talks to the *.dev.gs rewrite, which resolves a per-admin
+// "password" instead (§13). Same input field either way; only the wire
+// field name sent to the backend differs, based on DEV_MODE.
+function authParam() {
+  return DEV_MODE ? { password: apiKey() } : { key: apiKey() };
+}
+function authQuery() {
+  return (DEV_MODE ? 'password=' : 'key=') + encodeURIComponent(apiKey());
+}
 
 // Public entry point (Connect / ↻ Refresh buttons) — guarded, since the real
 // body below unconditionally wipes editState, which would otherwise silently
@@ -591,7 +673,7 @@ async function loadOrders() {
 
 async function loadOrdersConfirmed() {
   const url = apiUrl(), key = apiKey();
-  if (!url || !key) { toast('Enter both URL and admin key', true); return; }
+  if (!url || !key) { toast('Enter both URL and password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -600,8 +682,9 @@ async function loadOrdersConfirmed() {
 
   try {
     const [ordersRes] = await Promise.all([
-      fetch(`${url}?action=list&key=${encodeURIComponent(key)}`),
-      loadCatalog()
+      fetch(`${url}?action=list&${authQuery()}`),
+      loadCatalog(),
+      loadWhoAmI()
     ]);
     const data = await ordersRes.json();
     if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
@@ -629,16 +712,18 @@ async function loadOrdersConfirmed() {
     document.getElementById('searchRow').style.display = 'block';
     if (CATALOG.length === 0) toast('Orders loaded, but catalog failed to load — pricing may show "no price set"', true);
     else toast('Orders loaded');
+    renderIdentityBar();
     render();
+    jumpToDeepLinkOrder();
   } catch (err) {
     document.getElementById('connDot').className = 'conn-dot err';
     document.getElementById('connText').textContent = 'Connection failed';
-    toast('Failed to load: ' + err.message + ' — check the URL is deployed and the admin key matches.', true);
+    toast('Failed to load: ' + err.message + ' — check the URL is deployed and the password matches.', true);
     document.getElementById('listContainer').innerHTML = `
       <div class="empty-state">
         <h3>Couldn't connect</h3>
         <p>${err.message}</p>
-        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Apps Script is deployed as a Web App with "Anyone" access, (2) the admin key matches what's in the script, (3) the deployment URL is the latest version.</p>
+        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Apps Script is deployed as a Web App with "Anyone" access, (2) the password matches what's in the Admins tab, (3) the deployment URL is the latest version.</p>
       </div>`;
   } finally {
     document.getElementById('connectBtn').innerHTML = 'Connect';
@@ -681,6 +766,12 @@ function setFilter(f) {
   currentFilter = f;
   render();
 }
+
+// Multi-admin workflow (DEV-only). Assignment/reassignment (the "Assign
+// to…" control + its WhatsApp notification) has moved entirely to the new
+// dedicated Super Admin page (§13) — this page is per-admin-scoped now, so
+// there's nothing left to assign from here, not even for Super Admin (they
+// use the new page for that, and this page only for their own bucket).
 
 // Dirty-check (unsaved-changes) tracking — a JSON snapshot of just the
 // fields that "Update order" actually persists (item qty/discounts/price
@@ -795,6 +886,10 @@ function render() {
       const hay = (o.customerName + ' ' + o.phone + ' ' + o.address).toLowerCase();
       if (!hay.includes(search)) return false;
     }
+    // Multi-admin workflow (DEV-only) — visibility is now enforced entirely
+    // server-side (§13): the backend's "list" action only ever returns
+    // orders belonging to whoever's password authenticated, so there's
+    // nothing left to filter client-side here.
     return true;
   });
 
@@ -1524,7 +1619,7 @@ async function confirmAddItem(rowIndex) {
   try {
     const res = await fetch(apiUrl(), {
       method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ key: apiKey(), action: 'addItemToOrder', rowIndex, itemName: product.waKey, qty: newQty })
+      body: JSON.stringify({ ...authParam(), action: 'addItemToOrder', rowIndex, itemName: product.waKey, qty: newQty })
     });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
@@ -1586,9 +1681,14 @@ async function doConfirmOrder(rowIndex) {
   const { totalQty, estWeight } = computeConfirmPreview(o);
 
   try {
+    // Multi-admin workflow (DEV-only): resolve+send the currently assigned
+    // admin's UPI VPA so confirmOrder_ can snapshot it idempotently — a
+    // no-op field on prod (no such column exists there) and a no-op value
+    // ('') outside dev mode/when unassigned.
+    const confirmingAdminUpi = assignedAdminUpi(o);
     const res = await fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ key, action: 'confirmOrder', rowIndex, productIdMap, totalQty, estWeight })
+      body: JSON.stringify({ ...authParam(), action: 'confirmOrder', rowIndex, productIdMap, totalQty, estWeight, confirmingAdminUpi })
     });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
@@ -1660,7 +1760,7 @@ async function changeStatus(rowIndex, newStatus) {
   try {
     const res = await fetch(apiUrl(), {
       method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ key: apiKey(), action: 'update', rowIndex, fields })
+      body: JSON.stringify({ ...authParam(), action: 'update', rowIndex, fields })
     });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
@@ -1695,7 +1795,7 @@ async function recordPayment(rowIndex) {
   try {
     const res = await fetch(apiUrl(), {
       method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ key: apiKey(), action: 'recordPayment', rowIndex, amountPaid: thisPayment, paymentMode, paymentRef, paymentDate })
+      body: JSON.stringify({ ...authParam(), action: 'recordPayment', rowIndex, amountPaid: thisPayment, paymentMode, paymentRef, paymentDate })
     });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
@@ -1749,7 +1849,7 @@ async function updateOrderVersion(rowIndex) {
   );
 
   const payload = {
-    key: key,
+    ...authParam(),
     action: 'update',
     rowIndex: rowIndex,
     fields: {
@@ -1860,7 +1960,7 @@ function sendConfirmWhatsApp(rowIndex) {
   const shipLine = shipCharge > 0 ? `\nShipping: ₹${shipCharge.toLocaleString('en-IN')}` : '\nShipping: Free';
   const sameDayLine = sameDayCharge > 0 ? `\nSame-day delivery: ₹${sameDayCharge.toLocaleString('en-IN')}` : '';
 
-  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`);
+  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`, assignedAdminUpi(o));
 
   const msg = `🌿 *Purnavah — Order Confirmation*
 
@@ -1903,7 +2003,7 @@ function sendConfirmEmail(rowIndex) {
   const sameDayLine = sameDayCharge > 0 ? `\nSame-day delivery: Rs ${sameDayCharge.toLocaleString('en-IN')}` : '';
 
   const subject = `Purnavah — Order Confirmation (${o.gaplOrderId || (o.orderRef || '').slice(0, 8)})`;
-  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`);
+  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`, assignedAdminUpi(o));
   const body = `Hi ${o.customerName},
 
 Here's your confirmed order (${preview.totalQty} item${preview.totalQty !== 1 ? 's' : ''}, approx. ${preview.estWeight} kg):
@@ -1987,7 +2087,7 @@ function renderConfirmModal() {
   // draft below — shown here as an actual clickable <a> so the admin can
   // verify/tap it themselves before sending, instead of only ever seeing it
   // as raw URL text once it's already in the outgoing message.
-  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`);
+  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`, assignedAdminUpi(o));
 
   document.getElementById('confirmModalBody').innerHTML = `
     <div style="margin-bottom:10px;font-size:13px;color:var(--stone)">${escapeHtml(o.customerName || '')} · ${escapeHtml(o.phone || '')}</div>
@@ -2065,7 +2165,7 @@ async function generateInvoice(rowIndex) {
     try {
       const res = await fetch(apiUrl(), {
         method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ key: apiKey(), action: 'getNextInvoiceNo' })
+        body: JSON.stringify({ ...authParam(), action: 'getNextInvoiceNo' })
       });
       const data = await res.json();
       if (data.status !== 'ok') throw new Error(data.message || 'Could not get invoice number');
@@ -2115,7 +2215,8 @@ async function generateInvoice(rowIndex) {
     customer: o, lineItems, oosLineItems, subTotal, discountAmt, taxableValue,
     totalCgst, totalSgst, totalIgst, totalGst, grandTotal, isIntraState,
     invoiceBadge: { label: payCfg.label.toUpperCase(), bg: payCfg.bg, color: payCfg.color },
-    paymentReceived
+    paymentReceived,
+    confirmingAdminUpi: o.confirmingAdminUpi // multi-admin workflow (DEV-only); blank on every other order, see invoice-shared.js
   });
 
   if (win) { win.document.open(); win.document.write(html); win.document.close(); }
@@ -2125,7 +2226,7 @@ async function generateInvoice(rowIndex) {
   fetch(url, {
     method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({
-      key, action: 'update', rowIndex,
+      ...authParam(), action: 'update', rowIndex,
       allowFinalTotalUpdate: true, // generateInvoice() is the one flow allowed to (re)compute Final Total, even on a reprint
       fields: {
         'Status': newOrderStatus,
@@ -2162,6 +2263,50 @@ function escapeHtml(s) {
 function escAttr(s) {
   return String(s).replace(/'/g, "\\'");
 }
+
+// Deep link target from an assignment WhatsApp message (sent by the new
+// Super Admin page's sendAssignmentWhatsApp, §13 — assignment itself no
+// longer happens on this page) — matched by Order Ref (stable across
+// "Update order" versions), never rowIndex (can shift). Called once orders
+// finish loading.
+let deepLinkOrderRef = null;
+function jumpToDeepLinkOrder() {
+  if (!deepLinkOrderRef) return;
+  const ref = deepLinkOrderRef;
+  deepLinkOrderRef = null; // only ever jump once per page load
+  const target = latestVersionsOnly(orders).find(o => o.orderRef === ref);
+  if (!target) return;
+  expandedRow = target.rowIndex;
+  render();
+  setTimeout(() => {
+    const head = document.querySelector(`#card-${target.rowIndex} .order-head`);
+    if (head) head.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
+
+// DEV MODE init — mirrors invoices.html's initFromQueryParams(): pre-fills
+// the Orders URL/key from the query string (sent inside an assignment
+// WhatsApp message) and connects automatically, then jumpToDeepLinkOrder()
+// (called from loadOrdersConfirmed once data loads) scrolls to/expands the
+// order. Also defaults the setup-bar URL to the DEV deployment, and carries
+// dev=1 onto the Products/Invoices/Finance nav links so dev mode doesn't
+// silently drop the moment an admin navigates to another page.
+(function initDevModeAndQueryParams() {
+  if (DEV_MODE) {
+    document.getElementById('webhookUrl').value = DEV_ORDERS_API_URL;
+    document.querySelectorAll('.nav-link[href]').forEach(a => {
+      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
+    });
+  }
+  const params = new URLSearchParams(location.search);
+  const orderRef = params.get('orderRef');
+  const wUrl = params.get('webhookUrl');
+  const key = params.get('key');
+  if (orderRef) deepLinkOrderRef = orderRef;
+  if (wUrl) document.getElementById('webhookUrl').value = wUrl;
+  if (key) document.getElementById('adminKey').value = key;
+  if (wUrl && key) loadOrders();
+})();
 </script>
 </body>
 </html>

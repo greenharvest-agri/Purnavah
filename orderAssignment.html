@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Super Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#26241E;
+  --moss:#2F4A34;
+  --moss-mid:#41613F;
+  --moss-lt:#E7EEE1;
+  --earth:#B9812E;
+  --cream:#F6F2E9;
+  --parchment:#EFE7D3;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --white:#FCFAF4;
+  --red:#B14A3B;
+  --red-lt:#F7E9E5;
+  --amber:#8F631F;
+  --amber-lt:#F6ECD8;
+  --wa:#25D366;
+}
+html{scroll-behavior:smooth}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.app{max-width:1100px;margin:0 auto;padding:0 24px 80px}
+.topbar{background:var(--moss);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#B9CBAE}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
+.conn-dot.ok{background:var(--wa)}
+.conn-dot.err{background:var(--red)}
+.conn-status{font-size:12px;color:#B9CBAE;display:flex;align-items:center}
+.nav-link{color:#B9CBAE;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.nav-link:hover{color:var(--cream)}
+
+.setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif}
+.setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
+.setup-bar select{padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;background:#fff}
+
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--moss);color:#fff}
+.btn-primary:hover{background:#2d4020}
+.btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
+.btn-secondary:hover{border-color:var(--moss);color:var(--moss)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{font-size:12px;padding:6px 12px}
+
+.order-list{display:flex;flex-direction:column;gap:12px}
+.order-card{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.order-id-block{min-width:0}
+.order-customer{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--ink)}
+.order-meta{font-size:12px;color:var(--stone);margin-top:2px}
+.order-flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.status-pill{display:inline-flex;align-items:center;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.flag{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+.order-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.order-total{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--moss)}
+.assign-select{border:1px solid var(--rule);border-radius:20px;padding:5px 10px;font-size:12.5px;font-family:'Inter',sans-serif;cursor:pointer;background:#fff}
+
+.status-count-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.status-count-chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;
+  border:1.5px solid transparent;cursor:pointer;font-size:12.5px;font-weight:600;
+  transition:all .12s;white-space:nowrap}
+.status-count-chip.active{box-shadow:0 0 0 2px var(--ink)}
+.status-count-chip .chip-num{font-family:'Fraunces',serif;font-size:16px;font-weight:600}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--stone)}
+.empty-state h3{font-family:'Fraunces',serif;font-size:20px;color:var(--ink);margin-bottom:6px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--cream);padding:14px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:100;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--red)}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-name">Purnavah</div>
+      <div class="brand-tag">Super Admin</div>
+    </div>
+    <div class="topbar-actions">
+      <a class="nav-link" href="admin.html">Orders →</a>
+      <a class="nav-link" href="products.html">Products →</a>
+      <a class="nav-link" href="invoices.html">Invoices →</a>
+      <a class="nav-link" href="finance.html">Finance →</a>
+      <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
+      <button class="btn btn-secondary btn-sm" onclick="loadAll()">↻ Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="setup-bar" id="setupBar">
+    <div style="flex:2;min-width:260px">
+      <label>Orders Apps Script Web App URL</label><br>
+      <input type="text" id="ordersUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
+    </div>
+    <div style="flex:2;min-width:260px">
+      <label>Catalog Apps Script Web App URL</label><br>
+      <input type="text" id="catalogUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
+    </div>
+    <div style="flex:1;min-width:180px">
+      <label>Password</label><br>
+      <input type="password" id="adminKey" placeholder="your password" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
+    </div>
+    <button class="btn btn-primary" onclick="loadAll()" id="connectBtn">Connect</button>
+    <div class="setup-hint" style="font-size:11.5px;color:var(--stone);width:100%">
+      Exclusive to Super Admin — every other identity gets an access-denied message here, not a locked-down view. See MULTI_ADMIN_WORKFLOW_PLAN.md §13.
+    </div>
+  </div>
+
+  <div class="setup-bar" id="filterBar" style="display:none;gap:10px;align-items:center"></div>
+
+  <div class="status-count-bar" id="statusCountBar" style="display:none">
+    <!-- rendered by renderStatusBar() -->
+  </div>
+
+  <div id="accessDenied" style="display:none">
+    <div class="empty-state">
+      <h3>Super Admin only</h3>
+      <p id="accessDeniedMsg">This page is exclusive to Super Admin.</p>
+    </div>
+  </div>
+
+  <div id="listContainer">
+    <div class="empty-state">
+      <h3>Not connected yet</h3>
+      <p>Enter the Orders + Catalog Apps Script URLs and your password above, then click Connect.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// This page only ever exists in the multi-admin DEV workflow (§13) — there
+// is no prod counterpart, so unlike admin.html/invoices.html/products.html/
+// finance.html there's no DEV_MODE on/off branch here: every request always
+// sends a per-admin "password" (never a shared "key"), and the setup fields
+// always default to the DEV deployments. ?dev=1 is still appended to the
+// nav links below purely so navigating to another page keeps ITS dev mode
+// on — those pages *do* have a prod path, and would otherwise silently drop
+// back to it.
+const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbys7_tYwd4Oo5SKXvOsjCpcuI6uTzibMyhktgnUfdXUi543VqIYWlLJ1U1KDDeH5YQsEA/exec";
+const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
+
+let ALL_ORDERS = [];   // every order, unfiltered — from ?action=listAll
+let ALL_ADMINS = [];   // full roster (minus Password) — from ?action=admins
+let CURRENT_ADMIN = null;
+let filterAdminId = 'all'; // 'all' | '' (Super Admin's own bucket) | an Admin ID
+let statusFilter = 'New'; // 'all' | a key of ORDER_STATUSES — defaults to New so incoming orders needing assignment surface first
+
+// Same fulfillment-status set/colors as admin.html's ORDER_STATUSES, kept
+// independent (not shared code between the two pages) since this page has
+// no version-history concept and never needs the "Revised" legacy state.
+const ORDER_STATUSES = {
+  New:                { color:'#1D4ED8', bg:'#DBEAFE', label:'New' },
+  Confirmed:          { color:'#166534', bg:'#DCFCE7', label:'Confirmed' },
+  Invoiced:           { color:'#7C3AED', bg:'#EDE9FE', label:'Invoiced' },
+  'Packed & Shipped':  { color:'#B9812E', bg:'#EFE7D3', label:'Packed & Shipped' },
+  Delivered:          { color:'#14532D', bg:'#F0FDF4', label:'Delivered' },
+  Cancelled:          { color:'#B14A3B', bg:'#FEE2E2', label:'Cancelled' }
+};
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2600);
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(s) { return String(s == null ? '' : s).replace(/'/g, "\\'"); }
+
+function ordersUrl() { return document.getElementById('ordersUrl').value.trim(); }
+function catalogUrl() { return document.getElementById('catalogUrl').value.trim(); }
+function apiKey() { return document.getElementById('adminKey').value.trim(); }
+function authQuery() { return 'password=' + encodeURIComponent(apiKey()); }
+
+async function loadWhoAmI() {
+  try {
+    const res = await fetch(`${catalogUrl()}?action=whoAmI&${authQuery()}`);
+    const data = await res.json();
+    CURRENT_ADMIN = data.status === 'ok' ? data.admin : null;
+    return data.status === 'ok' ? null : (data.message || 'Invalid password');
+  } catch (e) {
+    CURRENT_ADMIN = null;
+    return 'Could not verify password: ' + e.message;
+  }
+}
+
+async function loadAll() {
+  const oUrl = ordersUrl(), cUrl = catalogUrl(), key = apiKey();
+  if (!oUrl || !cUrl || !key) { toast('Enter both URLs and your password', true); return; }
+
+  document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
+  document.getElementById('connectBtn').disabled = true;
+  document.getElementById('connDot').className = 'conn-dot';
+  document.getElementById('connText').textContent = 'Connecting…';
+  document.getElementById('accessDenied').style.display = 'none';
+  document.getElementById('filterBar').style.display = 'none';
+  document.getElementById('statusCountBar').style.display = 'none';
+
+  try {
+    const whoAmIError = await loadWhoAmI();
+    if (whoAmIError) throw new Error(whoAmIError);
+    if (!CURRENT_ADMIN || CURRENT_ADMIN.role !== 'Super Admin') {
+      document.getElementById('connDot').className = 'conn-dot err';
+      document.getElementById('connText').textContent = 'Not connected';
+      document.getElementById('accessDeniedMsg').textContent = CURRENT_ADMIN
+        ? `You're logged in as ${CURRENT_ADMIN.name} (${CURRENT_ADMIN.role}) — this page is exclusive to Super Admin.`
+        : 'This page is exclusive to Super Admin.';
+      document.getElementById('accessDenied').style.display = 'block';
+      document.getElementById('listContainer').innerHTML = '';
+      return;
+    }
+
+    const [ordersRes, adminsRes] = await Promise.all([
+      fetch(`${oUrl}?action=listAll&${authQuery()}`),
+      fetch(`${cUrl}?action=admins&${authQuery()}`)
+    ]);
+    const ordersData = await ordersRes.json();
+    const adminsData = await adminsRes.json();
+    if (ordersData.status !== 'ok') throw new Error(ordersData.message || 'Could not load orders');
+    if (adminsData.status !== 'ok') throw new Error(adminsData.message || 'Could not load admins');
+
+    ALL_ORDERS = ordersData.data;
+    ALL_ADMINS = adminsData.data;
+
+    document.getElementById('connDot').className = 'conn-dot ok';
+    document.getElementById('connText').textContent = `Connected · ${ALL_ORDERS.length} orders`;
+    renderFilterBar();
+    render();
+    toast('Orders loaded');
+  } catch (err) {
+    document.getElementById('connDot').className = 'conn-dot err';
+    document.getElementById('connText').textContent = 'Connection failed';
+    toast('Failed to load: ' + err.message, true);
+    document.getElementById('listContainer').innerHTML = `
+      <div class="empty-state">
+        <h3>Couldn't connect</h3>
+        <p>${escapeHtml(err.message)}</p>
+      </div>`;
+  } finally {
+    document.getElementById('connectBtn').innerHTML = 'Connect';
+    document.getElementById('connectBtn').disabled = false;
+  }
+}
+
+function adminName(adminId) {
+  if (!adminId) return 'Super Admin';
+  const a = ALL_ADMINS.find(x => x.adminId === adminId);
+  return a ? a.name : adminId;
+}
+
+// The per-admin breakdown is a filter, not multiple simultaneous sections
+// (confirmed 2026-09-15, §13) — picking an admin (or "All") narrows the
+// list; each order still shows its own current status.
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  bar.style.display = 'flex';
+  const active = ALL_ADMINS.filter(a => a.active && a.role !== 'Super Admin');
+  bar.innerHTML = `
+    <label style="font-size:12.5px;color:var(--stone);font-weight:600">Filter by admin</label>
+    <select onchange="setFilterAdmin(this.value)">
+      <option value="all" ${filterAdminId === 'all' ? 'selected' : ''}>All orders</option>
+      <option value="" ${filterAdminId === '' ? 'selected' : ''}>Super Admin</option>
+      ${active.map(a => `<option value="${escAttr(a.adminId)}" ${filterAdminId === a.adminId ? 'selected' : ''}>${escapeHtml(a.name)}</option>`).join('')}
+    </select>`;
+}
+function setFilterAdmin(v) { filterAdminId = v; render(); }
+function setStatusFilter(s) { statusFilter = s; render(); }
+
+// Status tabs/counts reflect whichever admin is currently selected in the
+// "Filter by admin" control above, so switching that dropdown also updates
+// these counts — the two filters combine (admin narrows first, status tab
+// narrows further), not two independent views.
+function renderStatusBar(byAdmin) {
+  const bar = document.getElementById('statusCountBar');
+  bar.style.display = 'flex';
+
+  const counts = {};
+  Object.keys(ORDER_STATUSES).forEach(s => counts[s] = 0);
+  byAdmin.forEach(o => { const s = o.status || 'New'; if (counts[s] !== undefined) counts[s]++; });
+
+  bar.innerHTML = Object.entries(counts).map(([status, count]) => {
+    const cfg = ORDER_STATUSES[status];
+    const isActive = statusFilter === status;
+    return `<div class="status-count-chip ${isActive ? 'active' : ''}"
+      style="background:${cfg.bg};color:${cfg.color};border-color:${isActive ? cfg.color : 'transparent'}"
+      onclick="setStatusFilter('${status}')">
+      <span class="chip-num">${count}</span>
+      <span>${cfg.label}</span>
+    </div>`;
+  }).join('') +
+  `<div class="status-count-chip ${statusFilter === 'all' ? 'active' : ''}"
+     style="background:var(--parchment);color:var(--stone);border-color:var(--rule)"
+     onclick="setStatusFilter('all')">
+     <span class="chip-num">${byAdmin.length}</span><span>All</span></div>`;
+}
+
+function render() {
+  const container = document.getElementById('listContainer');
+  const byAdmin = filterAdminId === 'all'
+    ? ALL_ORDERS
+    : ALL_ORDERS.filter(o => (o.assignedTo || '') === filterAdminId);
+  renderStatusBar(byAdmin);
+
+  const filtered = statusFilter === 'all'
+    ? byAdmin
+    : byAdmin.filter(o => (o.status || 'New') === statusFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><h3>No orders match</h3><p>Try a different filter.</p></div>`;
+    return;
+  }
+  // Most-recently touched order first, same convention as admin.html.
+  const sorted = [...filtered].sort((a, b) => (b.lastUpdated || b.timestamp || '').localeCompare(a.lastUpdated || a.timestamp || ''));
+  container.innerHTML = `<div class="order-list">${sorted.map(renderCard).join('')}</div>`;
+}
+
+function renderCard(o) {
+  const itemCount = Object.keys(o.items || {}).length;
+  const active = ALL_ADMINS.filter(a => a.active && a.role !== 'Super Admin');
+  const statusCfg = ORDER_STATUSES[o.status] || ORDER_STATUSES.New;
+  return `
+  <div class="order-card">
+    <div class="order-id-block">
+      <div class="order-customer">${escapeHtml(o.customerName || '(no name)')}</div>
+      <div class="order-meta">${escapeHtml(o.phone)} · ${escapeHtml(o.timestamp)} · ${itemCount} item${itemCount !== 1 ? 's' : ''}${o.gaplOrderId ? ' · ' + escapeHtml(o.gaplOrderId) : ''}</div>
+      <div class="order-flags">
+        <span class="status-pill" style="background:${statusCfg.bg};color:${statusCfg.color}">${escapeHtml(statusCfg.label)}</span>
+        <span class="flag" style="background:var(--moss-lt);color:var(--moss)">Currently: ${escapeHtml(adminName(o.assignedTo))}</span>
+      </div>
+    </div>
+    <div class="order-right">
+      <div class="order-total">₹${(o.finalTotal || o.orderTotal || 0).toLocaleString('en-IN')}</div>
+      <select class="assign-select" onchange="assignOrder(${o.rowIndex}, this.value)">
+        <option value="" ${!o.assignedTo ? 'selected' : ''}>Assign to: Super Admin</option>
+        ${active.map(a => `<option value="${escAttr(a.adminId)}" ${o.assignedTo === a.adminId ? 'selected' : ''}>Assign to: ${escapeHtml(a.name)}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+}
+
+async function assignOrder(rowIndex, adminId) {
+  const o = ALL_ORDERS.find(x => x.rowIndex === rowIndex);
+  const previousAssignee = o.assignedTo;
+  try {
+    const res = await fetch(ordersUrl(), {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ password: apiKey(), action: 'update', rowIndex, fields: { 'Assigned To': adminId } })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+    o.assignedTo = adminId;
+    render();
+    toast('Order assigned to ' + adminName(adminId));
+
+    // Click-to-send WhatsApp notification — same wa.me?text= prefilled-tab
+    // pattern as every other WhatsApp feature in this codebase, never a
+    // silent/automatic push. Only fires on an actual reassignment to
+    // someone new, and only if that admin has a WhatsApp number on file.
+    if (adminId && adminId !== previousAssignee) {
+      const admin = ALL_ADMINS.find(a => a.adminId === adminId);
+      if (admin && admin.whatsapp) sendAssignmentWhatsApp(o, admin);
+      else if (admin) toast(`${admin.name} has no WhatsApp number on file — notify them yourself`, true);
+    }
+  } catch (err) {
+    toast('Assign failed: ' + err.message, true);
+    render(); // revert the <select> to the last-known-good state
+  }
+}
+
+// Deep link into admin.html (dev=1), scrolled/expanded to this order —
+// carries the Orders URL + this admin's own password so the recipient
+// doesn't have to re-enter them, matched by Order Ref (stable across
+// "Update order" versions), never rowIndex.
+function sendAssignmentWhatsApp(o, admin) {
+  const itemCount = Object.keys(o.items || {}).length;
+  const params = new URLSearchParams({ dev: '1', webhookUrl: ordersUrl(), key: apiKey(), orderRef: o.orderRef });
+  const deepLink = `${location.origin}${location.pathname.replace(/[^/]*$/, 'admin.html')}?${params.toString()}`;
+  const msg = `📦 *New order assigned to you — please confirm ASAP*
+
+Order: ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}
+Customer: ${o.customerName}
+Items: ${itemCount}
+
+Open it here: ${deepLink}`;
+  const phone = admin.whatsapp.length === 10 ? '91' + admin.whatsapp : admin.whatsapp;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+(function init() {
+  document.getElementById('ordersUrl').value = DEV_ORDERS_API_URL;
+  document.getElementById('catalogUrl').value = DEV_CATALOG_API_URL;
+  document.querySelectorAll('.nav-link[href]').forEach(a => {
+    a.setAttribute('href', a.getAttribute('href') + '?dev=1');
+  });
+})();
+</script>
+</body>
+</html>

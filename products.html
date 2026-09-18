@@ -4,52 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Product Catalog Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#1C1B17;
-  --moss:#3A5428;
-  --moss-mid:#527A3B;
-  --moss-lt:#EDF2E8;
-  --earth:#7C5C3A;
-  --cream:#F5F0E8;
-  --parchment:#EDE6D6;
-  --rule:#C8BFA8;
-  --stone:#7A6F61;
-  --white:#FDFCF9;
-  --red:#B91C1C;
-  --red-lt:#FBECEC;
-  --amber:#9A6B0F;
-  --amber-lt:#FBF3E1;
+  --ink:#26241E;
+  --moss:#2F4A34;
+  --moss-mid:#41613F;
+  --moss-lt:#E7EEE1;
+  --earth:#B9812E;
+  --cream:#F6F2E9;
+  --parchment:#EFE7D3;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --white:#FCFAF4;
+  --red:#B14A3B;
+  --red-lt:#F7E9E5;
+  --amber:#8F631F;
+  --amber-lt:#F6ECD8;
   --wa:#25D366;
 }
 html{scroll-behavior:smooth}
-body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
 
 /* ── LAYOUT ── */
 .app{max-width:1500px;margin:0 auto;padding:0 24px 80px}
-.topbar{background:var(--ink);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar{background:var(--moss);color:var(--cream);padding:22px 24px;margin-bottom:28px}
 .topbar-inner{max-width:1500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .brand{display:flex;align-items:baseline;gap:12px}
 .brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
-.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#A89E8E}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#B9CBAE}
 .topbar-actions{display:flex;gap:10px;align-items:center}
 .conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
 .conn-dot.ok{background:var(--wa)}
 .conn-dot.err{background:var(--red)}
-.conn-status{font-size:12px;color:#A89E8E;display:flex;align-items:center}
-.nav-link{color:#A89E8E;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.conn-status{font-size:12px;color:#B9CBAE;display:flex;align-items:center}
+.nav-link{color:#B9CBAE;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
 .nav-link:hover{color:var(--cream)}
 
 /* ── KEY SETUP BAR ── */
 .setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif}
 .setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
 .setup-hint{font-size:11.5px;color:var(--stone);margin-top:6px;flex-basis:100%}
 
 /* ── BUTTONS ── */
-.btn{font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn-primary{background:var(--moss);color:#fff}
 .btn-primary:hover{background:#2d4020}
 .btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
@@ -71,9 +71,9 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 .filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
 .filter-chip{padding:7px 14px;border-radius:20px;border:1.5px solid var(--rule);background:var(--white);font-size:12.5px;font-weight:600;color:var(--stone);cursor:pointer;transition:all .12s;white-space:nowrap}
 .filter-chip.active{background:var(--ink);color:var(--cream);border-color:var(--ink)}
-.search-input{flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--parchment);border-radius:20px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:var(--white)}
+.search-input{flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--parchment);border-radius:20px;font-size:13px;font-family:'Inter',sans-serif;background:var(--white)}
 .search-input:focus{outline:none;border-color:var(--moss)}
-select.filter-select{padding:8px 12px;border-radius:20px;border:1.5px solid var(--rule);background:var(--white);font-size:12.5px;font-family:'Hanken Grotesk',sans-serif;color:var(--ink)}
+select.filter-select{padding:8px 12px;border-radius:20px;border:1.5px solid var(--rule);background:var(--white);font-size:12.5px;font-family:'Inter',sans-serif;color:var(--ink)}
 
 /* ── ADD PANEL ── */
 .add-panel{background:var(--white);border:1.5px solid var(--moss);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:none}
@@ -82,7 +82,7 @@ select.filter-select{padding:8px 12px;border-radius:20px;border:1.5px solid var(
 .add-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .add-grid .field-full{grid-column:1/-1}
 .add-grid label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-bottom:5px}
-.add-grid input,.add-grid select{width:100%;padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.add-grid input,.add-grid select{width:100%;padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;background:#fff}
 .add-grid input:focus,.add-grid select:focus{outline:none;border-color:var(--moss)}
 .add-actions{display:flex;gap:8px;margin-top:16px}
 .wa-preview{font-size:11.5px;color:var(--stone);margin-top:10px;font-style:italic}
@@ -94,7 +94,7 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
 .catalog-table td{padding:8px 10px;border-bottom:1px solid var(--parchment);vertical-align:middle}
 .catalog-table tr:last-child td{border-bottom:none}
 .catalog-table tr.inactive-row{background:#FAF8F4;color:var(--stone)}
-.catalog-table input,.catalog-table select{width:100%;padding:6px 8px;border:1.5px solid var(--parchment);border-radius:5px;font-size:12.5px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.catalog-table input,.catalog-table select{width:100%;padding:6px 8px;border:1.5px solid var(--parchment);border-radius:5px;font-size:12.5px;font-family:'Inter',sans-serif;background:#fff}
 .catalog-table input:focus,.catalog-table select:focus{outline:none;border-color:var(--moss)}
 .catalog-table input.num{text-align:right}
 .col-name{min-width:170px;font-weight:600}
@@ -152,12 +152,20 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
       <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec">
     </div>
     <div style="flex:1;min-width:180px">
-      <label>Admin Key</label><br>
-      <input type="password" id="adminKey" placeholder="your admin key" value="">
+      <label>Password</label><br>
+      <input type="password" id="adminKey" placeholder="your password" value="">
     </div>
     <button class="btn btn-primary" onclick="loadProducts()" id="connectBtn">Connect</button>
-    <div class="setup-hint">Uses the same admin key as the Orders admin. Deploy <code>google-apps-script/catalog_code.gs</code> against your Catalog sheet and paste its Web App URL here — see the comment header in that file for step-by-step deploy instructions.</div>
+    <div class="setup-hint">Uses the same password as the Orders admin. Deploy <code>google-apps-script/catalog_code.gs</code> against your Catalog sheet and paste its Web App URL here — see the comment header in that file for step-by-step deploy instructions.</div>
   </div>
+
+  <!-- Multi-admin workflow (DEV-only) — hidden unless DEV_MODE; shows "Logged
+       in as X (Role)" once whoAmI resolves at connect time. This page stays
+       equal-access for every admin (§13 point 3 — no per-admin scoping,
+       there's no per-admin catalog data to scope) — this is purely a status
+       display, not a gate. The old self-picked "Who are you?" dropdown is
+       superseded (see MULTI_ADMIN_WORKFLOW_PLAN.md §13). -->
+  <div class="setup-bar" id="identityBar" style="display:none;gap:10px;align-items:center"></div>
 
   <div class="stats-row" id="statsRow" style="display:none">
     <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total products</div></div>
@@ -259,7 +267,7 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
   <div id="notConnected">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter your Catalog Apps Script Web App URL and admin key above, then click Connect.</p>
+      <p>Enter your Catalog Apps Script Web App URL and password above, then click Connect.</p>
     </div>
   </div>
 
@@ -270,6 +278,14 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
 <div class="toast" id="toast"></div>
 
 <script>
+// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
+// to point at the DEV Catalog deployment instead of prod, and to activate
+// the multi-admin workflow — a real per-admin password. With dev mode off
+// this page behaves exactly as it always has. See
+// MULTI_ADMIN_WORKFLOW_PLAN.md §13.
+const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
+const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbys7_tYwd4Oo5SKXvOsjCpcuI6uTzibMyhktgnUfdXUi543VqIYWlLJ1U1KDDeH5YQsEA/exec";
+
 let products = [];
 let editState = {}; // rowIndex -> cloned editable fields
 let currentFilter = 'all';
@@ -285,6 +301,41 @@ function toast(msg, isError) {
 
 function apiUrl() { return document.getElementById('webhookUrl').value.trim(); }
 function apiKey() { return document.getElementById('adminKey').value.trim(); }
+// Prod talks to catalog_code.gs, which still checks a shared "key" — DEV
+// talks to catalog_code.dev.gs, which resolves a per-admin "password"
+// instead (§13). Same input field either way; only the wire field name sent
+// to the backend differs, based on DEV_MODE.
+function authParam() { return DEV_MODE ? { password: apiKey() } : { key: apiKey() }; }
+function authQuery() { return (DEV_MODE ? 'password=' : 'key=') + encodeURIComponent(apiKey()); }
+
+// ─────────────────────────────────────────────
+//  MULTI-ADMIN WORKFLOW (DEV-only) — identity display only, for consistency
+//  with admin.html/invoices.html/finance.html. Catalog editing is equal
+//  access for all three admins (§13 point 3), so there's no visibility/
+//  permission gating on this page — this just shows who's logged in. The
+//  old self-picked "Who are you?" dropdown is superseded (§13).
+// ─────────────────────────────────────────────
+let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at connect via ?action=whoAmI
+
+async function loadWhoAmI() {
+  if (!DEV_MODE) return;
+  try {
+    const res = await fetch(`${apiUrl()}?action=whoAmI&${authQuery()}`);
+    const data = await res.json();
+    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
+    else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
+  } catch (e) {
+    CURRENT_ADMIN = null;
+    console.warn('whoAmI failed', e);
+  }
+}
+function renderIdentityBar() {
+  const bar = document.getElementById('identityBar');
+  if (!bar) return;
+  if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
+}
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -299,7 +350,7 @@ function computeWaKey(displayName, packSize) {
 
 async function loadProducts() {
   const url = apiUrl(), key = apiKey();
-  if (!url || !key) { toast('Enter both URL and admin key', true); return; }
+  if (!url || !key) { toast('Enter both URL and password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -307,7 +358,10 @@ async function loadProducts() {
   document.getElementById('connText').textContent = 'Connecting…';
 
   try {
-    const res = await fetch(`${url}?action=list&key=${encodeURIComponent(key)}`);
+    const [res] = await Promise.all([
+      fetch(`${url}?action=list&${authQuery()}`),
+      loadWhoAmI()
+    ]);
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
 
@@ -320,6 +374,7 @@ async function loadProducts() {
     document.getElementById('statsRow').style.display = 'grid';
     document.getElementById('mainArea').style.display = 'block';
     document.getElementById('notConnected').style.display = 'none';
+    renderIdentityBar();
     populateCategoryOptions();
     toast('Catalog loaded');
     render();
@@ -332,7 +387,7 @@ async function loadProducts() {
       <div class="empty-state">
         <h3>Couldn't connect</h3>
         <p>${escapeHtml(err.message)}</p>
-        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Catalog Apps Script is deployed as a Web App with "Anyone" access, (2) the admin key matches what's in the script, (3) the "Catalog" sheet tab exists with the expected header row.</p>
+        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Catalog Apps Script is deployed as a Web App with "Anyone" access, (2) the password matches an active row's Password in the Admins tab, (3) the "Catalog" sheet tab exists with the expected header row.</p>
       </div>`;
     toast('Failed to load: ' + err.message, true);
   } finally {
@@ -540,7 +595,7 @@ async function saveRow(rowIndex) {
     // (another admin's add/delete) between page load and this save, and
     // Product ID is the same stable identifier confirmOrder_/decrementStock_
     // already rely on for stock updates.
-    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ key, action: 'update', productId: p.productId, fields }) });
+    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ ...authParam(), action: 'update', productId: p.productId, fields }) });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
     Object.assign(p, ed);
@@ -562,7 +617,7 @@ async function bulkDelete() {
   let okCount = 0, failCount = 0;
   for (const p of rows) {
     try {
-      const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ key, action: 'delete', productId: p.productId }) });
+      const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ ...authParam(), action: 'delete', productId: p.productId }) });
       const data = await res.json();
       if (data.status !== 'ok') throw new Error(data.message);
       okCount++;
@@ -626,7 +681,7 @@ async function addProduct() {
 
   const url = apiUrl(), key = apiKey();
   try {
-    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ key, action: 'add', fields }) });
+    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ ...authParam(), action: 'add', fields }) });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
     toast('✅ ' + productName + ' added successfully');
@@ -636,6 +691,17 @@ async function addProduct() {
     toast('Add failed: ' + err.message, true);
   }
 }
+
+// DEV MODE init — defaults the setup-bar URL to the DEV Catalog deployment
+// and carries dev=1 onto the "← Orders" nav link so dev mode doesn't
+// silently drop when navigating back to admin.html.
+(function initDevMode() {
+  if (!DEV_MODE) return;
+  document.getElementById('webhookUrl').value = DEV_CATALOG_API_URL;
+  document.querySelectorAll('.nav-link[href]').forEach(a => {
+    a.setAttribute('href', a.getAttribute('href') + '?dev=1');
+  });
+})();
 </script>
 </body>
 </html>

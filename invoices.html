@@ -4,51 +4,51 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Invoices</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="invoice-shared.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#1C1B17;
-  --moss:#3A5428;
-  --moss-mid:#527A3B;
-  --moss-lt:#EDF2E8;
-  --earth:#7C5C3A;
-  --cream:#F5F0E8;
-  --parchment:#EDE6D6;
-  --rule:#C8BFA8;
-  --stone:#7A6F61;
-  --white:#FDFCF9;
-  --red:#B91C1C;
-  --red-lt:#FBECEC;
-  --amber:#9A6B0F;
-  --amber-lt:#FBF3E1;
+  --ink:#26241E;
+  --moss:#2F4A34;
+  --moss-mid:#41613F;
+  --moss-lt:#E7EEE1;
+  --earth:#B9812E;
+  --cream:#F6F2E9;
+  --parchment:#EFE7D3;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --white:#FCFAF4;
+  --red:#B14A3B;
+  --red-lt:#F7E9E5;
+  --amber:#8F631F;
+  --amber-lt:#F6ECD8;
   --wa:#25D366;
 }
 html{scroll-behavior:smooth}
-body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
 
 .app{max-width:1500px;margin:0 auto;padding:0 24px 80px}
-.topbar{background:var(--ink);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar{background:var(--moss);color:var(--cream);padding:22px 24px;margin-bottom:28px}
 .topbar-inner{max-width:1500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .brand{display:flex;align-items:baseline;gap:12px}
 .brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
-.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#A89E8E}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#B9CBAE}
 .topbar-actions{display:flex;gap:10px;align-items:center}
 .conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
 .conn-dot.ok{background:var(--wa)}
 .conn-dot.err{background:var(--red)}
-.conn-status{font-size:12px;color:#A89E8E;display:flex;align-items:center}
-.nav-link{color:#A89E8E;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.conn-status{font-size:12px;color:#B9CBAE;display:flex;align-items:center}
+.nav-link{color:#B9CBAE;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
 .nav-link:hover{color:var(--cream)}
 
 .setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif}
 .setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
 .setup-hint{font-size:11.5px;color:var(--stone);margin-top:6px;flex-basis:100%}
 
-.btn{font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn-primary{background:var(--moss);color:#fff}
 .btn-primary:hover{background:#2d4020}
 .btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
@@ -57,7 +57,7 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 .btn-sm{font-size:12px;padding:6px 12px}
 
 .field-mini-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-bottom:4px;display:block}
-.date-input{padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.date-input{padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;background:#fff}
 .date-range-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:20px}
 
 .status-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -106,6 +106,7 @@ table.invoice-table{width:100%;border-collapse:collapse;font-size:13px;min-width
     </div>
     <div class="topbar-actions">
       <a class="nav-link" href="admin.html">← Orders</a>
+      <a class="nav-link" href="finance.html">Finance →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
     </div>
   </div>
@@ -123,12 +124,22 @@ table.invoice-table{width:100%;border-collapse:collapse;font-size:13px;min-width
       <input type="text" id="catalogUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec">
     </div>
     <div style="flex:1;min-width:180px">
-      <label>Admin Key</label><br>
-      <input type="password" id="adminKey" placeholder="your admin key" value="">
+      <label>Password</label><br>
+      <input type="password" id="adminKey" placeholder="your password" value="">
     </div>
     <button class="btn btn-primary" onclick="connect()" id="connectBtn">Connect</button>
     <div class="setup-hint">The Catalog URL is needed to look up each item's real GST% and HSN code — the Excel export computes exact CGST/SGST/IGST per line item, not an approximation.</div>
   </div>
+
+  <!-- Multi-admin workflow (DEV-only) — hidden unless DEV_MODE; shows "Logged
+       in as X (Role)" once whoAmI resolves at connect time. Read-only — real
+       identity now comes from the password, not a self-picked dropdown (that
+       old dropdown/"Assigned to" filter model is superseded, see
+       MULTI_ADMIN_WORKFLOW_PLAN.md §13). Visibility itself is enforced
+       entirely server-side now (§13 point 1 + this doc's invoices-scope
+       decision): Admin A/B see only their own assigned invoices; Super Admin
+       sees every invoice, same as prod, for GST/CA reporting. -->
+  <div class="setup-bar" id="identityBar" style="display:none;gap:10px;align-items:center"></div>
 
   <div id="mainArea" style="display:none">
     <div class="date-range-bar">
@@ -155,7 +166,7 @@ table.invoice-table{width:100%;border-collapse:collapse;font-size:13px;min-width
   <div id="notConnected">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter both Web App URLs and the admin key above, then click Connect.</p>
+      <p>Enter both Web App URLs and the password above, then click Connect.</p>
     </div>
   </div>
 
@@ -177,11 +188,23 @@ const HOME_STATE = "Chhattisgarh";
 // Simplified from admin.html's PAYMENT_STATES — Overdue is computed the same
 // way (>15 days unpaid/partially-paid since Invoice Date).
 const PAYMENT_STATES = {
-  Unpaid:           { color:'#9A6B0F', bg:'#FBF3E1', label:'Unpaid' },
-  Paid:             { color:'#FDFCF9', bg:'#14532D', label:'Paid' },
-  'Partially Paid': { color:'#9A6B0F', bg:'#FBF3E1', label:'Partially Paid' },
-  Overdue:          { color:'#B91C1C', bg:'#FEF3C7', label:'Overdue' }
+  Unpaid:           { color:'#8F631F', bg:'#F6ECD8', label:'Unpaid' },
+  Paid:             { color:'#FCFAF4', bg:'#14532D', label:'Paid' },
+  'Partially Paid': { color:'#8F631F', bg:'#F6ECD8', label:'Partially Paid' },
+  Overdue:          { color:'#B14A3B', bg:'#FEF3C7', label:'Overdue' }
 };
+
+// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
+// to point at the DEV Catalog/Orders deployments instead of prod, and to
+// activate the multi-admin workflow — a real per-admin password resolved
+// server-side to an identity that scopes which invoices this page even
+// receives (own assigned orders for Admin A/B; every invoice for Super
+// Admin, same as prod, since this page exists for GST/CA reporting). With
+// dev mode off this page behaves exactly as it always has — same shared
+// ADMIN_KEY, full unscoped visibility. See MULTI_ADMIN_WORKFLOW_PLAN.md §13.
+const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
+const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbys7_tYwd4Oo5SKXvOsjCpcuI6uTzibMyhktgnUfdXUi543VqIYWlLJ1U1KDDeH5YQsEA/exec";
+const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
 
 let orders = [];
 let CATALOG = [];
@@ -249,7 +272,8 @@ function buildInvoiceFromOrder(o) {
     grandTotal: o.finalTotal || Math.round((tax.taxableValue + tax.totalGst) * 100) / 100,
     isIntraState: tax.isIntra,
     invoiceBadge: { label: payCfg.label.toUpperCase(), bg: payCfg.bg, color: payCfg.color },
-    paymentReceived
+    paymentReceived,
+    confirmingAdminUpi: o.confirmingAdminUpi // multi-admin workflow (DEV-only); blank on every other order, see invoice-shared.js
   });
 }
 
@@ -271,6 +295,44 @@ function toast(msg, isError) {
 function ordersUrl() { return document.getElementById('ordersUrl').value.trim(); }
 function catalogUrl() { return document.getElementById('catalogUrl').value.trim(); }
 function apiKey() { return document.getElementById('adminKey').value.trim(); }
+// Prod talks to catalog_code.gs/orders_code.gs, which still check a shared
+// "key" — DEV talks to the *.dev.gs rewrite, which resolves a per-admin
+// "password" instead (§13). Same input field either way; only the wire
+// field name sent to the backend differs, based on DEV_MODE.
+function authParam() { return DEV_MODE ? { password: apiKey() } : { key: apiKey() }; }
+function authQuery() { return (DEV_MODE ? 'password=' : 'key=') + encodeURIComponent(apiKey()); }
+
+// ─────────────────────────────────────────────
+//  MULTI-ADMIN WORKFLOW (DEV-only) — real per-admin password auth (§13). The
+//  backend resolves the submitted password to an identity and scopes every
+//  response server-side (Admin A/B: their own assigned invoices only; Super
+//  Admin: everything, via the "listAll" action — see connect()). This page
+//  no longer picks an identity from a dropdown or filters anything
+//  client-side; it just shows who's logged in.
+// ─────────────────────────────────────────────
+
+let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at connect via ?action=whoAmI
+
+async function loadWhoAmI() {
+  if (!DEV_MODE) return;
+  try {
+    const res = await fetch(`${catalogUrl()}?action=whoAmI&${authQuery()}`);
+    const data = await res.json();
+    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
+    else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
+  } catch (e) {
+    CURRENT_ADMIN = null;
+    console.warn('whoAmI failed', e);
+  }
+}
+
+function renderIdentityBar() {
+  const bar = document.getElementById('identityBar');
+  if (!bar) return;
+  if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
+}
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -317,7 +379,7 @@ function isoToDdmmyyyy(iso) {
 
 async function connect() {
   const oUrl = ordersUrl(), cUrl = catalogUrl(), key = apiKey();
-  if (!oUrl || !cUrl || !key) { toast('Enter both URLs and the admin key', true); return; }
+  if (!oUrl || !cUrl || !key) { toast('Enter both URLs and the password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -325,10 +387,17 @@ async function connect() {
   document.getElementById('connText').textContent = 'Connecting…';
 
   try {
+    // whoAmI must resolve first — Super Admin needs "listAll" (every
+    // invoice, for GST/CA reporting) while Admin A/B need "list" (server
+    // scopes it to their own assigned orders); prod (DEV_MODE off) always
+    // uses "list", which is unfiltered there, same as it always has been.
+    await loadWhoAmI();
+    const ordersAction = (DEV_MODE && CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? 'listAll' : 'list';
+
     const [ordersRes, catalogRes, creditNotesRes] = await Promise.all([
-      fetch(`${oUrl}?action=list&key=${encodeURIComponent(key)}`),
-      fetch(`${cUrl}?action=list&key=${encodeURIComponent(key)}`),
-      fetch(`${oUrl}?action=listCreditNotes&key=${encodeURIComponent(key)}`)
+      fetch(`${oUrl}?action=${ordersAction}&${authQuery()}`),
+      fetch(`${cUrl}?action=list&${authQuery()}`),
+      fetch(`${oUrl}?action=listCreditNotes&${authQuery()}`)
     ]);
     const ordersData = await ordersRes.json();
     const catalogData = await catalogRes.json();
@@ -344,6 +413,7 @@ async function connect() {
     document.getElementById('connText').textContent = `Connected · ${orders.filter(o => o.invoiceNo).length} invoices on file`;
     document.getElementById('mainArea').style.display = 'block';
     document.getElementById('notConnected').style.display = 'none';
+    renderIdentityBar();
     document.getElementById('fromDate').value = isoToDdmmyyyy(firstDayOfMonthIso());
     document.getElementById('toDate').value = isoToDdmmyyyy(todayIso());
     applyDateRange();
@@ -357,7 +427,7 @@ async function connect() {
       <div class="empty-state">
         <h3>Couldn't connect</h3>
         <p>${escapeHtml(err.message)}</p>
-        <p style="margin-top:10px;font-size:12px">Make sure both Apps Scripts are deployed as Web Apps with "Anyone" access and the admin key matches both.</p>
+        <p style="margin-top:10px;font-size:12px">Make sure both Apps Scripts are deployed as Web Apps with "Anyone" access and the password matches both.</p>
       </div>`;
     toast('Failed to load: ' + err.message, true);
   } finally {
@@ -683,7 +753,7 @@ async function submitCreditNote() {
     const res = await fetch(ordersUrl(), {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
-        key: apiKey(), action: 'createCreditNote', rowIndex: o.rowIndex, invoiceNo: o.invoiceNo,
+        ...authParam(), action: 'createCreditNote', rowIndex: o.rowIndex, invoiceNo: o.invoiceNo,
         items: preview.items, taxableValue: preview.taxableValue, cgst: preview.cgst, sgst: preview.sgst,
         igst: preview.igst, totalGst: preview.totalGst, totalAmount: preview.totalAmount, reason
       })
@@ -833,8 +903,12 @@ th.num{text-align:right}
 }
 
 function getFilteredByChip() {
-  if (currentPayFilter === 'all') return currentInvoices;
-  return currentInvoices.filter(o => computePaymentState(o) === currentPayFilter);
+  let list = currentInvoices;
+  if (currentPayFilter !== 'all') list = list.filter(o => computePaymentState(o) === currentPayFilter);
+  // Multi-admin workflow (DEV-only) visibility is enforced entirely
+  // server-side now (§13): "list"/"listAll" already returned only what this
+  // identity is allowed to see, so there's nothing left to filter here.
+  return list;
 }
 
 function render() {
@@ -1062,6 +1136,13 @@ function exportExcel() {
 // re-enter them, then jumpToDeepLinkInvoice() (called from connect()) scrolls
 // to and highlights that invoice once data loads.
 (function initFromQueryParams() {
+  if (DEV_MODE) {
+    document.getElementById('ordersUrl').value = DEV_ORDERS_API_URL;
+    document.getElementById('catalogUrl').value = DEV_CATALOG_API_URL;
+    document.querySelectorAll('.nav-link[href]').forEach(a => {
+      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
+    });
+  }
   const params = new URLSearchParams(location.search);
   const invoiceNo = params.get('invoiceNo');
   const oUrl = params.get('ordersUrl');

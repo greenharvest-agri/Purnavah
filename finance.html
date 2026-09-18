@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#26241E;
+  --moss:#2F4A34;
+  --moss-mid:#41613F;
+  --moss-lt:#E7EEE1;
+  --earth:#B9812E;
+  --cream:#F6F2E9;
+  --parchment:#EFE7D3;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --white:#FCFAF4;
+  --red:#B14A3B;
+  --red-lt:#F7E9E5;
+  --amber:#8F631F;
+  --amber-lt:#F6ECD8;
+}
+html{scroll-behavior:smooth}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.app{max-width:1300px;margin:0 auto;padding:0 24px 80px}
+.topbar{background:var(--moss);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#B9CBAE}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
+.conn-dot.ok{background:var(--moss-mid)}
+.conn-dot.err{background:var(--red)}
+.conn-status{font-size:12px;color:#B9CBAE;display:flex;align-items:center}
+.nav-link{color:#B9CBAE;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.nav-link:hover{color:var(--cream)}
+
+.setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif}
+.setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
+.setup-hint{font-size:11.5px;color:var(--stone);margin-top:6px;flex-basis:100%}
+
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--moss);color:#fff}
+.btn-primary:hover{background:#2d4020}
+.btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
+.btn-secondary:hover{border-color:var(--moss);color:var(--moss)}
+.btn-danger{background:var(--white);color:var(--red);border-color:var(--red-lt)}
+.btn-danger:hover{background:var(--red-lt)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{font-size:12px;padding:6px 12px}
+
+.field-mini-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-bottom:4px;display:block}
+.date-input,.text-input,select.text-input{padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;background:#fff}
+.date-range-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:20px}
+
+.pl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.pl-card{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:16px 18px}
+.pl-card .pl-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-bottom:8px}
+.pl-card .pl-num{font-family:'Fraunces',serif;font-size:26px;font-weight:600}
+.pl-card .pl-sub{font-size:11.5px;color:var(--stone);margin-top:4px}
+.pl-card.revenue .pl-num{color:var(--moss)}
+.pl-card.creditnotes .pl-num{color:var(--amber)}
+.pl-card.expenses .pl-num{color:var(--red)}
+.pl-card.profit .pl-num.positive{color:var(--moss)}
+.pl-card.profit .pl-num.negative{color:var(--red)}
+
+.section{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+.section h3{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin-bottom:14px}
+
+.cat-breakdown{display:grid;grid-template-columns:1fr auto;row-gap:8px;column-gap:16px;font-size:13px}
+.cat-breakdown .cat-name{color:var(--ink)}
+.cat-breakdown .cat-amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.cat-breakdown .cat-total{border-top:1.5px solid var(--rule);margin-top:6px;padding-top:8px;font-weight:700;color:var(--red)}
+
+.expense-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px}
+.expense-form .field{display:flex;flex-direction:column;min-width:140px}
+.expense-form .field.grow{flex:1;min-width:180px}
+
+.table-wrap{background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow-x:auto}
+table.fin-table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+.fin-table th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);padding:10px 10px;border-bottom:1.5px solid var(--rule);background:var(--parchment);position:sticky;top:0;white-space:nowrap}
+.fin-table td{padding:9px 10px;border-bottom:1px solid var(--parchment);vertical-align:middle}
+.fin-table tr:last-child td{border-bottom:none}
+.fin-table td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cat-pill{display:inline-flex;align-items:center;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.02em;background:var(--parchment);color:var(--stone);white-space:nowrap}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--stone)}
+.empty-state h3{font-family:'Fraunces',serif;font-size:20px;color:var(--ink);margin-bottom:6px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--cream);padding:14px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:100;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--red)}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-name">Purnavah</div>
+      <div class="brand-tag">Finance</div>
+    </div>
+    <div class="topbar-actions">
+      <a class="nav-link" href="admin.html">← Orders</a>
+      <a class="nav-link" href="invoices.html">Invoices →</a>
+      <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="setup-bar" id="setupBar">
+    <div style="flex:2;min-width:260px">
+      <label>Script URL</label><br>
+      <input type="text" id="baseUrl" placeholder="http://localhost:8787 or https://script.google.com/.../exec" value="http://localhost:8787">
+    </div>
+    <div style="flex:1;min-width:180px">
+      <label>Password</label><br>
+      <input type="password" id="adminKey" placeholder="your password" value="purnavah-admin-2026">
+    </div>
+    <button class="btn btn-primary" onclick="connect()" id="connectBtn">Connect</button>
+    <div class="setup-hint">
+      Points at the local mock server (<code>python local-server/server.py</code>) by default, using fictional test
+      orders/expenses — nothing here touches the real Google Sheet. Once the Expenses feature is finalized and added
+      to <code>orders_code.gs</code> + redeployed, switch this URL to the real hosted <code>/exec</code> link (same
+      one used in admin.html/invoices.html) — nothing else on this page needs to change.
+    </div>
+  </div>
+
+  <!-- Multi-admin workflow (DEV-only) — hidden unless DEV_MODE; shows "Logged
+       in as X (Role)" once whoAmI resolves at connect time. Read-only — real
+       identity now comes from the password, not a self-picked dropdown (that
+       old dropdown/Super-Admin-only-block model is superseded, see
+       MULTI_ADMIN_WORKFLOW_PLAN.md §13 point 4: Admin A/B now get a
+       revenue-only view instead of being blocked outright). -->
+  <div class="setup-bar" id="identityBar" style="display:none;gap:10px;align-items:center"></div>
+
+  <div id="mainArea" style="display:none">
+    <div id="financeRestricted" style="display:none">
+      <div class="empty-state" style="padding:14px 18px;text-align:left">
+        <p style="margin:0;font-size:13px">Showing revenue for your own assigned orders only — expenses and net profit are Super Admin's full company-wide view.</p>
+      </div>
+    </div>
+    <div id="financeContent">
+    <div class="date-range-bar">
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+          <label class="field-mini-label">From date</label>
+          <input type="text" id="fromDate" class="date-input" placeholder="dd/mm/yyyy" maxlength="10">
+        </div>
+        <div>
+          <label class="field-mini-label">To date</label>
+          <input type="text" id="toDate" class="date-input" placeholder="dd/mm/yyyy" maxlength="10">
+        </div>
+        <button class="btn btn-primary" onclick="applyDateRange()">Load P&amp;L</button>
+        <button class="btn btn-secondary btn-sm" onclick="setThisMonth()">This month</button>
+        <button class="btn btn-secondary btn-sm" onclick="setAllTime()">All time</button>
+      </div>
+      <div id="rangeSummary" style="margin-top:10px;font-size:13px;color:var(--stone)"></div>
+    </div>
+
+    <div class="pl-grid">
+      <div class="pl-card revenue">
+        <div class="pl-label">Revenue</div>
+        <div class="pl-num" id="plRevenue">₹0</div>
+        <div class="pl-sub">Invoiced orders in range, excl. Cancelled</div>
+      </div>
+      <div class="pl-card creditnotes">
+        <div class="pl-label">Credit Notes</div>
+        <div class="pl-num" id="plCreditNotes">₹0</div>
+        <div class="pl-sub">Refunds/adjustments issued in range</div>
+      </div>
+      <div class="pl-card expenses" id="expensesCard">
+        <div class="pl-label">Total Expenses</div>
+        <div class="pl-num" id="plExpenses">₹0</div>
+        <div class="pl-sub">Purchases, packaging, labor, shipping, transport</div>
+      </div>
+      <div class="pl-card profit" id="profitCard">
+        <div class="pl-label">Net Profit</div>
+        <div class="pl-num" id="plNetProfit">₹0</div>
+        <div class="pl-sub">Revenue − Credit Notes − Expenses</div>
+      </div>
+    </div>
+
+    <div class="section" id="catBreakdownSection">
+      <h3>Expenses by category</h3>
+      <div class="cat-breakdown" id="catBreakdown"></div>
+    </div>
+
+    <div class="section" id="logExpenseSection">
+      <h3>Log an expense</h3>
+      <form class="expense-form" id="expenseForm" onsubmit="submitExpense(event)">
+        <div class="field">
+          <label class="field-mini-label">Date</label>
+          <input type="text" id="expDate" class="date-input" placeholder="dd/mm/yyyy" maxlength="10" required>
+        </div>
+        <div class="field">
+          <label class="field-mini-label">Category</label>
+          <select id="expCategory" class="text-input" required></select>
+        </div>
+        <div class="field grow">
+          <label class="field-mini-label">Description</label>
+          <input type="text" id="expDescription" class="text-input" style="width:100%" placeholder="e.g. Bulk turmeric from wholesaler">
+        </div>
+        <div class="field">
+          <label class="field-mini-label">Amount (₹)</label>
+          <input type="number" id="expAmount" class="text-input" min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+        <div class="field">
+          <label class="field-mini-label">Payment Mode</label>
+          <input type="text" id="expPaymentMode" class="text-input" placeholder="Cash / UPI / Bank">
+        </div>
+        <div class="field grow">
+          <label class="field-mini-label">Notes</label>
+          <input type="text" id="expNotes" class="text-input" style="width:100%" placeholder="optional">
+        </div>
+        <button class="btn btn-primary" type="submit" id="addExpenseBtn">+ Add expense</button>
+      </form>
+    </div>
+
+    <div id="expenseTableContainer"></div>
+    </div>
+  </div>
+
+  <div id="notConnected">
+    <div class="empty-state">
+      <h3>Not connected yet</h3>
+      <p>Enter the script URL and password above, then click Connect.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
+// to activate the multi-admin workflow — a real per-admin password resolved
+// server-side to an identity. Admin A/B get a revenue-only view (their own
+// assigned orders only, no expenses/net profit — there's no attribution
+// mechanism for company-wide expenses per admin); Super Admin gets the full
+// P&L, same as prod (§13 point 4/8, reversed from the original "Super Admin
+// only" restriction). With dev mode off this page behaves exactly as it
+// always has: no identity concept, full access to whoever has the shared
+// key. See MULTI_ADMIN_WORKFLOW_PLAN.md §13.
+const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
+const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbys7_tYwd4Oo5SKXvOsjCpcuI6uTzibMyhktgnUfdXUi543VqIYWlLJ1U1KDDeH5YQsEA/exec";
+
+const EXPENSE_CATEGORIES = [
+  "Wholesale Purchase", "Packaging Material", "Packing Labor",
+  "Shipping/Courier", "Personal Transport", "Other"
+];
+
+let orders = [];
+let creditNotes = [];
+let expenses = [];
+let currentFromIso = '';
+let currentToIso = '';
+let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at connect via ?action=whoAmI
+
+async function loadWhoAmI() {
+  if (!DEV_MODE) return;
+  try {
+    const res = await fetch(`${DEV_CATALOG_API_URL}?action=whoAmI&${authQuery()}`);
+    const data = await res.json();
+    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
+    else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
+  } catch (e) {
+    CURRENT_ADMIN = null;
+    console.warn('whoAmI failed', e);
+  }
+}
+function isSuperAdmin() {
+  if (!DEV_MODE) return true;
+  return !!CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin';
+}
+function renderIdentityBar() {
+  const bar = document.getElementById('identityBar');
+  if (!bar) return;
+  if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
+}
+// Admin A/B get a revenue-only view — no Expenses/Net Profit tiles, no
+// category breakdown, no expense log (there's no attribution mechanism for
+// company-wide expenses per admin, see MULTI_ADMIN_WORKFLOW_PLAN.md §13
+// point 4/8). Super Admin gets the full P&L, same as prod. Off in prod (dev
+// mode off means isSuperAdmin() always returns true, so this is a no-op).
+function applyAccessGate() {
+  const revenueOnly = DEV_MODE && !isSuperAdmin();
+  document.getElementById('financeRestricted').style.display = revenueOnly ? 'block' : 'none';
+  ['expensesCard', 'profitCard', 'catBreakdownSection', 'logExpenseSection', 'expenseTableContainer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = revenueOnly ? 'none' : '';
+  });
+}
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2600);
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(s) { return String(s == null ? '' : s).replace(/'/g, "\\'"); }
+
+function baseUrl() { return document.getElementById('baseUrl').value.trim().replace(/\/$/, ''); }
+function apiKey() { return document.getElementById('adminKey').value.trim(); }
+// Prod talks to catalog_code.gs/orders_code.gs, which still check a shared
+// "key" — DEV talks to the *.dev.gs rewrite, which resolves a per-admin
+// "password" instead (§13). Same input field either way; only the wire
+// field name sent to the backend differs, based on DEV_MODE.
+function authParam() { return DEV_MODE ? { password: apiKey() } : { key: apiKey() }; }
+function authQuery() { return (DEV_MODE ? 'password=' : 'key=') + encodeURIComponent(apiKey()); }
+
+function parseDdmmyyyy(str) {
+  if (!str) return null;
+  const [d, m, y] = str.split('/');
+  if (!d || !m || !y) return null;
+  return new Date(+y, +m - 1, +d);
+}
+function ddmmyyyyToIso(str) {
+  const m = (str || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return '';
+  const [, d, mo, y] = m;
+  return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+function isoToDdmmyyyy(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function firstDayOfMonthIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-01`;
+}
+function todayIso() { return new Date().toISOString().slice(0, 10); }
+
+function populateCategorySelect() {
+  const sel = document.getElementById('expCategory');
+  sel.innerHTML = EXPENSE_CATEGORIES.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+}
+
+async function connect() {
+  const url = baseUrl(), key = apiKey();
+  if (!url || !key) { toast('Enter the script URL and password', true); return; }
+
+  document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
+  document.getElementById('connectBtn').disabled = true;
+  document.getElementById('connDot').className = 'conn-dot';
+  document.getElementById('connText').textContent = 'Connecting…';
+
+  try {
+    // whoAmI must resolve first — Super Admin needs "listAll" (every order,
+    // for the full company-wide P&L) while Admin A/B need "list" (server
+    // scopes it to their own assigned orders' revenue); prod (DEV_MODE off)
+    // always uses "list", unfiltered there, same as it always has been.
+    // Expenses are Super-Admin-only (§13 point 4/8 — revenue-only for
+    // everyone else, no attribution mechanism per admin) so Admin A/B skip
+    // that fetch entirely rather than pulling full company expense data
+    // they're not shown.
+    await loadWhoAmI();
+    const ordersAction = (DEV_MODE && CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? 'listAll' : 'list';
+    const fetchExpenses = !DEV_MODE || isSuperAdmin();
+
+    const [ordersRes, creditNotesRes, expensesRes] = await Promise.all([
+      fetch(`${url}?action=${ordersAction}&${authQuery()}`),
+      fetch(`${url}?action=listCreditNotes&${authQuery()}`),
+      fetchExpenses ? fetch(`${url}?action=listExpenses&${authQuery()}`) : Promise.resolve(null)
+    ]);
+    const ordersData = await ordersRes.json();
+    const creditNotesData = await creditNotesRes.json();
+    const expensesData = expensesRes ? await expensesRes.json() : { status: 'ok', data: [] };
+    if (ordersData.status !== 'ok') throw new Error('Orders: ' + (ordersData.message || 'Unknown error'));
+    if (creditNotesData.status !== 'ok') throw new Error('Credit Notes: ' + (creditNotesData.message || 'Unknown error'));
+    if (fetchExpenses && expensesData.status !== 'ok') throw new Error('Expenses: ' + (expensesData.message || 'Unknown error — has the Expenses action been added yet?'));
+
+    orders = ordersData.data;
+    creditNotes = creditNotesData.data;
+    expenses = fetchExpenses ? expensesData.data : [];
+
+    document.getElementById('connDot').className = 'conn-dot ok';
+    document.getElementById('connText').textContent = `Connected · ${orders.length} orders, ${expenses.length} expenses on file`;
+    document.getElementById('mainArea').style.display = 'block';
+    document.getElementById('notConnected').style.display = 'none';
+    renderIdentityBar();
+    applyAccessGate();
+    populateCategorySelect();
+    document.getElementById('expDate').value = isoToDdmmyyyy(todayIso());
+    setThisMonth();
+  } catch (err) {
+    document.getElementById('connDot').className = 'conn-dot err';
+    document.getElementById('connText').textContent = 'Connection failed';
+    document.getElementById('mainArea').style.display = 'none';
+    document.getElementById('notConnected').style.display = 'block';
+    document.getElementById('notConnected').innerHTML = `
+      <div class="empty-state">
+        <h3>Couldn't connect</h3>
+        <p>${escapeHtml(err.message)}</p>
+        <p style="margin-top:10px;font-size:12px">If using the local mock, make sure <code>python local-server/server.py</code> is running on port 8787.</p>
+      </div>`;
+    toast('Failed to load: ' + err.message, true);
+  } finally {
+    document.getElementById('connectBtn').innerHTML = 'Connect';
+    document.getElementById('connectBtn').disabled = false;
+  }
+}
+
+function setThisMonth() {
+  document.getElementById('fromDate').value = isoToDdmmyyyy(firstDayOfMonthIso());
+  document.getElementById('toDate').value = isoToDdmmyyyy(todayIso());
+  applyDateRange();
+}
+function setAllTime() {
+  document.getElementById('fromDate').value = '01/01/2000';
+  document.getElementById('toDate').value = isoToDdmmyyyy(todayIso());
+  applyDateRange();
+}
+
+function applyDateRange() {
+  const fromIso = ddmmyyyyToIso(document.getElementById('fromDate').value);
+  const toIso = ddmmyyyyToIso(document.getElementById('toDate').value);
+  if (!fromIso || !toIso) { toast('Enter both dates as dd/mm/yyyy', true); return; }
+  currentFromIso = fromIso;
+  currentToIso = toIso;
+  render();
+}
+
+function inRange(ddmmyyyy) {
+  const d = parseDdmmyyyy(ddmmyyyy);
+  if (!d) return false;
+  const from = new Date(currentFromIso);
+  const to = new Date(currentToIso);
+  to.setHours(23, 59, 59, 999);
+  return d >= from && d <= to;
+}
+
+// Revenue is recognized at invoice time (same convention invoices.html
+// already uses) — an order with no invoice yet isn't counted as revenue,
+// and Cancelled orders never happened commercially, matching admin.html's
+// revenue-bar filter.
+function computePL() {
+  const revenue = orders
+    .filter(o => o.invoiceNo && o.invoiceDate && inRange(o.invoiceDate) && o.status !== 'Cancelled' && o.status !== 'Revised')
+    .reduce((s, o) => s + (Number(o.finalTotal) || Number(o.orderTotal) || 0), 0);
+
+  const creditNoteTotal = creditNotes
+    .filter(cn => cn.creditNoteDate && inRange(cn.creditNoteDate))
+    .reduce((s, cn) => s + (Number(cn.totalAmount) || 0), 0);
+
+  const expensesInRange = expenses.filter(e => e.date && inRange(e.date));
+  const expenseTotal = expensesInRange.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+  const byCategory = {};
+  EXPENSE_CATEGORIES.forEach(c => byCategory[c] = 0);
+  expensesInRange.forEach(e => { byCategory[e.category] = (byCategory[e.category] || 0) + (Number(e.amount) || 0); });
+
+  const netProfit = revenue - creditNoteTotal - expenseTotal;
+  return { revenue, creditNoteTotal, expenseTotal, byCategory, netProfit, expensesInRange };
+}
+
+function render() {
+  const pl = computePL();
+
+  document.getElementById('rangeSummary').textContent =
+    `${document.getElementById('fromDate').value} — ${document.getElementById('toDate').value}`;
+
+  document.getElementById('plRevenue').textContent = '₹' + pl.revenue.toLocaleString('en-IN');
+  document.getElementById('plCreditNotes').textContent = '₹' + pl.creditNoteTotal.toLocaleString('en-IN');
+  document.getElementById('plExpenses').textContent = '₹' + pl.expenseTotal.toLocaleString('en-IN');
+  const profitEl = document.getElementById('plNetProfit');
+  profitEl.textContent = '₹' + pl.netProfit.toLocaleString('en-IN');
+  profitEl.className = 'pl-num ' + (pl.netProfit >= 0 ? 'positive' : 'negative');
+
+  document.getElementById('catBreakdown').innerHTML =
+    EXPENSE_CATEGORIES.map(c => `
+      <div class="cat-name">${escapeHtml(c)}</div>
+      <div class="cat-amt">₹${(pl.byCategory[c] || 0).toLocaleString('en-IN')}</div>
+    `).join('') +
+    `<div class="cat-name cat-total">Total</div><div class="cat-amt cat-total">₹${pl.expenseTotal.toLocaleString('en-IN')}</div>`;
+
+  renderExpenseTable(pl.expensesInRange);
+}
+
+function renderExpenseTable(rows) {
+  const container = document.getElementById('expenseTableContainer');
+  if (rows.length === 0) {
+    container.innerHTML = `<div class="empty-state"><h3>No expenses in this range</h3><p>Log one above, or widen the date range.</p></div>`;
+    return;
+  }
+  const sorted = [...rows].sort((a, b) => (parseDdmmyyyy(a.date) || 0) - (parseDdmmyyyy(b.date) || 0));
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table class="fin-table">
+        <thead><tr>
+          <th>Date</th><th>Category</th><th>Description</th><th class="num">Amount</th>
+          <th>Payment Mode</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody>${sorted.map(renderExpenseRow).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderExpenseRow(e) {
+  return `<tr>
+    <td>${escapeHtml(e.date)}</td>
+    <td><span class="cat-pill">${escapeHtml(e.category)}</span></td>
+    <td>${escapeHtml(e.description)}</td>
+    <td class="num">₹${(Number(e.amount) || 0).toLocaleString('en-IN')}</td>
+    <td>${escapeHtml(e.paymentMode)}</td>
+    <td>${escapeHtml(e.notes)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteExpense(${e.id})">✕ Delete</button></td>
+  </tr>`;
+}
+
+async function submitExpense(evt) {
+  evt.preventDefault();
+  const date = document.getElementById('expDate').value.trim();
+  const category = document.getElementById('expCategory').value;
+  const description = document.getElementById('expDescription').value.trim();
+  const amount = parseFloat(document.getElementById('expAmount').value);
+  const paymentMode = document.getElementById('expPaymentMode').value.trim();
+  const notes = document.getElementById('expNotes').value.trim();
+
+  if (!ddmmyyyyToIso(date)) { toast('Enter the date as dd/mm/yyyy', true); return; }
+  if (!amount || amount <= 0) { toast('Enter an amount greater than ₹0', true); return; }
+
+  const btn = document.getElementById('addExpenseBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(baseUrl(), {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ ...authParam(), action: 'addExpense', date, category, description, amount, paymentMode, notes })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+
+    expenses.push(data.expense);
+    document.getElementById('expenseForm').reset();
+    document.getElementById('expDate').value = date; // keep date filled — logging several in a row is common
+    populateCategorySelect();
+    render();
+    toast('Expense logged');
+  } catch (err) {
+    toast('Failed to log expense: ' + err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteExpense(id) {
+  if (!confirm('Delete this expense entry?')) return;
+  try {
+    const res = await fetch(baseUrl(), {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ ...authParam(), action: 'deleteExpense', id })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+
+    expenses = expenses.filter(e => e.id !== id);
+    render();
+    toast('Expense deleted');
+  } catch (err) {
+    toast('Failed to delete expense: ' + err.message, true);
+  }
+}
+
+// DEV MODE init — carries dev=1 onto the Orders/Invoices nav links so dev
+// mode doesn't silently drop when navigating to another page.
+(function initDevMode() {
+  if (!DEV_MODE) return;
+  document.querySelectorAll('.nav-link[href]').forEach(a => {
+    a.setAttribute('href', a.getAttribute('href') + '?dev=1');
+  });
+})();
+</script>
+
+</body>
+</html>

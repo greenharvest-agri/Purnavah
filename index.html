@@ -4,206 +4,216 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Order</title>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#1C1B17;
-  --moss:#3A5428;
-  --moss-mid:#527A3B;
-  --moss-lt:#EDF2E8;
-  --earth:#7C5C3A;
-  --cream:#F5F0E8;
-  --parchment:#EDE6D6;
-  --rule:#C8BFA8;
-  --stone:#7A6F61;
-  --white:#FDFCF9;
-  --red:#B91C1C;
+  --cream:#F6F2E9;
+  --paper:#FCFAF4;
+  --ink:#26241E;
+  --pine:#2F4A34;
+  --pine-dim:#41613F;
+  --sage:#E7EEE1;
+  --gold:#B9812E;
+  --gold-dim:#8F631F;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --red:#B14A3B;
   --wa:#25D366;
 }
-html{scroll-behavior:smooth}
-body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(--ink);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:15px;line-height:1.6;overflow-x:hidden}
+button{touch-action:manipulation}
 
-/* ── HEADER ── */
-.header{background:var(--ink);color:var(--cream);padding:0;position:relative;overflow:hidden}
-.header-inner{max-width:680px;margin:0 auto;padding:44px 28px 36px;position:relative;z-index:1}
-.header-rule{width:32px;height:2px;background:var(--earth);margin-bottom:18px}
-.brand{font-family:'EB Garamond',serif;font-size:46px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;line-height:1;color:var(--cream)}
-.brand-sub{font-size:10.5px;letter-spacing:.35em;text-transform:uppercase;color:var(--rule);margin-top:10px;font-weight:400}
-.header-desc{margin-top:22px;font-size:13.5px;color:#A89E8E;line-height:1.7;max-width:380px}
-.header-badge{display:inline-flex;align-items:center;gap:7px;margin-top:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:6px 14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#A89E8E}
-.header-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--wa);flex-shrink:0}
+/* HERO */
+.hero{background:var(--pine);color:var(--sage);padding:40px 24px 28px}
+.hero-inner{max-width:640px;margin:0 auto}
+.hero-eyebrow{font-size:11px;letter-spacing:.14em;color:#B9CBAE;margin-bottom:10px;text-transform:uppercase}
+.hero h1{font-family:'Fraunces',serif;font-weight:500;font-size:38px;letter-spacing:.01em;color:#FBF8EF}
+.hero p{margin-top:12px;font-size:13.5px;color:#C7D6BB;max-width:420px;line-height:1.7}
 
-/* ── BODY ── */
-.body{max-width:680px;margin:0 auto;padding:36px 28px 60px}
+/* STICKY NAV: steps + category chips */
+.stickynav{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);box-shadow:0 2px 10px rgba(38,36,30,.04)}
+.steps{display:flex;gap:0;max-width:640px;margin:0 auto;padding:10px 24px 0}
+.step{flex:1;text-align:center;font-size:11px;letter-spacing:.06em;color:var(--stone);padding-bottom:9px;border-bottom:3px solid var(--rule);position:relative;font-weight:600;transition:.2s;cursor:pointer}
+.step.active{color:var(--pine);border-color:var(--gold)}
+.step.done{color:var(--pine-dim)}
+.chipbar{display:flex;gap:8px;overflow-x:auto;padding:10px 24px 12px;max-width:640px;margin:0 auto;scrollbar-width:none}
+.chipbar::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;font-size:12.5px;font-weight:600;color:var(--pine-dim);background:var(--sage);border:1px solid transparent;border-radius:20px;padding:9px 14px;cursor:pointer;white-space:nowrap;transition:.15s;touch-action:manipulation}
+.chip:hover{border-color:var(--pine-dim)}
+.chip.active{background:var(--pine);color:#fff}
 
-/* ── SECTION ── */
-.section{margin-bottom:36px}
-.section-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
-.section-num{font-family:'EB Garamond',serif;font-size:13px;font-weight:500;color:var(--earth);min-width:20px}
-.section-title{font-family:'EB Garamond',serif;font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.01em}
+/* BODY */
+.body{max-width:640px;margin:0 auto;padding:28px 24px 60px}
+.section{margin-bottom:40px;scroll-margin-top:120px}
+.section-title{font-family:'Fraunces',serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.section-sub{font-size:12.5px;color:var(--stone);margin-bottom:18px}
 
-/* ── PRODUCT CARDS ── */
-.category-label{font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--stone);margin:20px 0 10px}
-.category-label:first-of-type{margin-top:0}
 .catalog-status{font-size:12.5px;color:var(--stone);font-style:italic;margin-bottom:14px}
 .catalog-status-error{color:var(--red)}
-.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-.product-row{display:flex;flex-direction:column;background:var(--white);border:1px solid var(--parchment);border-radius:8px;padding:12px;gap:10px;transition:border-color .15s,background .15s}
-.product-row:hover{border-color:var(--rule);background:#FEFDFB}
-.product-row.has-qty{border-color:var(--moss);background:var(--moss-lt)}
-.product-row.oos{opacity:.6}
-.product-row.oos:hover{border-color:var(--parchment);background:var(--white)}
+
+.cat-heading{display:flex;align-items:center;gap:10px;margin:22px 0 12px;scroll-margin-top:120px}
+.cat-heading:first-child{margin-top:0}
+.cat-dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.cat-heading span{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--stone)}
+
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color .15s,background .15s}
+.card.has-qty{border-color:var(--pine);background:#F1F5EC}
+.card.oos{opacity:.6}
+.card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.card-name{font-size:14px;font-weight:600;color:var(--ink);line-height:1.35}
+.card-pack{margin-top:4px}
+.card-pack select{font-size:11.5px;font-weight:600;color:var(--pine-dim);border:1.5px solid var(--rule);border-radius:6px;padding:4px 22px 4px 8px;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2379715F' stroke-width='1.4' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;cursor:pointer}
+.card-price{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--gold-dim);white-space:nowrap;text-align:right}
+.card-mrp-label{font-size:9px;letter-spacing:.08em;color:var(--stone);text-transform:uppercase;display:block}
+.card-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.subtotal{font-size:12px;color:var(--pine-dim);font-weight:600}
+.qty{display:flex;align-items:center;border:1.5px solid var(--rule);border-radius:999px;overflow:hidden;background:#fff}
+.qty button{width:36px;height:36px;border:none;background:transparent;color:var(--pine);font-size:17px;font-weight:700;cursor:pointer}
+.qty button:hover{background:var(--sage)}
+.qty input{width:34px;height:36px;border:none;text-align:center;font-size:13px;font-weight:700;color:var(--ink);background:transparent;-moz-appearance:textfield}
+.qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none}
+.qty input:focus{outline:none;background:var(--sage)}
+.qty input:disabled,.qty button:disabled{cursor:not-allowed;color:var(--stone)}
+
 .oos-tag{font-size:11.5px;font-weight:600;color:var(--red)}
-.qty-ctrl input:disabled,.qty-ctrl button:disabled{cursor:not-allowed;color:var(--stone)}
-.same-day-row{margin:14px 0}
-.same-day-label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer}
-.same-day-label input{width:16px;height:16px;cursor:pointer}
+.max-note{font-size:10.5px;color:var(--stone);min-height:13px;margin-top:6px}
+.max-note-blocked{color:var(--red);font-weight:600}
 .product-contents{margin-top:2px}
-.contents-details summary{font-size:11px;color:var(--moss-mid);cursor:pointer;list-style:none}
+.contents-details summary{font-size:11px;color:var(--pine-dim);cursor:pointer;list-style:none}
 .contents-details summary::-webkit-details-marker{display:none}
 .contents-body{font-size:11px;color:var(--stone);margin-top:3px;line-height:1.5}
-.product-info{flex:1}
-.product-name{font-size:13.5px;font-weight:500;color:var(--ink);line-height:1.35;overflow-wrap:break-word}
-.product-meta{font-size:11px;color:var(--stone);margin-top:3px}
-.pack-select{margin-top:5px;width:auto;max-width:100%;font-size:11.5px;font-weight:500;color:var(--ink);padding:5px 24px 5px 8px;border:1.5px solid var(--parchment);border-radius:5px;background-color:#fff;font-family:'Hanken Grotesk',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A6F61' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;transition:border-color .15s}
-.pack-select:focus{outline:none;border-color:var(--moss)}
-.pack-select:hover{border-color:var(--rule)}
-.product-price{font-family:'EB Garamond',serif;font-size:16px;font-weight:500;color:var(--moss);white-space:nowrap}
-.qty-ctrl{display:flex;align-items:center;gap:0;border:1.5px solid var(--rule);border-radius:5px;overflow:hidden;background:#fff;width:100%}
-.qty-ctrl button{width:28px;height:28px;flex-shrink:0;border:none;background:transparent;font-size:16px;font-weight:600;color:var(--moss);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
-.qty-ctrl button:hover{background:var(--moss-lt)}
-.qty-ctrl input{flex:1;min-width:0;height:28px;border:none;border-left:1px solid var(--rule);border-right:1px solid var(--rule);text-align:center;font-size:13px;font-weight:600;color:var(--ink);background:transparent;-moz-appearance:textfield;font-family:'Hanken Grotesk',sans-serif}
-.qty-ctrl input::-webkit-outer-spin-button,.qty-ctrl input::-webkit-inner-spin-button{-webkit-appearance:none}
-.qty-ctrl input:focus{outline:none;background:var(--moss-lt)}
-.max-note{font-size:10.5px;color:var(--stone);min-height:13px}
-.max-note-blocked{color:var(--red);font-weight:600}
 
-/* ── CUSTOMER DETAILS ── */
 .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .field{display:flex;flex-direction:column;gap:5px}
 .field.full{grid-column:1/-1}
-.field label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
-.field input,.field textarea,.field select{width:100%;padding:10px 13px;border:1.5px solid var(--parchment);border-radius:6px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:var(--ink);background:var(--white);transition:border-color .15s;outline:none}
-.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--moss)}
+.field label{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--stone);text-transform:uppercase}
+.field input,.field select,.field textarea{padding:12px 13px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:var(--paper);outline:none;transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pine);box-shadow:0 0 0 3px var(--sage)}
 .field input::placeholder,.field textarea::placeholder{color:#BDB5A6}
-.field textarea{resize:vertical;min-height:72px}
-.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A6F61' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.field textarea{resize:vertical;min-height:70px}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2379715F' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
 .field-hint{font-size:11px;color:var(--stone);margin-top:3px}
-.required-star{color:var(--red);margin-left:2px}
+.req{color:var(--red)}
 
-/* ── ORDER SUMMARY ── */
-.summary-box{background:var(--white);border:1px solid var(--rule);border-radius:8px;overflow:hidden;margin-bottom:20px}
-.summary-header{background:var(--ink);color:var(--cream);padding:12px 18px;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
-.summary-items{padding:14px 18px;min-height:48px}
+.summary{background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.summary-head{background:var(--pine);color:#EFE9D8;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.1em}
+.summary-body{padding:12px 16px;min-height:40px}
 .summary-empty{font-size:13px;color:var(--stone);font-style:italic}
-.summary-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--parchment)}
+.summary-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13.5px;border-bottom:1px dashed var(--rule)}
 .summary-item:last-child{border-bottom:none}
 .summary-item-name{color:var(--ink)}
-.summary-item-val{font-weight:600;color:var(--moss);white-space:nowrap;margin-left:12px}
-.summary-footer{background:var(--parchment);padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
-.summary-total-label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
-.summary-total-val{font-family:'EB Garamond',serif;font-size:24px;font-weight:600;color:var(--moss)}
+.summary-item-val{font-weight:600;color:var(--pine-dim);white-space:nowrap;margin-left:12px}
+.summary-subtotal-row{display:flex;justify-content:space-between;padding:8px 0 0;font-size:12.5px;color:var(--stone)}
+.summary-discounts{padding:8px 0 0}
+.summary-discount-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--pine)}
+.summary-foot{background:var(--sage);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.summary-total{font-family:'Fraunces',serif;font-size:23px;font-weight:600;color:var(--pine)}
 .summary-weight-note{font-size:11px;color:var(--stone);margin-top:3px}
 
-/* ── SUMMARY SECTIONS (items / GST / grand total / discounts) ── */
-.summary-subtotal-row{display:flex;justify-content:space-between;padding:8px 18px;font-size:13px;color:var(--stone);border-top:1px dashed var(--parchment)}
-.summary-grandtotal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;font-size:14.5px;font-weight:700;color:var(--ink);background:var(--moss-lt);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.summary-discounts{padding:8px 18px;border-bottom:1px solid var(--parchment)}
-.summary-discount-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--moss)}
-
-/* ── COUPON ── */
 .coupon-row{display:flex;gap:8px;margin-bottom:8px}
-.coupon-row input{flex:1;padding:10px 13px;border:1.5px solid var(--parchment);border-radius:6px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;text-transform:uppercase;color:var(--ink);background:var(--white);outline:none;transition:border-color .15s}
-.coupon-row input:focus{border-color:var(--moss)}
+.coupon-row input{flex:1;padding:12px 13px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;text-transform:uppercase;color:var(--ink);background:var(--paper);outline:none;transition:border-color .15s}
+.coupon-row input:focus{border-color:var(--pine)}
 .coupon-row input::placeholder{color:#BDB5A6;text-transform:none}
-.coupon-row button{padding:10px 18px;background:var(--ink);color:var(--cream);border:none;border-radius:6px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:background .15s}
-.coupon-row button:hover{background:var(--moss)}
+.coupon-row button{padding:12px 18px;background:var(--pine);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:background .15s}
+.coupon-row button:hover{background:var(--pine-dim)}
 .coupon-msg{display:none;font-size:12.5px;margin-bottom:16px}
-.coupon-msg.ok{display:block;color:var(--moss)}
+.coupon-msg.ok{display:block;color:var(--pine)}
 .coupon-msg.err{display:block;color:var(--red)}
 .coupon-msg a{color:inherit;text-decoration:underline;cursor:pointer;margin-left:6px}
 
-/* ── SHIPPING NOTE ── */
-.ship-note{background:var(--parchment);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;font-size:12.5px;color:var(--stone);line-height:1.6;margin-bottom:20px}
+.same-day-row{margin:14px 0}
+.same-day-label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer}
+.same-day-label input{width:16px;height:16px;cursor:pointer}
+
+.ship-note{background:var(--sage);border:1px solid var(--rule);border-radius:8px;padding:12px 16px;font-size:12.5px;color:var(--pine-dim);line-height:1.6;margin-bottom:18px}
 .ship-note strong{color:var(--ink)}
 
-/* ── WHATSAPP BUTTON ── */
-.wa-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px 24px;background:var(--wa);color:#fff;border:none;border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.02em;transition:background .15s,transform .1s;box-shadow:0 4px 14px rgba(37,211,102,.3)}
-.wa-btn:hover{background:#1ebe5d;transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,211,102,.4)}
+.wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;background:var(--wa);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s}
+.wa-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
 .wa-btn:active{transform:translateY(0)}
-.wa-btn svg{width:22px;height:22px;flex-shrink:0}
-.wa-btn:disabled{background:#A8C9B0;cursor:not-allowed;transform:none;box-shadow:none}
+.wa-btn svg{width:20px;height:20px}
+.wa-btn:disabled{background:#9FCDB0;cursor:not-allowed;transform:none}
 .error-msg{display:none;color:var(--red);font-size:12.5px;margin-top:10px;text-align:center}
 
-/* ── FOOTER ── */
-.footer{text-align:center;font-size:11px;color:var(--stone);margin-top:32px;line-height:1.8;padding-top:20px;border-top:1px solid var(--rule)}
-
-
-.product-price-block{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
-.mrp-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);font-family:'Hanken Grotesk',sans-serif;display:block;margin-bottom:1px}
-.product-subtotal{font-family:'EB Garamond',serif;font-size:12.5px;font-weight:600;color:var(--moss);white-space:nowrap}
-
-.reset-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 24px;background:transparent;color:var(--stone);border:1.5px solid var(--rule);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;transition:border-color .15s,color .15s}
+.reset-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 24px;background:transparent;color:var(--stone);border:1.5px solid var(--rule);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;transition:border-color .15s,color .15s}
 .reset-btn:hover{border-color:var(--red);color:var(--red)}
 
-@media(max-width:500px){
-  .brand{font-size:36px}
+.footer{text-align:center;font-size:11px;color:var(--stone);margin-top:28px;padding-top:18px;border-top:1px solid var(--rule);line-height:1.8}
+
+.stickybar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--pine);color:#fff;padding:12px 20px calc(12px + env(safe-area-inset-bottom)) 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .25s}
+.stickybar.show{transform:translateY(0)}
+.stickybar-total{font-family:'Fraunces',serif;font-size:18px;font-weight:600}
+.stickybar-label{font-size:10px;letter-spacing:.08em;color:#B9CBAE}
+.stickybar button{background:var(--gold);color:#fff;border:none;border-radius:20px;padding:11px 18px;min-height:40px;font-size:12.5px;font-weight:700;cursor:pointer;touch-action:manipulation}
+
+@media(max-width:480px){
+  .hero h1{font-size:30px}
   .field-grid{grid-template-columns:1fr}
   .field.full{grid-column:1}
+  .field input,.field select,.field textarea,.card-pack select{font-size:16px}
+  .hero,.body{padding-left:20px;padding-right:20px}
+  .steps,.chipbar{padding-left:20px;padding-right:20px}
+}
+@media(max-width:360px){
+  .hero{padding-top:32px}
+  .hero h1{font-size:27px}
+  .hero p{font-size:13px}
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-inner">
-    <div class="header-rule"></div>
-    <div class="brand">Purnavah</div>
-    <div class="brand-sub">Farm · Cold-pressed · Stone-ground</div>
-    <div class="header-desc">Organic and natural foods sourced directly from farms. Place your order below and we'll confirm on WhatsApp.</div>
-    
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Farm · Cold-pressed · Stone-ground</div>
+    <h1>Purnavah</h1>
+    <p>Organic and natural foods sourced directly from farms. Place your order below and we'll confirm on WhatsApp.</p>
   </div>
+</div>
+
+<div class="stickynav">
+  <div class="steps">
+    <div class="step active" id="step-products" onclick="jump('sec-products')">Products</div>
+    <div class="step" id="step-details" onclick="jump('sec-details')">Delivery</div>
+    <div class="step" id="step-review" onclick="jump('sec-review')">Review</div>
+  </div>
+  <div class="chipbar" id="chipbar"></div>
 </div>
 
 <div class="body">
 
-  <!-- ── SECTION 1: PRODUCTS ── -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-num">01</div>
-      <div class="section-title">Choose your products</div>
-    </div>
-
+  <!-- ── SECTION: PRODUCTS ── -->
+  <div class="section" id="sec-products">
     <div class="catalog-status" id="catalogStatus">Loading products…</div>
     <div id="categoriesContainer"></div>
   </div>
 
-  <!-- ── SECTION 2: DELIVERY ── -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-num">02</div>
-      <div class="section-title">Delivery details</div>
-    </div>
+  <!-- ── SECTION: DELIVERY ── -->
+  <div class="section" id="sec-details">
+    <div class="section-title">Delivery details</div>
+    <div class="section-sub">Where should we send your order?</div>
     <div class="field-grid">
       <div class="field full">
-        <label>Full name<span class="required-star">*</span></label>
+        <label>Full name<span class="req">*</span></label>
         <input type="text" id="fname" placeholder="Your name" autocomplete="name">
       </div>
       <div class="field">
-        <label>Phone<span class="required-star">*</span></label>
+        <label>Phone<span class="req">*</span></label>
         <input type="tel" id="fphone" placeholder="10-digit mobile" autocomplete="tel" maxlength="10">
       </div>
       <div class="field">
-        <label>Email<span class="required-star">*</span></label>
+        <label>Email<span class="req">*</span></label>
         <input type="email" id="femail" placeholder="you@example.com" autocomplete="email">
       </div>
       <div class="field">
-        <label>Pincode<span class="required-star">*</span></label>
+        <label>Pincode<span class="req">*</span></label>
         <input type="text" id="fpincode" placeholder="6-digit pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
       </div>
       <div class="field">
-        <label>State<span class="required-star">*</span></label>
+        <label>State<span class="req">*</span></label>
         <select id="fstate">
           <option value="">Select state</option>
           <option>Andaman and Nicobar Islands</option>
@@ -245,7 +255,7 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
         </select>
       </div>
       <div class="field full">
-        <label>Full address<span class="required-star">*</span></label>
+        <label>Full address<span class="req">*</span></label>
         <textarea id="faddress" placeholder="House/flat, street, locality, city, state"></textarea>
       </div>
       <div class="field full">
@@ -256,24 +266,22 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
     </div>
   </div>
 
-  <!-- ── SECTION 3: REVIEW & SEND ── -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-num">03</div>
-      <div class="section-title">Review & send order</div>
-    </div>
+  <!-- ── SECTION: REVIEW & SEND ── -->
+  <div class="section" id="sec-review">
+    <div class="section-title">Review & send</div>
+    <div class="section-sub">Double-check your order before sending it over.</div>
 
-    <div class="summary-box">
-      <div class="summary-header">Your order</div>
-      <div class="summary-items" id="summaryItems">
+    <div class="summary">
+      <div class="summary-head">YOUR ORDER</div>
+      <div class="summary-body" id="summaryItems">
         <div class="summary-empty">No items selected yet</div>
       </div>
-      <div class="summary-footer">
+      <div class="summary-foot">
         <div>
-          <div class="summary-total-label">Order total</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--stone)">ORDER TOTAL</div>
           <div class="summary-weight-note" id="summaryWeight"></div>
         </div>
-        <div class="summary-total-val" id="summaryTotal">₹0</div>
+        <div class="summary-total" id="summaryTotal">₹0</div>
       </div>
     </div>
 
@@ -316,6 +324,14 @@ body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(-
 
 </div>
 
+<div class="stickybar" id="stickybar">
+  <div>
+    <div class="stickybar-label">YOUR ORDER</div>
+    <div class="stickybar-total" id="barTotal">₹0</div>
+  </div>
+  <button onclick="jump('sec-review')">Review order</button>
+</div>
+
 <script>
 const WA_NUMBER = "918338962474"; // +91 83389 62474
 
@@ -343,9 +359,18 @@ function isSameDayDeliverySelected() {
   return !!(el && el.checked);
 }
 
+// DEV MODE — code-only switch, no UI. Append ?dev=1 to the page URL (e.g.
+// index.html?dev=1) to point at the dev Catalog/Orders Apps Script
+// deployments instead of prod, for testing new features before they're
+// copied into the live scripts. Fill in the two DEV_* URLs below once the
+// dev Sheets + deployments exist (see google-apps-script/*_code.dev.gs).
+const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
+const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbys7_tYwd4Oo5SKXvOsjCpcuI6uTzibMyhktgnUfdXUi543VqIYWlLJ1U1KDDeH5YQsEA/exec";
+const DEV_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
+
 // Live catalog — pulled from the Catalog Google Sheet on load (Active = Y
 // and Stock > 0 rows only; filtering happens server-side in the Apps Script).
-const CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
+const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
 
 let PRODUCTS = []; // [{id, grid, category, displayName, packSize, unit, mrp, gstPct, waKey, inStock}, ...] — one entry per catalog row (one per pack size)
 let PRODUCT_GROUPS = []; // [{groupId, grid, displayName, variants: [product, ...]}, ...] — variants sharing a Display Name are merged into one tile
@@ -393,21 +418,54 @@ function toProduct(p) {
   };
 }
 
+// Builds both the category headings/lists (in the page body) and the
+// matching chip bar (in the sticky nav) in one pass, so chip order always
+// matches section order. Categories aren't known until the catalog loads,
+// so — unlike a static wireframe — both are built here at runtime rather
+// than hardcoded in the HTML.
 function buildCategorySections() {
-  const container = document.getElementById('categoriesContainer');
-  container.innerHTML = '';
+  const catContainer = document.getElementById('categoriesContainer');
+  const chipbar = document.getElementById('chipbar');
+  catContainer.innerHTML = '';
+  chipbar.innerHTML = '';
+
+  // One entry per distinct category, in first-seen order.
   const seen = new Set();
+  const categories = [];
   PRODUCTS.forEach(p => {
     if (seen.has(p.grid)) return;
     seen.add(p.grid);
-    const label = document.createElement('div');
-    label.className = 'category-label';
-    label.textContent = CATEGORY_LABELS[p.category] || p.category;
-    container.appendChild(label);
-    const gridEl = document.createElement('div');
-    gridEl.className = 'product-grid';
-    gridEl.id = p.grid;
-    container.appendChild(gridEl);
+    categories.push({ grid: p.grid, fullLabel: CATEGORY_LABELS[p.category] || p.category });
+  });
+
+  // Chips use the short form (before an em dash) for a compact pill, but
+  // only when that short form is unique — e.g. "Cold-Pressed Oils —
+  // Organic" and "Cold-Pressed Oils — Regular" would otherwise both
+  // collapse to an identical-looking "Cold-Pressed Oils" chip.
+  const shortCounts = {};
+  categories.forEach(c => {
+    c.shortLabel = c.fullLabel.split(' — ')[0];
+    shortCounts[c.shortLabel] = (shortCounts[c.shortLabel] || 0) + 1;
+  });
+
+  categories.forEach((c, i) => {
+    const heading = document.createElement('div');
+    heading.className = 'cat-heading';
+    heading.id = 'catlabel-' + c.grid;
+    heading.innerHTML = `<div class="cat-dot"></div><span>${c.fullLabel.toUpperCase()}</span>`;
+    catContainer.appendChild(heading);
+
+    const listEl = document.createElement('div');
+    listEl.className = 'card-list';
+    listEl.id = c.grid;
+    catContainer.appendChild(listEl);
+
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (i === 0 ? ' active' : '');
+    chip.textContent = shortCounts[c.shortLabel] > 1 ? c.fullLabel : c.shortLabel;
+    chip.dataset.grid = c.grid;
+    chip.onclick = () => document.getElementById('catlabel-' + c.grid).scrollIntoView({behavior:'smooth',block:'start'});
+    chipbar.appendChild(chip);
   });
 }
 
@@ -476,7 +534,7 @@ function pickDefaultVariant(variants) {
   return pool.find(v => normalizePackSize(v.packSize) === '1kg') || pool[0];
 }
 
-// Build product rows — one per Display Name group, with a pack-size
+// Build product cards — one per Display Name group, with a pack-size
 // selector when a group has more than one variant.
 function renderProductGrid() {
   buildCategorySections();
@@ -488,30 +546,35 @@ function renderProductGrid() {
     selectedVariant[gid] = pickDefaultVariant(group.variants).id;
     const container = document.getElementById(group.grid);
     const row = document.createElement('div');
-    row.className = 'product-row';
+    row.className = 'card';
     row.id = 'row-' + gid;
 
     const packControl = group.variants.length > 1
-      ? `<select class="pack-select" id="pack-${gid}" onchange="selectVariant('${gid}', this.value)" aria-label="Pack size for ${group.displayName}">
+      ? `<div class="card-pack"><select id="pack-${gid}" onchange="selectVariant('${gid}', this.value)" aria-label="Pack size for ${group.displayName}">
           ${group.variants.map(v => `<option value="${v.id}" ${v.inStock ? '' : 'disabled'}>${v.packSize || v.unit}${v.inStock ? '' : ' (Out of stock)'}</option>`).join('')}
-        </select>`
-      : `<div class="product-meta">${group.variants[0].packSize || group.variants[0].unit}</div>`;
+        </select></div>`
+      : `<div class="card-pack" style="font-size:11.5px;color:var(--stone)">${group.variants[0].packSize || group.variants[0].unit}</div>`;
 
     row.innerHTML = `
-      <div class="product-info">
-        <div class="product-name">${group.displayName}</div>
-        ${packControl}
-        <div class="product-contents" id="contents-${gid}"></div>
+      <div class="card-top">
+        <div>
+          <div class="card-name">${group.displayName}</div>
+          ${packControl}
+          <div class="product-contents" id="contents-${gid}"></div>
+        </div>
+        <div>
+          <span class="card-mrp-label">MRP</span>
+          <div class="card-price" id="price-${gid}"></div>
+        </div>
       </div>
-      <div class="product-price-block">
-        <div class="product-price"><span class="mrp-label">MRP</span><span id="price-${gid}"></span></div>
-        <div class="product-subtotal" id="sub-${gid}"></div>
-      </div>
-      <div class="qty-ctrl">
-        <button type="button" onclick="changeQty('${gid}',-1)" aria-label="Decrease">−</button>
-        <input type="number" id="qty-${gid}" value="0" min="0" max="99"
-          oninput="setQty('${gid}',this.value)" aria-label="Quantity for ${group.displayName}">
-        <button type="button" onclick="changeQty('${gid}',1)" aria-label="Increase">+</button>
+      <div class="card-bottom">
+        <div class="subtotal" id="sub-${gid}"></div>
+        <div class="qty">
+          <button type="button" onclick="changeQty('${gid}',-1)" aria-label="Decrease">−</button>
+          <input type="number" id="qty-${gid}" value="0" min="0" max="99"
+            oninput="setQty('${gid}',this.value)" aria-label="Quantity for ${group.displayName}">
+          <button type="button" onclick="changeQty('${gid}',1)" aria-label="Increase">+</button>
+        </div>
       </div>
       <div class="max-note" id="maxnote-${gid}"></div>
     `;
@@ -522,6 +585,8 @@ function renderProductGrid() {
     if (select) select.value = selectedVariant[gid];
     updateVariantDisplay(gid);
   });
+
+  setupCategoryScrollSpy();
 }
 
 async function loadCatalog() {
@@ -634,7 +699,7 @@ function updateVariantDisplay(gid) {
 
   row.classList.toggle('oos', !prod.inStock);
   qtyInput.disabled = !prod.inStock;
-  row.querySelectorAll('.qty-ctrl button').forEach(b => { b.disabled = !prod.inStock; });
+  row.querySelectorAll('.qty button').forEach(b => { b.disabled = !prod.inStock; });
 
   if (!prod.inStock) {
     // Selecting an OOS pack size (or it becoming OOS on a catalog refresh)
@@ -685,11 +750,15 @@ function updateSummary() {
   const container = document.getElementById('summaryItems');
   const totalEl = document.getElementById('summaryTotal');
   const weightEl = document.getElementById('summaryWeight');
+  const barTotalEl = document.getElementById('barTotal');
+  const stickybarEl = document.getElementById('stickybar');
 
   if (items.length === 0) {
     container.innerHTML = '<div class="summary-empty">No items selected yet</div>';
     totalEl.textContent = '₹0';
     weightEl.textContent = '';
+    barTotalEl.textContent = '₹0';
+    stickybarEl.classList.remove('show');
     return;
   }
 
@@ -757,6 +826,8 @@ function updateSummary() {
   container.innerHTML = html;
   totalEl.textContent = '₹' + payable.toLocaleString('en-IN');
   weightEl.textContent = totalWeight > 0 ? `Est. weight ≈ ${Math.round(totalWeight * 10) / 10} kg (±2 kg)` : '';
+  barTotalEl.textContent = totalEl.textContent;
+  stickybarEl.classList.toggle('show', payable > 0);
 }
 
 async function applyCoupon() {
@@ -879,7 +950,7 @@ State: ${state}
 Address: ${address}${notes ? `\nNotes: ${notes}` : ''}`;
 
   // ── GOOGLE SHEETS: silently log order ──────────────────
-  const SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxCdUCpYoqY3Mg-UuGWuJswnbXsCTVIqaB891_ncDiBDrJvvPniOWnOVzAManjuhkE6/exec";
+  const SHEETS_WEBHOOK_URL = DEV_MODE ? DEV_SHEETS_WEBHOOK_URL : "https://script.google.com/macros/s/AKfycbxCdUCpYoqY3Mg-UuGWuJswnbXsCTVIqaB891_ncDiBDrJvvPniOWnOVzAManjuhkE6/exec";
 
   // A fresh id per submission attempt — a genuine retry (e.g. after a
   // network error) gets a new one, but the server can still collapse two
@@ -956,6 +1027,57 @@ function showError(msg) {
   el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
+// ── STICKY NAV: step tabs + category chips (scroll-driven) ──────────────
+// jump() is the click handler for the three top-level step tabs (Products/
+// Delivery/Review) and the sticky bar's "Review order" button.
+function jump(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Highlights whichever step tab corresponds to the section currently near
+// the top of the viewport. All three sections exist in the static markup
+// from page load, so this observer is wired up once, unconditionally.
+const STEP_SECTIONS = ['sec-products', 'sec-details', 'sec-review'];
+const STEP_ELS = {
+  'sec-products': document.getElementById('step-products'),
+  'sec-details':  document.getElementById('step-details'),
+  'sec-review':   document.getElementById('step-review')
+};
+const stepObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      STEP_SECTIONS.forEach(id => STEP_ELS[id] && STEP_ELS[id].classList.remove('active'));
+      const target = STEP_ELS[entry.target.id];
+      if (target) target.classList.add('active');
+    }
+  });
+}, {rootMargin:'-140px 0px -60% 0px'});
+STEP_SECTIONS.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) stepObserver.observe(el);
+});
+
+// Category chips are the "sub tabs" within the Products step — this mirrors
+// the step-tab scroll-spy above, but for the category headings created at
+// catalog-load time. Re-created each time the catalog (re)renders, since the
+// set of category headings only exists after buildCategorySections() runs.
+let categoryObserver = null;
+function setupCategoryScrollSpy() {
+  if (categoryObserver) categoryObserver.disconnect();
+  const headings = document.querySelectorAll('.cat-heading');
+  if (headings.length === 0) return;
+  categoryObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const grid = entry.target.id.replace('catlabel-', '');
+      document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.grid === grid));
+      const activeChip = document.querySelector(`.chip[data-grid="${grid}"]`);
+      if (activeChip) activeChip.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    });
+  }, {rootMargin:'-130px 0px -75% 0px'});
+  headings.forEach(h => categoryObserver.observe(h));
+}
 </script>
 </body>
 </html>

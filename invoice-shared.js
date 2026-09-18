@@ -18,10 +18,13 @@ const ORDER_FORM_URL = 'https://purnavah-orders.pages.dev';
 const UPI_VPA = 'greenharvestagri@upi';
 const UPI_PAYEE_NAME = 'Greenharvest Agriculture Private Limited';
 
-// amount: number (rupees); note: short text shown as the UPI transaction note.
-function buildUpiPayLink(amount, note) {
+// amount: number (rupees); note: short text shown as the UPI transaction note;
+// vpa: optional override (e.g. an assigned admin's own UPI VPA — see the
+// multi-admin workflow, MULTI_ADMIN_WORKFLOW_PLAN.md §6/§11), defaults to the
+// company UPI_VPA so every existing caller is unaffected.
+function buildUpiPayLink(amount, note, vpa) {
   const params = new URLSearchParams({
-    pa: UPI_VPA, pn: UPI_PAYEE_NAME, am: amount.toFixed(2), cu: 'INR', tn: note
+    pa: vpa || UPI_VPA, pn: UPI_PAYEE_NAME, am: amount.toFixed(2), cu: 'INR', tn: note
   });
   // URLSearchParams encodes spaces as "+" (form encoding), but UPI apps parse
   // this as a plain URI and don't decode "+" back to a space — that breaks
@@ -51,7 +54,11 @@ function numberToWords(num) {
 
 // d: { invoiceNo, date, dueDate, customer, lineItems, oosLineItems, subTotal,
 //      discountAmt, taxableValue, totalCgst, totalSgst, totalIgst, totalGst,
-//      grandTotal, isIntraState, invoiceBadge:{label,bg,color}, paymentReceived }
+//      grandTotal, isIntraState, invoiceBadge:{label,bg,color}, paymentReceived,
+//      confirmingAdminUpi }
+// confirmingAdminUpi is optional (multi-admin workflow, DEV-only) — the
+// assigned admin's own UPI VPA snapshotted at order-confirm time; omitted/
+// blank falls back to the company UPI_VPA (see buildUpiPayLink).
 // lineItems entries: { sn, name, qty, price, rate, hsn, discPct, discAmt, cgstRate,
 //      cgstAmt, sgstRate, sgstAmt, igstRate, igstAmt, totalTaxAmt, amount, grossAmount }
 // `rate` is the ex-GST per-unit rate (drives the "Rate" column below) —
@@ -116,7 +123,11 @@ function buildInvoiceHtml(d) {
   // partially-paid invoice doesn't ask the customer to pay the full amount again.
   const amountPaid = d.customer.amountPaid || 0;
   const payableAmount = Math.max(0, Math.round((d.grandTotal - amountPaid) * 100) / 100);
-  const upiLink = buildUpiPayLink(payableAmount, `Invoice ${d.invoiceNo}`);
+  // d.confirmingAdminUpi (multi-admin workflow, DEV-only) is only ever
+  // populated for an order confirmed through the dev-gated assignment flow —
+  // blank/undefined here falls back to the company UPI_VPA, so this is a
+  // no-op for every order created outside that flow.
+  const upiLink = buildUpiPayLink(payableAmount, `Invoice ${d.invoiceNo}`, d.confirmingAdminUpi);
   const upiQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(upiLink)}`;
   const upiSection = payableAmount > 0 ? `
     <a href="${upiLink}" style="text-decoration:none;text-align:center;flex-shrink:0">
