@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Order Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1C1B17;
+  --moss:#3A5428;
+  --moss-mid:#527A3B;
+  --moss-lt:#EDF2E8;
+  --earth:#7C5C3A;
+  --cream:#F5F0E8;
+  --parchment:#EDE6D6;
+  --rule:#C8BFA8;
+  --stone:#7A6F61;
+  --white:#FDFCF9;
+  --red:#B91C1C;
+  --red-lt:#FBECEC;
+  --amber:#9A6B0F;
+  --amber-lt:#FBF3E1;
+  --wa:#25D366;
+}
+html{scroll-behavior:smooth}
+body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ── LAYOUT ── */
+.app{max-width:1400px;margin:0 auto;padding:0 24px 80px}
+.topbar{background:var(--ink);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#A89E8E}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
+.conn-dot.ok{background:var(--wa)}
+.conn-dot.err{background:var(--red)}
+.conn-status{font-size:12px;color:#A89E8E;display:flex;align-items:center}
+.nav-link{color:#A89E8E;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.nav-link:hover{color:var(--cream)}
+
+/* ── KEY SETUP BAR ── */
+.setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
+
+/* ── BUTTONS ── */
+.btn{font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--moss);color:#fff}
+.btn-primary:hover{background:#2d4020}
+.btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
+.btn-secondary:hover{border-color:var(--moss);color:var(--moss)}
+.btn-wa{background:var(--wa);color:#fff}
+.btn-wa:hover{background:#1ebe5d}
+.btn-danger{background:var(--white);color:var(--red);border-color:var(--red)}
+.btn-danger:hover{background:var(--red-lt)}
+.btn-ghost{background:transparent;color:var(--stone);border-color:transparent;padding:6px 10px}
+.btn-ghost:hover{color:var(--ink);background:var(--parchment)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{font-size:12px;padding:6px 12px}
+
+/* ── STATUS COUNT BAR ── */
+.status-count-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.status-count-chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;
+  border:1.5px solid transparent;cursor:pointer;font-size:12.5px;font-weight:600;
+  transition:all .12s;white-space:nowrap}
+.status-count-chip.active{box-shadow:0 0 0 2px var(--ink)}
+.status-count-chip .chip-num{font-family:'Fraunces',serif;font-size:16px;font-weight:600}
+.status-count-chip.dup-chip{background:var(--amber-lt);color:var(--amber);border-color:var(--amber)}
+.search-row{margin-bottom:18px}
+.revenue-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;color:var(--stone)}
+.rev-num{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--moss)}
+.search-input{flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--parchment);border-radius:20px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:var(--white)}
+.search-input:focus{outline:none;border-color:var(--moss)}
+
+/* ── ORDER CARDS ── */
+.order-list{display:flex;flex-direction:column;gap:14px}
+.order-card{background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow:hidden;transition:box-shadow .15s}
+.order-card.dup-flag{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.order-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;gap:16px;flex-wrap:wrap}
+.order-head:hover{background:#FEFDFB}
+.order-id-block{display:flex;align-items:center;gap:14px;min-width:0}
+.order-customer{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--ink)}
+.order-meta{font-size:12px;color:var(--stone);margin-top:2px}
+.order-flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.flag{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+.flag-dup{background:var(--amber-lt);color:var(--amber)}
+.flag-coupon{background:var(--moss-lt);color:var(--moss)}
+.order-right{display:flex;align-items:center;gap:18px}
+.order-total-block{text-align:right}
+.order-total{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:var(--moss)}
+.order-total-orig{font-size:11.5px;color:var(--stone);text-decoration:line-through}
+.chevron{font-size:18px;color:var(--stone);transition:transform .2s}
+.order-card.expanded .chevron{transform:rotate(180deg)}
+
+.order-body{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.order-card.expanded .order-body{max-height:3000px}
+.order-body-inner{padding:0 20px 20px;border-top:1px solid var(--parchment)}
+
+.body-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:24px;margin-top:16px}
+.body-grid>div{min-width:0}
+@media(max-width:800px){.body-grid{grid-template-columns:1fr}}
+
+/* Table gets its own scroll container — items-table's fixed-width qty/disc
+   inputs give it a min-content width wider than a phone screen. Without this,
+   the grid item's default min-width:auto lets that width blow out the whole
+   .body-grid column (pushing the side panel's totals off-screen too), and
+   order-card's overflow:hidden then clips the table with no way to scroll to
+   the hidden columns. */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.items-table{width:100%;border-collapse:collapse;font-size:13px}
+.items-table th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);padding:6px 6px;border-bottom:1.5px solid var(--rule)}
+.items-table td{padding:6px;border-bottom:1px solid var(--parchment);vertical-align:middle}
+.items-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.item-name-oos{text-decoration:line-through;color:var(--stone)}
+.qty-input{width:42px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.disc-input{width:60px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.mrp-input{width:70px;padding:4px;border:1.5px solid var(--parchment);border-radius:5px;text-align:center;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.oos-btn{font-size:11px;color:var(--red);background:none;border:1px solid var(--red);border-radius:4px;padding:3px 6px;cursor:pointer;white-space:nowrap}
+.oos-btn.active{background:var(--red);color:#fff}
+.oos-btn:hover{background:var(--red-lt)}
+.oos-btn.active:hover{background:var(--red)}
+.del-item-btn{background:none;border:none;color:var(--stone);cursor:pointer;font-size:14px;padding:2px 5px;border-radius:4px}
+.del-item-btn:hover{color:var(--red);background:var(--red-lt)}
+
+.side-panel{display:flex;flex-direction:column;gap:12px}
+.panel-section{background:var(--parchment);border-radius:8px;padding:12px 14px}
+.panel-label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin-bottom:8px}
+.field-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.field-row:last-child{margin-bottom:0}
+.field-row label{font-size:12.5px;color:var(--stone);min-width:76px}
+.field-row input,.field-row select{flex:1;padding:6px 8px;border:1.5px solid var(--rule);border-radius:5px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.field-row > div{flex:1;font-size:13px;color:var(--ink)}
+.totals-box{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:10px 12px;font-size:13px}
+.totals-row{display:flex;justify-content:space-between;padding:4px 0}
+.totals-row.final{font-weight:700;font-size:15px;color:var(--moss);border-top:1px solid var(--parchment);margin-top:6px;padding-top:8px}
+.contact-line{font-size:13px;color:var(--ink);line-height:1.7}
+.contact-line strong{color:var(--stone);font-weight:600}
+.notes-box{font-size:12.5px;color:var(--stone);font-style:italic;background:#fff;border-radius:6px;padding:10px 12px;border:1px solid var(--rule)}
+
+.action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--stone)}
+.empty-state h3{font-family:'Fraunces',serif;font-size:20px;color:var(--ink);margin-bottom:6px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--cream);padding:14px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:100;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--red)}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── STATUS / LIFECYCLE ADDITIONS ── */
+.status-pill{display:inline-flex;align-items:center;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.action-btn-group{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.disc-cell{font-size:11px;line-height:1.6;text-align:right}
+.disc-orig{color:var(--stone)}
+.disc-saved{color:var(--red)}
+.disc-net{font-weight:600;color:var(--ink)}
+.shipping-section,.payment-section{background:var(--parchment);border-radius:8px;padding:14px 16px;margin-top:14px}
+.section-mini-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);margin-bottom:10px}
+.locked-note{font-size:11px;color:var(--stone);font-style:italic;margin-top:6px}
+.dirty-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--amber-lt);border:1px solid var(--amber);color:var(--amber);border-radius:8px;padding:10px 14px;margin-top:14px;font-size:13px;font-weight:600}
+.field-hint{font-size:11px;color:var(--stone)}
+.add-item-toggle{margin-bottom:12px}
+.add-item-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:12px;background:var(--moss-lt);border-radius:8px}
+.add-item-form input{padding:7px 10px;border:1.5px solid var(--rule);border-radius:5px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.add-item-form input[type=text]{flex:2;min-width:180px}
+.add-item-form input[type=number]{width:70px}
+
+/* ── CONFIRM MODAL (Phase 4) ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(28,27,23,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--white);border-radius:10px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:22px 24px}
+.modal-box h3{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin-bottom:14px}
+.modal-box .totals-row{display:flex;justify-content:space-between;padding:5px 0}
+.modal-box .totals-row.final{font-weight:700;font-size:14px;color:var(--moss);border-top:1px solid var(--parchment);margin-top:6px;padding-top:8px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.comms-choice-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.comms-choice{padding:7px 14px;border-radius:20px;border:1.5px solid var(--rule);background:var(--white);font-size:12.5px;font-weight:600;color:var(--stone);cursor:pointer}
+.comms-choice.active{border-color:var(--moss);color:var(--moss);background:var(--moss-lt)}
+.confirm-preview-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-name">Purnavah</div>
+      <div class="brand-tag">Order Admin</div>
+    </div>
+    <div class="topbar-actions">
+      <a class="nav-link" href="products.html">Products →</a>
+      <a class="nav-link" href="invoices.html">Invoices →</a>
+      <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
+      <button class="btn btn-secondary btn-sm" onclick="loadOrders()">↻ Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="setup-bar" id="setupBar">
+    <div style="flex:2;min-width:260px">
+      <label>Apps Script Web App URL</label><br>
+      <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbxCdUCpYoqY3Mg-UuGWuJswnbXsCTVIqaB891_ncDiBDrJvvPniOWnOVzAManjuhkE6/exec" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
+    </div>
+    <div style="flex:1;min-width:180px">
+      <label>Admin Key</label><br>
+      <input type="password" id="adminKey" placeholder="your admin key" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
+    </div>
+    <button class="btn btn-primary" onclick="loadOrders()" id="connectBtn">Connect</button>
+  </div>
+
+  <div class="status-count-bar" id="statusCountBar" style="display:none">
+    <!-- rendered by renderStatusBar() -->
+  </div>
+  <div class="revenue-bar" id="revenueBar" style="display:none">
+    <span id="statRevenue" class="rev-num">₹0</span>
+    <span class="rev-label">total order value</span>
+    <span style="margin:0 12px;color:var(--rule)">·</span>
+    <span id="statDupCount" class="rev-label"></span>
+  </div>
+  <div class="search-row" id="searchRow" style="display:none">
+    <input class="search-input" id="searchInput" placeholder="Search name, phone, or address…" oninput="render()">
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="toggleVersionHistory()">
+      <span id="versionHistoryToggleLabel">Show version history</span>
+    </button>
+  </div>
+
+  <div id="listContainer">
+    <div class="empty-state">
+      <h3>Not connected yet</h3>
+      <p>Enter your Apps Script Web App URL and admin key above, then click Connect.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="invoice-shared.js"></script>
+
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal-box">
+    <h3>Confirm order</h3>
+    <div id="confirmModalBody"></div>
+    <div class="modal-actions" id="confirmModalActions"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dirtyGuardOverlay">
+  <div class="modal-box">
+    <h3>Unsaved changes</h3>
+    <p style="font-size:13.5px;color:var(--stone)">This order has changes that haven't been saved yet. What would you like to do?</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeDirtyGuard()">Keep editing</button>
+      <button class="btn btn-danger btn-sm" onclick="dirtyGuardDiscard()">Discard changes</button>
+      <button class="btn btn-primary btn-sm" onclick="dirtyGuardUpdate()">Update changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Live product catalog — pulled from the Catalog Google Sheet's Apps Script
+// deployment (same one used by products.html / index.html). This is a
+// SEPARATE deployment from the Orders webhook above; both share the same
+// admin key. We hit the admin "list" endpoint (not the public "catalog"
+// endpoint) so pricing for items that have since gone inactive/out-of-stock
+// still resolves correctly on old orders — the public endpoint would drop
+// them and break historical pricing.
+const CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
+
+let CATALOG = [];        // full catalog (admin list) — used for price lookups on any item ever ordered
+let CATALOG_ACTIVE = []; // Active=Y && Stock>0 subset — used for the "Add item" picker
+
+async function loadCatalog() {
+  try {
+    const res = await fetch(`${CATALOG_API_URL}?action=list&key=${encodeURIComponent(apiKey())}`);
+    const data = await res.json();
+    if (data.status === 'ok') {
+      CATALOG = data.data;
+      CATALOG_ACTIVE = CATALOG.filter(p => String(p.active).trim().toUpperCase() === 'Y' && Number(p.stock) > 0);
+    } else {
+      console.warn('Catalog load failed', data.message);
+    }
+  } catch (e) {
+    console.warn('Catalog load failed', e);
+  }
+}
+
+// Resolve a catalog product for an order's item name, preferring the
+// immutable Product ID captured at confirm time (o.productIdMap, from the
+// sheet's "Product IDs JSON") over a waKey text match. A product's Display
+// Name/Pack Size can be edited at any time in products.html, which silently
+// breaks name-based matching for every order that referenced it before the
+// edit — Product ID never changes, so it survives renames. Falls back to a
+// plain waKey match for orders that predate Product ID capture (never
+// confirmed yet, or confirmed before this column existed).
+function findCatalogProduct(o, name) {
+  const pid = o && o.productIdMap && o.productIdMap[name];
+  if (pid) {
+    const byId = CATALOG.find(c => c.productId === pid);
+    if (byId) return byId;
+  }
+  return CATALOG.find(c => c.waKey === name);
+}
+
+function unitPrice(o, waKey) {
+  const ed = getEdit(o);
+  if (ed.itemPriceOverrides[waKey] !== undefined) return Number(ed.itemPriceOverrides[waKey]);
+  const p = findCatalogProduct(o, waKey);
+  return p ? Number(p.mrp) : null; // unknown item — flagged in UI, never silently priced as 0
+}
+
+function productId(o, waKey) {
+  const p = findCatalogProduct(o, waKey);
+  return p ? p.productId : null;
+}
+
+// Packing checklist (added 2026-08-11) — standalone from computeOrderTotals()/
+// getEdit(), deliberately. downloadPackingChecklist() always calls this
+// against a *freshly re-fetched* raw order (not the locally-cached `orders`
+// entry), so the checklist a warehouse employee prints always matches what's
+// actually saved on the sheet right now — never this tab's in-progress
+// unsaved edits, and never a stale snapshot if another session touched the
+// same order since Connect. findCatalogProduct() only needs o.productIdMap
+// (a plain field on the fetched order), so it's safe to call here without
+// going through getEdit()/editState at all. No pricing/MRP/discount/GST
+// anywhere in the output — see buildPackingChecklistHtml (invoice-shared.js).
+function computeChecklistData(o) {
+  const items = [];
+  let totalQty = 0, estWeight = 0;
+  Object.entries(o.items || {}).forEach(([name, qty]) => {
+    if (qty <= 0) return;
+    items.push({ name, qty });
+    totalQty += qty;
+    const product = findCatalogProduct(o, name);
+    if (product) estWeight += qty * (Number(product.weightKg) || 0);
+  });
+  return {
+    orderLabel: o.gaplOrderId || (o.orderRef || '').slice(0, 8) || ('Row ' + o.rowIndex),
+    customerName: o.customerName || '',
+    phone: o.phone || '',
+    address: o.address || '',
+    pincode: o.pincode || '',
+    notes: o.notes || '',
+    items, totalQty,
+    estWeight: Math.round(estWeight * 100) / 100
+  };
+}
+
+// Re-fetches the full order list (there's no single-order GET endpoint) and
+// picks out this one order by Order Ref (stable across row shifts, same
+// precedent as findCatalogProduct's Product ID matching) so the checklist is
+// always built from what's live on the sheet, per the "always fetch the
+// latest order details" requirement — not from `orders`/`editState`, which
+// can be stale or hold this tab's own unsaved edits.
+async function downloadPackingChecklist(rowIndex) {
+  const existing = orders.find(x => x.rowIndex === rowIndex);
+  if (!existing) return;
+  const url = apiUrl(), key = apiKey();
+  if (!url || !key) { toast('Connect first', true); return; }
+
+  // Open synchronously so the browser doesn't treat it as a blocked popup
+  // once we start awaiting the fetch below (same pattern as generateInvoice).
+  const win = window.open('', '_blank');
+  if (win) win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">Loading latest order details…</p>');
+
+  try {
+    const res = await fetch(`${url}?action=list&key=${encodeURIComponent(key)}`);
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || 'Could not load latest order data');
+    const fresh = data.data.find(x => (existing.orderRef && x.orderRef === existing.orderRef) || x.rowIndex === rowIndex);
+    if (!fresh) throw new Error('Order not found — it may have been deleted or moved');
+
+    const html = buildPackingChecklistHtml(computeChecklistData(fresh));
+    if (win) { win.document.open(); win.document.write(html); win.document.close(); }
+  } catch (err) {
+    toast('Could not build packing checklist: ' + err.message, true);
+    if (win) win.close();
+  }
+}
+
+// Pincode → State lookup, based on the first 2 digits of the postal circle.
+// Source: standard India Post PIN allocation (stable since 1972).
+const PINCODE_PREFIX_STATE = {
+  11:"Delhi", 12:"Haryana", 13:"Haryana", 14:"Punjab", 15:"Punjab", 16:"Punjab",
+  17:"Himachal Pradesh", 18:"Jammu and Kashmir", 19:"Jammu and Kashmir",
+  20:"Uttar Pradesh", 21:"Uttar Pradesh", 22:"Uttar Pradesh", 23:"Uttar Pradesh",
+  24:"Uttar Pradesh", 25:"Uttar Pradesh", 26:"Uttar Pradesh", 27:"Uttar Pradesh", 28:"Uttar Pradesh",
+  30:"Rajasthan", 31:"Rajasthan", 32:"Rajasthan", 33:"Rajasthan", 34:"Rajasthan",
+  36:"Gujarat", 37:"Gujarat", 38:"Gujarat", 39:"Gujarat",
+  40:"Maharashtra", 41:"Maharashtra", 42:"Maharashtra", 43:"Maharashtra", 44:"Maharashtra",
+  45:"Madhya Pradesh", 46:"Madhya Pradesh", 47:"Madhya Pradesh", 48:"Madhya Pradesh",
+  49:"Chhattisgarh",
+  50:"Telangana", 51:"Andhra Pradesh", 52:"Andhra Pradesh", 53:"Andhra Pradesh",
+  56:"Karnataka", 57:"Karnataka", 58:"Karnataka", 59:"Karnataka",
+  60:"Tamil Nadu", 61:"Tamil Nadu", 62:"Tamil Nadu", 63:"Tamil Nadu", 64:"Tamil Nadu",
+  67:"Kerala", 68:"Kerala", 69:"Kerala",
+  70:"West Bengal", 71:"West Bengal", 72:"West Bengal", 73:"West Bengal", 74:"West Bengal",
+  75:"Odisha", 76:"Odisha", 77:"Odisha",
+  78:"Assam",
+  79:"North-East India", // Arunachal/Meghalaya/Manipur/Mizoram/Nagaland/Tripura share this prefix
+  80:"Bihar", 81:"Bihar", 82:"Bihar", 83:"Jharkhand", 84:"Bihar", 85:"Bihar"
+};
+
+function stateFromPincode(pincode) {
+  if (!pincode || pincode.length < 3) return "";
+  const p3 = parseInt(pincode.substring(0,3), 10);
+  const p2 = parseInt(pincode.substring(0,2), 10);
+  if (p3 === 403) return "Goa"; // sits inside the 40x Maharashtra block
+  return PINCODE_PREFIX_STATE[p2] || "";
+}
+
+// ── Order & invoice lifecycle config ──────────────────────────────
+// 5-stage fulfillment workflow (2026-07-09) — replaces the earlier
+// New/Confirmed/Packed/Shipped/Delivered/Paid model. Payment no longer gates
+// fulfillment: it's tracked as a sub-state (PAYMENT_STATES) under "Invoiced",
+// independent of Packed & Shipped / Delivered.
+const ORDER_STATUSES = {
+  New:                { color:'#1D4ED8', bg:'#DBEAFE', label:'New',               next:['Confirmed','Cancelled'] },
+  Confirmed:          { color:'#166534', bg:'#DCFCE7', label:'Confirmed',         next:['Invoiced'] },
+  Invoiced:           { color:'#7C3AED', bg:'#EDE9FE', label:'Invoiced',          next:['Packed & Shipped'] },
+  'Packed & Shipped':  { color:'#7C5C3A', bg:'#EDE6D6', label:'Packed & Shipped',  next:['Delivered'] },
+  Delivered:          { color:'#14532D', bg:'#F0FDF4', label:'Delivered',         next:[] },
+  Cancelled:          { color:'#B91C1C', bg:'#FEE2E2', label:'Cancelled',         next:[] },
+  // Legacy display only — "Update order" no longer creates versioned rows
+  // marked Revised (removed per user request; it now edits in place). Kept
+  // here only so any already-existing Revised row from before that change
+  // still renders sensibly (locked, muted) until deleteRevisedOrderRows_()
+  // cleans it up.
+  Revised:            { color:'#7A6F61', bg:'#EDE6D6', label:'Revised (superseded)', next:[] }
+};
+
+// Payment sub-states, shown only once an order has been invoiced (o.invoiceNo set).
+const PAYMENT_STATES = {
+  Unpaid:           { color:'#9A6B0F', bg:'#FBF3E1', label:'Unpaid' },
+  Paid:             { color:'#FDFCF9', bg:'#14532D', label:'Paid' },
+  'Partially Paid': { color:'#9A6B0F', bg:'#FBF3E1', label:'Partially Paid' },
+  Overdue:          { color:'#B91C1C', bg:'#FEF3C7', label:'Overdue' }
+};
+
+const STATUS_ACTION_LABELS = {
+  Confirmed:          'Confirm order',
+  Invoiced:           'Generate & send invoice',
+  'Packed & Shipped':  'Mark packed & shipped',
+  Delivered:          'Mark delivered',
+  Cancelled:          'Cancel order'
+};
+
+const LOCKED_STATUSES = ['Packed & Shipped', 'Delivered', 'Cancelled', 'Revised'];
+
+// Shipping policy — mirrors index.html's FREE_DELIVERY_THRESHOLD/DELIVERY_CHARGE.
+// Free above the threshold, flat fee below it, checked against the live
+// recalculated item subtotal (tax-inclusive MRP) — but admin.html additionally
+// lets an admin override the computed default per order (see
+// effectiveFreeShipping/the "Free Shipping Override" sheet column).
+const FREE_SHIPPING_THRESHOLD = 2890;
+const SHIPPING_CHARGE = 199;
+
+// Every non-product column name on the Orders sheet (mirrors FIXED_COLS +
+// ADMIN_COLS in orders_code.gs). At least one live order was found with a
+// stray "Coupon Discount %" key sitting in its persisted Item Discounts
+// JSON as if it were a product name, and an adminNotes entry showing it had
+// been removed via the same "✕ Remove item" control used for real product
+// rows — the exact code path that let that happen couldn't be pinned down,
+// so this is a defensive backstop: even if `o.items`/`ed.items` ever picks
+// up a non-product key again, it can never render as a fake item row here.
+const NON_PRODUCT_COLUMNS = new Set([
+  'Status', 'Timestamp', 'Order Ref', 'GAPL Order ID', 'Version',
+  'Customer Name', 'Phone', 'Email', 'Pincode', 'State', 'Address', 'Notes',
+  'Order Total',
+  'Discount %', 'Discount Amount', 'Final Total',
+  'Coupon Code', 'Coupon Discount %', 'Delivery Charge', 'Same Day Delivery Charge',
+  'Courier', 'AWB No', 'Shipped Date', 'Expected Delivery', 'Delivered Date',
+  'Admin Notes', 'Total Qty', 'Est. Weight (kg)', 'Stock Decremented',
+  'Product IDs JSON', 'Item Discounts JSON', 'Item Price Overrides JSON',
+  'Free Shipping Override', 'Client Order ID', 'Last Updated'
+]);
+
+// Payment sub-state — Unpaid/Paid/Partially Paid come straight from the
+// sheet's Invoice Status column; Overdue is computed (>15 days unpaid/
+// partially-paid since Invoice Date), same rule the old invoice-status
+// lifecycle used.
+function computePaymentState(o) {
+  const raw = (o.invoiceStatus === 'Paid' || o.invoiceStatus === 'Partially Paid') ? o.invoiceStatus : 'Unpaid';
+  if (raw !== 'Paid' && o.invoiceDate) {
+    const issued = parseDate_(o.invoiceDate); // dd/MM/yyyy
+    const due = new Date(issued.getTime() + 15 * 24 * 60 * 60 * 1000);
+    if (new Date() > due) return 'Overdue';
+  }
+  return raw;
+}
+
+function parseDate_(str) {
+  if (!str) return new Date();
+  const [d, m, y] = str.split('/');
+  return new Date(+y, +m - 1, +d);
+}
+
+// Parses the Orders sheet's "dd/MM/yyyy" or "dd/MM/yyyy HH:mm:ss" strings
+// (Timestamp/Last Updated) into a real Date for sort comparisons.
+function parseTimestamp_(str) {
+  if (!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}):(\d{2}))?$/);
+  if (!m) return null;
+  const [, d, mo, y, h, mi, s] = m;
+  return new Date(+y, +mo - 1, +d, +(h || 0), +(mi || 0), +(s || 0));
+}
+
+// Sort key for the order list (Issue: order by creation/update date desc) —
+// "Last Updated" is only stamped once an admin action touches the row, so a
+// never-touched order falls back to its creation Timestamp.
+function orderSortKey(o) {
+  const t = parseTimestamp_(o.lastUpdated) || parseTimestamp_(o.timestamp);
+  return t ? t.getTime() : 0;
+}
+
+function todayDDMMYYYY() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoToDDMMYYYY(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function ddmmyyyyToIso(str) {
+  if (!str) return '';
+  const [d, m, y] = str.split('/');
+  if (!d || !m || !y) return '';
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+
+function getStatusCfg(o) {
+  const ed = getEdit(o);
+  const status = ed.status || o.status || 'New';
+  const orderCfg = ORDER_STATUSES[status] || ORDER_STATUSES.New;
+  // Payment sub-state only means anything once an invoice exists.
+  const payStatus = o.invoiceNo ? computePaymentState(o) : '';
+  const payCfg = payStatus ? PAYMENT_STATES[payStatus] : null;
+  return { status, orderCfg, payStatus, payCfg };
+}
+
+let orders = [];
+let currentFilter = 'New';
+let expandedRow = null;
+let editState = {}; // rowIndex -> edit state (see getEdit)
+let savedState = {}; // rowIndex -> JSON snapshot of editState at last successful save (see isDirty)
+let showVersionHistory = false; // Issue 5/E — default view collapses to latest Version per Order Ref
+
+function toggleVersionHistory() {
+  showVersionHistory = !showVersionHistory;
+  const label = document.getElementById('versionHistoryToggleLabel');
+  if (label) label.textContent = showVersionHistory ? 'Hide version history' : 'Show version history';
+  render();
+}
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2600);
+}
+
+function apiUrl() {
+  return document.getElementById('webhookUrl').value.trim();
+}
+function apiKey() {
+  return document.getElementById('adminKey').value.trim();
+}
+
+// Public entry point (Connect / ↻ Refresh buttons) — guarded, since the real
+// body below unconditionally wipes editState, which would otherwise silently
+// discard an in-progress, unsaved edit on whichever order is expanded.
+async function loadOrders() {
+  if (expandedRow !== null && requestLeave(expandedRow, () => loadOrdersConfirmed())) return;
+  await loadOrdersConfirmed();
+}
+
+async function loadOrdersConfirmed() {
+  const url = apiUrl(), key = apiKey();
+  if (!url || !key) { toast('Enter both URL and admin key', true); return; }
+
+  document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
+  document.getElementById('connectBtn').disabled = true;
+  document.getElementById('connDot').className = 'conn-dot';
+  document.getElementById('connText').textContent = 'Connecting…';
+
+  try {
+    const [ordersRes] = await Promise.all([
+      fetch(`${url}?action=list&key=${encodeURIComponent(key)}`),
+      loadCatalog()
+    ]);
+    const data = await ordersRes.json();
+    if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
+
+    orders = data.data.map(o => {
+      const fromSheet = !!(o.state && o.state.trim() && o.state.trim() !== '0');
+      return {
+        ...o,
+        _dup: false,
+        state: fromSheet ? o.state.trim() : stateFromPincode(o.pincode),
+        _stateDerived: !fromSheet
+      };
+    });
+    // Most-recently touched order first — falls back to creation Timestamp
+    // for a row "Last Updated" has never stamped (nothing admin-side has
+    // touched it since this column shipped).
+    orders.sort((a, b) => orderSortKey(b) - orderSortKey(a));
+    flagDuplicates();
+    editState = {};
+
+    document.getElementById('connDot').className = 'conn-dot ok';
+    document.getElementById('connText').textContent = `Connected · ${orders.length} orders`;
+    document.getElementById('statusCountBar').style.display = 'flex';
+    document.getElementById('revenueBar').style.display = 'flex';
+    document.getElementById('searchRow').style.display = 'block';
+    if (CATALOG.length === 0) toast('Orders loaded, but catalog failed to load — pricing may show "no price set"', true);
+    else toast('Orders loaded');
+    render();
+  } catch (err) {
+    document.getElementById('connDot').className = 'conn-dot err';
+    document.getElementById('connText').textContent = 'Connection failed';
+    toast('Failed to load: ' + err.message + ' — check the URL is deployed and the admin key matches.', true);
+    document.getElementById('listContainer').innerHTML = `
+      <div class="empty-state">
+        <h3>Couldn't connect</h3>
+        <p>${err.message}</p>
+        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Apps Script is deployed as a Web App with "Anyone" access, (2) the admin key matches what's in the script, (3) the deployment URL is the latest version.</p>
+      </div>`;
+  } finally {
+    document.getElementById('connectBtn').innerHTML = 'Connect';
+    document.getElementById('connectBtn').disabled = false;
+  }
+}
+
+// Same customer + same day dedup, based on phone number (strongest signal).
+// Excludes rows that only share the same Order Ref (Issue E) — those are
+// version-history snapshots of one order, not separate duplicate orders.
+function flagDuplicates() {
+  const byPhoneDay = {};
+  orders.forEach(o => {
+    const day = (o.timestamp || '').split(' ')[0]; // dd/MM/yyyy part
+    const k = o.phone + '|' + day;
+    if (!byPhoneDay[k]) byPhoneDay[k] = [];
+    byPhoneDay[k].push(o);
+  });
+  Object.values(byPhoneDay).forEach(group => {
+    if (group.length <= 1) return;
+    const distinctRefs = new Set(group.map(o => o.orderRef || ('__row_' + o.rowIndex)));
+    if (distinctRefs.size > 1) group.forEach(o => o._dup = true);
+  });
+}
+
+// Version-history rows share an Order Ref (Issue 5/E) — collapse down to
+// just the highest-Version row per Order Ref for the default list view.
+// Rows without an Order Ref (legacy, pre-dating the feature) are never
+// grouped with anything else.
+function latestVersionsOnly(list) {
+  const byRef = {};
+  list.forEach(o => {
+    const key = o.orderRef || ('__row_' + o.rowIndex);
+    if (!byRef[key] || (o.version || 1) > (byRef[key].version || 1)) byRef[key] = o;
+  });
+  return Object.values(byRef);
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  render();
+}
+
+// Dirty-check (unsaved-changes) tracking — a JSON snapshot of just the
+// fields that "Update order" actually persists (item qty/discounts/price
+// overrides/OOS/deleted, the blended discount %, shipping fields, and the
+// free-shipping override). Fields that save immediately elsewhere (Status
+// via changeStatus, item adds via confirmAddItem) or that are pure UI state
+// (showAddItem) are deliberately excluded — they're never "unsaved."
+// Returns a plain object (not pre-stringified) so a caller that only just
+// persisted ONE field (changeStatus's Shipped Date, below) can patch that
+// single key on the saved baseline instead of having to resync the whole
+// snapshot — which would wrongly clear the dirty flag on other fields that
+// are still only sitting in the edit buffer, unsaved.
+function editSnapshot(ed) {
+  return {
+    items: { ...ed.items },
+    itemDiscounts: { ...ed.itemDiscounts },
+    itemPriceOverrides: { ...ed.itemPriceOverrides },
+    oos: Array.from(ed.oos).sort(),
+    deleted: Array.from(ed.deleted).sort(),
+    discountPct: ed.discountPct,
+    courier: ed.courier, awbNo: ed.awbNo,
+    shippedDate: ed.shippedDate, expectedDelivery: ed.expectedDelivery,
+    freeShippingOverride: ed.freeShippingOverride || ''
+  };
+}
+
+function isDirty(o) {
+  const ed = getEdit(o);
+  const saved = savedState[o.rowIndex];
+  return saved !== undefined && JSON.stringify(editSnapshot(ed)) !== JSON.stringify(saved);
+}
+
+// Call after any successful save that persists every ed-tracked field at once
+// (Update order, Generate invoice) so isDirty() stops flagging what's now
+// actually saved. A save that only persists one field (changeStatus's
+// Shipped Date) patches savedState directly instead — see there.
+function syncSavedState(o) {
+  savedState[o.rowIndex] = editSnapshot(getEdit(o));
+}
+
+// "Discard changes" — drop the whole edit buffer so the next getEdit() call
+// re-seeds fresh from the last-loaded order data (which is exactly what a
+// discard should show).
+function discardChanges(rowIndex) {
+  delete editState[rowIndex];
+  delete savedState[rowIndex];
+  render();
+  reExpand(rowIndex);
+}
+
+function getEdit(o) {
+  if (!editState[o.rowIndex]) {
+    // Seed per-item discounts from what's actually persisted per line (Issue 1
+    // Phase 1) — falls back to the order-level aggregate only for legacy rows
+    // saved before Item Discounts JSON existed.
+    // A self-applied coupon (o.couponDiscountPct) is used as the default
+    // discount when nothing's been persisted yet — admin.html's Discount %
+    // field still overrides it same as any manual discount, this just means
+    // the customer's coupon doesn't need to be manually re-typed by hand.
+    // o.discountPct is null when never explicitly saved, vs. a real number
+    // (including 0) once an admin has saved it — a `||` chain would treat an
+    // explicit "0%" override the same as "never set" and silently reinstate
+    // the coupon discount on the next reload, which is exactly the bug this
+    // distinguishes against (Issue 9).
+    const defaultPct = (o.discountPct !== null && o.discountPct !== undefined) ? o.discountPct : (o.couponDiscountPct || 0);
+    const itemDiscounts = {};
+    Object.keys(o.items).forEach(name => {
+      const persisted = o.itemDiscounts ? o.itemDiscounts[name] : undefined;
+      itemDiscounts[name] = persisted !== undefined ? persisted : defaultPct;
+    });
+    editState[o.rowIndex] = {
+      discountPct: defaultPct,
+      items: { ...o.items },
+      itemDiscounts,
+      // Per-order price override (e.g. giving one item free) — unlike
+      // itemDiscounts, there's no default to fall back to here: a missing
+      // key just means "use the catalog MRP," so this only ever holds
+      // explicitly-persisted or explicitly-typed overrides.
+      itemPriceOverrides: { ...(o.itemPriceOverrides || {}) },
+      oos: new Set(),
+      deleted: new Set(),
+      status: o.status || 'New',
+      courier: o.courier || '',
+      awbNo: o.awbNo || '',
+      shippedDate: o.shippedDate || '',
+      expectedDelivery: o.expectedDelivery || '',
+      adminNotes: o.adminNotes || '',
+      // "Y"/"N" if the admin has ever explicitly set this order's shipping
+      // one way or the other (persisted) — blank means "no override yet,"
+      // in which case effectiveFreeShipping() computes it live from the
+      // current subtotal instead.
+      freeShippingOverride: (o.freeShippingOverride === 'Y' || o.freeShippingOverride === 'N') ? o.freeShippingOverride : '',
+      showAddItem: false
+    };
+    savedState[o.rowIndex] = editSnapshot(editState[o.rowIndex]);
+  }
+  return editState[o.rowIndex];
+}
+
+function render() {
+  const container = document.getElementById('listContainer');
+  const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+
+  // Default view groups version-history rows down to one card per Order Ref
+  // (Issue 5/E) — "Show history" reveals every version as its own card.
+  const base = showVersionHistory ? orders : latestVersionsOnly(orders);
+
+  let filtered = base.filter(o => {
+    if (currentFilter === 'dup' && !o._dup) return false;
+    if (currentFilter !== 'all' && currentFilter !== 'dup' && (o.status || 'New') !== currentFilter) return false;
+    if (search) {
+      const hay = (o.customerName + ' ' + o.phone + ' ' + o.address).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  renderStatusBar();
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><h3>No orders match</h3><p>Try a different filter or search term.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="order-list">${filtered.map(renderCard).join('')}</div>`;
+}
+
+function renderStatusBar() {
+  const bar = document.getElementById('statusCountBar');
+  const revBar = document.getElementById('revenueBar');
+  if (!bar) return;
+
+  // Stats always reflect one row per order (latest version) regardless of
+  // the history toggle — old versions aren't separate live orders, so they
+  // shouldn't double-count status/revenue.
+  const latest = latestVersionsOnly(orders);
+
+  // "Revised" never legitimately appears on a latest-version row (it's set
+  // only on rows a newer version has superseded), so it's excluded from the
+  // filter chips here — showing a permanent "0 Revised" chip would just be
+  // noise. It's still a valid ORDER_STATUSES entry for card color/label
+  // when a Revised row is shown via "Show version history".
+  const counts = {};
+  Object.keys(ORDER_STATUSES).filter(s => s !== 'Revised').forEach(s => counts[s] = 0);
+  latest.forEach(o => { const s = o.status || 'New'; if (counts[s] !== undefined) counts[s]++; });
+  const dupCount = latest.filter(o => o._dup).length;
+  // Cancelled orders never happened commercially — excluded from the total
+  // order value shown here (Revised is defensive; latestVersionsOnly()
+  // should never surface one, but it's not real order value either).
+  const revenue = latest
+    .filter(o => o.status !== 'Cancelled' && o.status !== 'Revised')
+    .reduce((s, o) => s + amountDue(o), 0);
+
+  bar.innerHTML = Object.entries(counts).map(([status, count]) => {
+    const cfg = ORDER_STATUSES[status];
+    const isActive = currentFilter === status;
+    return `<div class="status-count-chip ${isActive ? 'active' : ''}"
+      style="background:${cfg.bg};color:${cfg.color};border-color:${isActive ? cfg.color : 'transparent'}"
+      onclick="setFilter('${status}')">
+      <span class="chip-num">${count}</span>
+      <span>${cfg.label}</span>
+    </div>`;
+  }).join('') +
+  `<div class="status-count-chip ${currentFilter === 'all' ? 'active' : ''}"
+     style="background:var(--parchment);color:var(--stone);border-color:var(--rule)"
+     onclick="setFilter('all')">
+     <span class="chip-num">${latest.length}</span><span>All</span></div>` +
+  (dupCount > 0 ? `<div class="status-count-chip dup-chip ${currentFilter === 'dup' ? 'active' : ''}"
+     onclick="setFilter('dup')">
+     <span class="chip-num">⚠ ${dupCount}</span><span>Duplicates</span></div>` : '');
+
+  document.getElementById('statRevenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+  document.getElementById('statDupCount').textContent = dupCount > 0 ? `${dupCount} possible duplicate${dupCount > 1 ? 's' : ''}` : '';
+}
+
+function renderCard(o) {
+  const isExpanded = expandedRow === o.rowIndex;
+  const itemCount = Object.keys(o.items).length;
+  const { orderCfg, payCfg } = getStatusCfg(o);
+
+  return `
+  <div class="order-card ${o._dup ? 'dup-flag' : ''} ${isExpanded ? 'expanded' : ''}" id="card-${o.rowIndex}">
+    <div class="order-head" onclick="toggleCard(${o.rowIndex})">
+      <div class="order-id-block">
+        <div>
+          <div class="order-customer">${escapeHtml(o.customerName || '(no name)')}</div>
+          <div class="order-meta">${o.phone} · ${o.timestamp} · ${itemCount} item${itemCount !== 1 ? 's' : ''}${o.version > 1 ? ` · v${o.version}` : ''}</div>
+          <div class="order-flags">
+            ${o._dup ? '<span class="flag flag-dup">⚠ Possible duplicate</span>' : ''}
+            ${o.couponCode ? `<span class="flag flag-coupon">🏷 ${escapeHtml(o.couponCode)} (${o.couponDiscountPct}%)</span>` : ''}
+            <span class="status-pill" style="background:${orderCfg.bg};color:${orderCfg.color}">${orderCfg.label}</span>
+            ${payCfg ? `<span class="status-pill" style="background:${payCfg.bg};color:${payCfg.color}">${payCfg.label}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="order-right">
+        <div class="order-total-block">
+          <div class="order-total">₹${amountDue(o).toLocaleString('en-IN')}</div>
+          ${o.orderTotal && Math.round(amountDue(o)) !== Math.round(o.orderTotal) ? `<div class="order-total-orig">₹${o.orderTotal.toLocaleString('en-IN')}</div>` : ''}
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+    </div>
+    <div class="order-body">
+      <div class="order-body-inner">
+        ${renderBody(o)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderBody(o) {
+  const ed = getEdit(o);
+  const { status } = getStatusCfg(o);
+  const isLocked = LOCKED_STATUSES.includes(status);
+  const canEditItems = ['New','Confirmed','Invoiced'].includes(status) && !isLocked;
+  // Union of o.items (server-confirmed) and ed.items (edit buffer) — a newly
+  // added item lives only in ed.items until the addItemToOrder call resolves,
+  // so keying off o.items alone would hide it from the table until then.
+  const itemNames = Object.keys(o.items);
+  Object.keys(ed.items).forEach(name => { if (!itemNames.includes(name)) itemNames.push(name); });
+  const items = itemNames
+    .filter(name => !ed.deleted.has(name) && !NON_PRODUCT_COLUMNS.has(name))
+    .map(name => [name, o.items[name] || 0]);
+
+  const itemsRows = items.map(([name, qty]) => {
+    const isOos = ed.oos.has(name);
+    const currentQty = ed.items[name] !== undefined ? ed.items[name] : qty;
+    const price = unitPrice(o, name);
+    const catalogProduct = findCatalogProduct(o, name);
+    const catalogPrice = catalogProduct ? Number(catalogProduct.mrp) : null;
+    const isOverridden = ed.itemPriceOverrides[name] !== undefined && catalogPrice !== null && ed.itemPriceOverrides[name] !== catalogPrice;
+    const discPct = ed.itemDiscounts[name] || 0;
+    const lineGross = (price !== null && !isOos) ? price * currentQty : null;
+    const discAmt = lineGross !== null ? Math.round(lineGross * discPct) / 100 : null;
+    const lineNet = lineGross !== null ? lineGross - discAmt : null;
+    const rowLocked = isLocked || isOos;
+
+    return `
+      <tr>
+        <td class="${isOos ? 'item-name-oos' : ''}">${escapeHtml(name)}${price === null ? ' <span style="color:var(--red);font-size:11px">(no price set)</span>' : ''}</td>
+        <td class="num">
+          <input type="number" class="mrp-input" min="0" value="${price !== null ? price : ''}"
+             ${rowLocked ? 'disabled' : ''} onchange="updateItemPrice(${o.rowIndex}, '${escAttr(name)}', this.value)">
+          ${isOverridden ? `<div style="font-size:10.5px;color:var(--stone);text-decoration:line-through">₹${catalogPrice.toLocaleString('en-IN')}</div>` : ''}
+        </td>
+        <td class="num"><input type="number" class="qty-input" min="0" value="${currentQty}"
+             ${rowLocked ? 'disabled' : ''} onchange="updateItemQty(${o.rowIndex}, '${escAttr(name)}', this.value)"></td>
+        <td class="num"><input type="number" class="disc-input" min="0" max="100" value="${discPct}"
+             ${rowLocked ? 'disabled' : ''} onchange="updateItemDisc(${o.rowIndex}, '${escAttr(name)}', this.value)"></td>
+        <td class="disc-cell">
+          ${lineGross !== null ? `
+            <div class="disc-orig">₹${lineGross.toLocaleString('en-IN')}</div>
+            ${discAmt > 0 ? `<div class="disc-saved">−₹${discAmt.toLocaleString('en-IN')}</div>` : ''}
+            <div class="disc-net">₹${lineNet.toLocaleString('en-IN')}</div>
+          ` : '—'}
+        </td>
+        <td><button class="oos-btn ${isOos ? 'active' : ''}" ${isLocked ? 'disabled' : ''} onclick="toggleOos(${o.rowIndex}, '${escAttr(name)}')">
+          ${isOos ? 'OOS ✓' : 'OOS'}</button></td>
+        <td>${canEditItems ? `<button class="del-item-btn" title="Remove item" onclick="deleteItem(${o.rowIndex}, '${escAttr(name)}')">✕</button>` : ''}</td>
+      </tr>`;
+  }).join('');
+
+  const totals = computeOrderTotals(o);
+  const isFreeShip = effectiveFreeShipping(o, totals);
+  const shipCharge = orderShippingCharge(o, totals);
+  const sameDayCharge = orderSameDayCharge(o);
+  const canUpdateOrder = status !== 'Revised' && !['Delivered','Cancelled'].includes(status);
+  // Generating a fresh invoice before the order is Confirmed would invoice
+  // items that haven't had stock decremented/GAPL ID assigned yet — once an
+  // invoice already exists, reprinting/refreshing it stays allowed regardless
+  // of status.
+  const canGenerateInvoice = !!o.invoiceNo || !['New','Cancelled'].includes(status);
+  const dirty = isDirty(o);
+
+  return `
+    ${dirty ? `
+    <div class="dirty-banner">
+      <span>⚠ Unsaved changes on this order</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="discardChanges(${o.rowIndex})">Discard changes</button>
+        <button class="btn btn-primary btn-sm" onclick="updateOrderVersion(${o.rowIndex})">Update changes</button>
+      </div>
+    </div>` : ''}
+    <div class="body-grid">
+      <div>
+        ${canEditItems ? renderAddItemPanel(o) : ''}
+        <div class="table-scroll">
+        <table class="items-table">
+          <thead><tr><th>Item</th><th style="text-align:right">MRP</th><th style="text-align:right">Qty</th><th style="text-align:right">Disc %</th><th style="text-align:right">Line total</th><th>Stock</th><th></th></tr></thead>
+          <tbody>${itemsRows}</tbody>
+        </table>
+        </div>
+
+        ${isLocked ? `<div class="locked-note">Editing locked — order has shipped or later.</div>` : ''}
+        ${totals.unknownItems.length ? `<div class="notes-box" style="color:var(--red);border-color:var(--red);margin-top:10px">
+          Price not found for: ${totals.unknownItems.map(escapeHtml).join(', ')}. These are excluded from totals below — check the item still exists in the catalog.
+        </div>` : ''}
+        <div style="margin-top:12px" class="notes-box">
+          ${o.notes ? escapeHtml(o.notes) : 'No notes from customer'}
+        </div>
+
+      </div>
+      <div class="side-panel">
+        <div class="panel-section">
+          <div class="panel-label">Contact</div>
+          <div class="contact-line">
+            <strong>Phone:</strong> ${o.phone}<br>
+            <strong>Pincode:</strong> ${o.pincode}<br>
+            <strong>State:</strong> ${o.state ? escapeHtml(o.state) + (o._stateDerived !== false ? ' <span style="color:var(--stone);font-size:11px">(from pincode)</span>' : '') : '<span style="color:var(--red)">unknown — check pincode</span>'}<br>
+            <strong>Address:</strong> ${escapeHtml(o.address)}
+          </div>
+        </div>
+
+        ${renderStatusSection(o)}
+        ${renderInvoiceSection(o)}
+
+        <div class="panel-section">
+          <div class="panel-label">Pricing</div>
+          ${o.couponCode ? `<div style="font-size:12.5px;color:var(--moss);margin-bottom:8px">🏷 Coupon <strong>${escapeHtml(o.couponCode)}</strong> applied by customer — ${o.couponDiscountPct}% off (pre-filled below, still editable)</div>` : ''}
+          <div class="field-row">
+            <label>Discount %</label>
+            <input type="number" min="0" max="100"
+              value="${effectiveDiscPct(totals)}"
+              onchange="applyOrderDiscount(${o.rowIndex}, this.value)" ${isLocked ? 'disabled' : ''}>
+          </div>
+          <div class="field-row">
+            <label>Free shipping</label>
+            <div style="display:flex;gap:14px;align-items:center">
+              <label style="display:flex;gap:5px;align-items:center;font-size:12.5px;color:var(--ink);min-width:0;cursor:pointer">
+                <input type="radio" name="freeShip-${o.rowIndex}" ${isFreeShip ? 'checked' : ''}
+                  ${isLocked ? 'disabled' : ''} onchange="setFreeShipping(${o.rowIndex}, 'Y')"> Yes
+              </label>
+              <label style="display:flex;gap:5px;align-items:center;font-size:12.5px;color:var(--ink);min-width:0;cursor:pointer">
+                <input type="radio" name="freeShip-${o.rowIndex}" ${!isFreeShip ? 'checked' : ''}
+                  ${isLocked ? 'disabled' : ''} onchange="setFreeShipping(${o.rowIndex}, 'N')"> No
+              </label>
+            </div>
+          </div>
+          <div class="field-hint" style="margin-bottom:8px">${ed.freeShippingOverride ? 'Manually set by admin' : `Auto — based on the ₹${FREE_SHIPPING_THRESHOLD.toLocaleString('en-IN')} subtotal threshold`}</div>
+          <div class="totals-box" style="margin-top:10px">
+            <div class="totals-row"><span>Subtotal (MRP)</span><span>₹${totals.subtotal.toLocaleString('en-IN')}</span></div>
+            <div class="totals-row"><span>Discount${totals.discountAmt > 0 ? ` <span style="color:var(--amber);font-weight:600">(−${effectiveDiscPct(totals)}%)</span>` : ''}</span><span>− ₹${totals.discountAmt.toLocaleString('en-IN')}</span></div>
+            ${totals.discountAmt > 0 ? `<div class="totals-row" style="font-size:11px;color:var(--stone);padding-top:0"><span>(Applied on ₹${(totals.taxable + totals.discountAmt).toLocaleString('en-IN')}, tax excluded)</span><span></span></div>` : ''}
+            <div class="totals-row"><span>Taxable</span><span>₹${totals.taxable.toLocaleString('en-IN')}</span></div>
+            <div class="totals-row"><span>GST ${totals.isIntraState ? '(CGST+SGST)' : '(IGST)'}</span><span>₹${totals.totalGst.toLocaleString('en-IN')}</span></div>
+            <div class="totals-row"><span>Item total</span><span>₹${totals.grandTotal.toLocaleString('en-IN')}</span></div>
+            <div class="totals-row"><span>Shipping</span><span>${shipCharge > 0 ? `₹${shipCharge.toLocaleString('en-IN')}` : 'Free'}</span></div>
+            ${sameDayCharge > 0 ? `<div class="totals-row"><span>Same-day delivery</span><span>₹${sameDayCharge.toLocaleString('en-IN')}</span></div>` : ''}
+            <div class="totals-row final"><span>Total Payable</span><span>₹${(totals.grandTotal + shipCharge + sameDayCharge).toLocaleString('en-IN')}</span></div>
+          </div>
+          ${o.orderTotal && Math.abs(totals.subtotal - o.orderTotal) > 1 && ed.oos.size === 0 && ed.deleted.size === 0 && totals.unknownItems.length === 0 ?
+            `<div style="font-size:11px;color:var(--amber);margin-top:6px">⚠ Recalculated subtotal (₹${totals.subtotal}) differs from sheet's Order Total (₹${o.orderTotal}) — worth a quick check.</div>` : ''}
+        </div>
+
+        ${renderShippingSection(o)}
+        ${renderPaymentSection(o)}
+
+        ${status === 'Revised' ? `<div class="locked-note">This is a superseded version — see the latest version for current actions.</div>` : `
+        <div class="action-row">
+          <button class="btn btn-secondary btn-sm" onclick="generateInvoice(${o.rowIndex})" ${(canGenerateInvoice && !dirty) ? '' : `disabled title="${dirty ? 'Update order (save your changes) first' : 'Confirm the order before generating an invoice'}"`}>${o.invoiceNo ? 'View / reprint invoice' : 'Generate invoice'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadPackingChecklist(${o.rowIndex})" ${canGenerateInvoice ? 'title="Always fetches the latest saved order details from the sheet"' : `disabled title="Confirm the order before generating a packing checklist"`}>📋 Packing checklist</button>
+        </div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderStatusSection(o) {
+  const ed = getEdit(o);
+  const { status, orderCfg, payCfg } = getStatusCfg(o);
+  // Confirming/changing status must reflect what's actually saved — an admin
+  // with unsaved item/discount/shipping edits has to "Update order" first,
+  // otherwise e.g. Confirm could decrement catalog stock and assign a GAPL
+  // Order ID against numbers that never made it to the sheet.
+  const dirty = isDirty(o);
+  const dirtyTitle = 'Update order (save your changes) first';
+  const buttons = (orderCfg.next || []).map(next => {
+    const label = STATUS_ACTION_LABELS[next] || ('Mark ' + next);
+    const cls = next === 'Cancelled' ? 'btn-danger' : 'btn-secondary';
+    return `<button class="btn ${cls} btn-sm" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="changeStatus(${o.rowIndex}, '${next}')">${label}</button>`;
+  }).join('');
+
+  // Issue A retry path: a prior confirm attempt that failed to decrement
+  // stock leaves Status=Confirmed but stockDecremented=false — there's no
+  // "next" transition back to Confirmed, so surface an explicit retry here
+  // instead of leaving the order stuck.
+  const retryStock = (status === 'Confirmed' && !o.stockDecremented)
+    ? `<div style="margin-top:8px;font-size:11.5px;color:var(--red)">⚠ Stock was not decremented (a previous confirm attempt failed) —
+        <button class="btn btn-secondary btn-sm" style="margin-top:4px" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="openConfirmModal(${o.rowIndex})">Retry stock decrement</button></div>`
+    : '';
+
+  return `
+    <div class="panel-section">
+      <div class="panel-label">Status</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="status-pill" style="background:${orderCfg.bg};color:${orderCfg.color}">${orderCfg.label}</span>
+        ${payCfg ? `<span class="status-pill" style="background:${payCfg.bg};color:${payCfg.color}">${payCfg.label}</span>` : ''}
+      </div>
+      ${o.gaplOrderId ? `<div style="font-size:12px;color:var(--stone);margin-top:6px">GAPL Order ID: <strong style="color:var(--ink)">${escapeHtml(o.gaplOrderId)}</strong></div>` : ''}
+      <div class="action-btn-group">${buttons || '<span style="font-size:12px;color:var(--stone)">No further actions</span>'}</div>
+      ${dirty && (orderCfg.next || []).length ? `<div class="field-hint" style="color:var(--amber);margin-top:6px">⚠ ${dirtyTitle} to confirm or change status</div>` : ''}
+      ${retryStock}
+    </div>`;
+}
+
+function renderInvoiceSection(o) {
+  if (!o.invoiceNo) return '';
+  const payStatus = computePaymentState(o);
+  const payCfg = PAYMENT_STATES[payStatus] || PAYMENT_STATES.Unpaid;
+
+  // Once invoiced, item/discount edits (via "Update order") are deliberately
+  // NOT allowed to move Final Total on their own (see updateOrder()'s
+  // blockFinalTotal guard) — so if the admin keeps editing after invoicing,
+  // the live totals can drift from what the issued invoice actually says.
+  // Surface that drift here, next to the invoice it affects, with a direct
+  // way to fix it instead of leaving the admin to notice on their own.
+  const totals = computeOrderTotals(o);
+  const isStale = Math.abs(totals.grandTotal - (o.finalTotal || 0)) > 1 ||
+                  Math.abs(totals.discountAmt - (o.discountAmount || 0)) > 1;
+  const dirty = isDirty(o);
+
+  return `
+    <div class="panel-section">
+      <div class="panel-label">Invoice</div>
+      <div class="field-row"><label>Number</label><div>${escapeHtml(o.invoiceNo)}</div></div>
+      <div class="field-row"><label>Payment</label><div><span class="status-pill" style="background:${payCfg.bg};color:${payCfg.color}">${payCfg.label}</span></div></div>
+      <div class="field-row"><label>Issued</label><div>${o.invoiceDate ? escapeHtml(o.invoiceDate) : '—'}</div></div>
+      <div class="field-row"><label>Sent on</label><div>${o.invoiceSentDate ? escapeHtml(o.invoiceSentDate) : '—'}</div></div>
+      ${isStale ? `<div style="font-size:11.5px;color:var(--red);margin-top:8px;padding:8px 10px;background:#FDEDED;border:1px solid var(--red);border-radius:6px">
+        ⚠ Items or discounts changed since this invoice was generated — it shows ₹${(o.finalTotal || 0).toLocaleString('en-IN')}, current total is ₹${totals.grandTotal.toLocaleString('en-IN')}.
+      </div>` : ''}
+      <div class="action-btn-group">
+        <button class="btn btn-secondary btn-sm" onclick="openInInvoices(${o.rowIndex})">View in Invoices →</button>
+        <button class="btn ${isStale ? 'btn-primary' : 'btn-secondary'} btn-sm" ${dirty ? 'disabled title="Update order (save your changes) first"' : ''} onclick="generateInvoice(${o.rowIndex})">↻ Refresh invoice &amp; totals</button>
+      </div>
+    </div>`;
+}
+
+// Opens invoices.html in a new tab, scrolled/highlighted to this order's
+// invoice — passes the Orders URL + key through so it connects automatically
+// instead of making the admin re-enter them. The full invoice list still
+// shows (deep link only scrolls/highlights, never filters out other rows).
+function openInInvoices(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  if (!o || !o.invoiceNo) return;
+  const params = new URLSearchParams({ invoiceNo: o.invoiceNo, ordersUrl: apiUrl(), key: apiKey() });
+  window.open('invoices.html?' + params.toString(), '_blank');
+}
+
+function renderShippingSection(o) {
+  const ed = getEdit(o);
+  const { status } = getStatusCfg(o);
+  if (!['Packed & Shipped','Delivered'].includes(status)) return '';
+  const editable = status === 'Packed & Shipped';
+
+  const row = (label, field, val, type) => {
+    if (!editable) return `<div class="field-row"><label>${label}</label><div>${val ? escapeHtml(val) : '—'}</div></div>`;
+    if (type === 'date') {
+      return `<div class="field-row"><label>${label}</label><input type="date" value="${ddmmyyyyToIso(val)}" onchange="updateShippingField(${o.rowIndex}, '${field}', isoToDDMMYYYY(this.value))"></div>`;
+    }
+    return `<div class="field-row"><label>${label}</label><input type="text" value="${escAttr(val)}" onchange="updateShippingField(${o.rowIndex}, '${field}', this.value)"></div>`;
+  };
+
+  return `
+    <div class="shipping-section">
+      <div class="section-mini-label">Shipping</div>
+      ${row('Courier', 'courier', ed.courier, 'text')}
+      ${row('AWB / Tracking', 'awbNo', ed.awbNo, 'text')}
+      ${row('Shipped date', 'shippedDate', ed.shippedDate, 'date')}
+      ${row('Expected delivery', 'expectedDelivery', ed.expectedDelivery, 'date')}
+      ${!editable ? '<div class="locked-note">Locked after shipping — contact the courier to amend.</div>' : ''}
+    </div>`;
+}
+
+function renderPaymentSection(o) {
+  const { status } = getStatusCfg(o);
+  if (!['Invoiced','Packed & Shipped','Delivered'].includes(status)) return '';
+  const finalTotal = amountDue(o);
+
+  if (computePaymentState(o) === 'Paid') {
+    return `
+      <div class="payment-section">
+        <div class="section-mini-label">Payment</div>
+        <div class="field-row"><label>Mode</label><div>${o.paymentMode ? escapeHtml(o.paymentMode) : '—'}</div></div>
+        <div class="field-row"><label>Reference</label><div>${o.paymentRef ? escapeHtml(o.paymentRef) : '—'}</div></div>
+        <div class="field-row"><label>Amount paid</label><div>₹${(o.amountPaid || 0).toLocaleString('en-IN')}</div></div>
+        <div class="field-row"><label>Paid on</label><div>${o.paymentDate ? escapeHtml(o.paymentDate) : '—'}</div></div>
+      </div>`;
+  }
+
+  const remaining = finalTotal - (o.amountPaid || 0);
+  const defaultAmount = remaining > 0 ? remaining : finalTotal;
+
+  return `
+    <div class="payment-section" id="paySection-${o.rowIndex}">
+      <div class="section-mini-label">Payment</div>
+      ${o.amountPaid > 0 ? `<div class="locked-note" style="font-style:normal;margin-bottom:8px">Already paid ₹${o.amountPaid.toLocaleString('en-IN')} — balance due ₹${(o.balanceDue || remaining).toLocaleString('en-IN')}</div>` : ''}
+      <div class="field-row"><label>Mode</label>
+        <select id="payMode-${o.rowIndex}">
+          ${['UPI','Bank Transfer','Cash','COD','Other'].map(m => `<option ${o.paymentMode === m ? 'selected' : ''}>${m}</option>`).join('')}
+        </select></div>
+      <div class="field-row"><label>This payment</label><input type="number" id="payAmount-${o.rowIndex}" min="0" value="${defaultAmount}"></div>
+      <div class="field-hint" style="margin:-4px 0 8px">Added to the ₹${(o.amountPaid || 0).toLocaleString('en-IN')} already recorded — not a running total</div>
+      <div class="field-row"><label>UTR / Ref</label><input type="text" id="payRef-${o.rowIndex}" placeholder="Transaction reference"></div>
+      <div class="field-row"><label>Payment date</label><input type="date" id="payDate-${o.rowIndex}" value="${todayIso()}"></div>
+      <div class="action-btn-group"><button class="btn btn-primary btn-sm" onclick="recordPayment(${o.rowIndex})">Record payment</button></div>
+    </div>`;
+}
+
+function renderAddItemPanel(o) {
+  const ed = getEdit(o);
+  return `
+    <div class="add-item-toggle">
+      <button class="btn btn-ghost btn-sm" onclick="toggleAddItem(${o.rowIndex})">${ed.showAddItem ? '− Hide' : '+ Add item to order'}</button>
+      ${ed.showAddItem ? renderAddItemForm(o) : ''}
+    </div>`;
+}
+
+function renderAddItemForm(o) {
+  const ed = getEdit(o);
+  const options = CATALOG_ACTIVE.map(p => `<option value="${escAttr(p.waKey)}">`).join('');
+  return `
+    <div class="add-item-form">
+      <input type="text" list="catalogDL-${o.rowIndex}" id="addItemName-${o.rowIndex}" placeholder="Search product…">
+      <datalist id="catalogDL-${o.rowIndex}">${options}</datalist>
+      <input type="number" id="addItemQty-${o.rowIndex}" value="1" min="1" title="Qty" placeholder="Qty">
+      <input type="number" id="addItemDisc-${o.rowIndex}" value="${ed.discountPct || 0}" min="0" max="100" title="Disc %" placeholder="Disc %">
+      <button class="btn btn-primary btn-sm" onclick="confirmAddItem(${o.rowIndex})">Add item</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleAddItem(${o.rowIndex})">Cancel</button>
+    </div>`;
+}
+
+// Shared money math (Issue 1/10/C) — the single source of truth for the
+// admin pricing panel, the invoice PDF, and the payment default/balance.
+// Looks up MRP + GST% + HSN from the live catalog by waKey and splits
+// CGST+SGST (intra-state) or IGST (inter-state) per the *product's own*
+// GST% — no more oil/ghee name regex, no more pre-GST-only "Payable".
+// Returns null-price items separately so the UI can warn rather than
+// silently mis-total the order.
+function computeOrderTotals(o) {
+  const ed = getEdit(o);
+  const isIntraState = (o.state || '').trim().toLowerCase() === HOME_STATE.toLowerCase();
+
+  let subtotal = 0, discountAmt = 0, taxable = 0, cgst = 0, sgst = 0, igst = 0;
+  const unknownItems = [];
+  const lineItems = [];
+  let sn = 0;
+
+  Object.entries(ed.items).forEach(([name, qty]) => {
+    if (ed.oos.has(name) || ed.deleted.has(name) || qty <= 0) return;
+    const product = findCatalogProduct(o, name);
+    if (!product) { unknownItems.push(name); return; }
+
+    // Per-order price override (e.g. giving this item free) takes priority
+    // over the catalog MRP — this order only, catalog stays untouched.
+    const price = ed.itemPriceOverrides[name] !== undefined
+      ? Number(ed.itemPriceOverrides[name]) || 0
+      : (Number(product.mrp) || 0); // tax-inclusive (MRP already includes GST)
+    const gstPct = Number(product.gstPct) || 0;
+    const hsn = product.hsn || '';
+    const discPct = ed.itemDiscounts[name] || 0;
+
+    const grossAmount = price * qty; // tax-inclusive "Subtotal (MRP)" — display value only
+    const taxableGross = Math.round(grossAmount * 100 / (100 + gstPct) * 100) / 100; // extract embedded GST
+    const discAmtLine = Math.round(taxableGross * discPct) / 100;
+    const amount = taxableGross - discAmtLine; // line taxable value
+    const totalTaxAmt = Math.round(amount * gstPct / 100 * 100) / 100; // GST recomputed on discounted taxable value
+    // Ex-tax per-unit rate — for the printed invoice's "Rate" column only.
+    // `price` (tax-inclusive MRP) stays the per-unit figure shown to the
+    // customer everywhere else (admin pricing panel, confirm modal, WhatsApp/
+    // email); `rate` exists so Qty × Rate reconciles to taxableGross, and
+    // Sub Total − Discount = Taxable Value on the invoice document — using
+    // `price` there instead would leave the invoice's own rows silently not
+    // adding up, since Rate would be tax-inclusive while Amount is not.
+    const rate = Math.round((taxableGross / qty) * 100) / 100;
+
+    sn++;
+    let line;
+    if (isIntraState) {
+      const halfRate = gstPct / 2;
+      const halfAmt = Math.round(totalTaxAmt / 2 * 100) / 100;
+      line = { sn, name, qty, price, rate, hsn, discPct, discAmt: discAmtLine,
+               cgstRate: halfRate, cgstAmt: halfAmt, sgstRate: halfRate, sgstAmt: halfAmt,
+               igstRate: 0, igstAmt: 0, totalTaxAmt: halfAmt * 2, amount, grossAmount, taxableGross };
+      cgst += halfAmt; sgst += halfAmt;
+    } else {
+      line = { sn, name, qty, price, rate, hsn, discPct, discAmt: discAmtLine,
+               cgstRate: 0, cgstAmt: 0, sgstRate: 0, sgstAmt: 0,
+               igstRate: gstPct, igstAmt: totalTaxAmt, totalTaxAmt, amount, grossAmount, taxableGross };
+      igst += totalTaxAmt;
+    }
+    lineItems.push(line);
+    subtotal += grossAmount;
+    discountAmt += discAmtLine;
+    taxable += amount;
+  });
+
+  const totalGst = Math.round((cgst + sgst + igst) * 100) / 100;
+  const grandTotal = Math.round((taxable + totalGst) * 100) / 100;
+
+  return {
+    subtotal, discountAmt, taxable, cgst, sgst, igst, totalGst, grandTotal,
+    unknownItems, lineItems, isIntraState
+  };
+}
+
+// Amount actually owed right now (Issue 10). Once an order is invoiced, the
+// invoice document is the source of truth — live edits to items/discounts
+// after that point must not silently change what's owed without
+// re-generating the invoice (generateInvoice() is the only thing allowed to
+// move Final Total once invoiceNo is set — see the backend guard in
+// updateOrder()). Before invoicing, this is the live
+// GST-inclusive total so the pricing panel and the eventual invoice always
+// agree.
+function amountDue(o) {
+  if (o.invoiceNo) return o.finalTotal || 0;
+  return computeOrderTotals(o).grandTotal;
+}
+
+// Free-shipping decision for this order — an explicit admin override (Yes/No
+// radio, persisted in the "Free Shipping Override" column) always wins;
+// otherwise it's computed live from the current recalculated subtotal vs.
+// FREE_SHIPPING_THRESHOLD, so an item/qty edit that crosses the threshold
+// updates the default without needing a separate resave. Deliberately kept
+// out of computeOrderTotals()/grandTotal — same as the pre-existing Delivery
+// Charge column, this is shown to the admin as a separate pricing line, not
+// folded into the GST-invoiced Final Total.
+function effectiveFreeShipping(o, totals) {
+  const ed = getEdit(o);
+  if (ed.freeShippingOverride === 'Y') return true;
+  if (ed.freeShippingOverride === 'N') return false;
+  return totals.subtotal >= FREE_SHIPPING_THRESHOLD;
+}
+
+function orderShippingCharge(o, totals) {
+  return effectiveFreeShipping(o, totals) ? 0 : SHIPPING_CHARGE;
+}
+
+// Same-day delivery add-on — set once at order creation from index.html's
+// checkbox (currently hidden behind a launch flag there), persisted as a
+// flat ₹ amount rather than a Yes/No + rate pair since it's never
+// recomputed/overridden the way shipping is. Same treatment as shipping:
+// excluded from computeOrderTotals()/grandTotal (not part of the GST
+// invoice), but it's real money the customer already agreed to pay, so it
+// must be added wherever the admin quotes/collects "Total Payable".
+function orderSameDayCharge(o) {
+  return Number(o.sameDayDeliveryCharge) || 0;
+}
+
+function setFreeShipping(rowIndex, val) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  ed.freeShippingOverride = val;
+  render();
+  reExpand(rowIndex);
+}
+
+// Effective/blended discount % of the tax-excluded (taxable) amount it was
+// actually applied on — the final applied rate across all items, shown even
+// when per-item discounts differ (instead of an unhelpful "Mixed" label).
+// Based on taxableGrossTotal (taxable + discountAmt = the pre-discount,
+// tax-extracted base), not the tax-inclusive subtotal — otherwise a real 15%
+// discount would show as a diluted ~14.29% (15% / (1 + GST%)).
+function effectiveDiscPct(totals) {
+  const taxableGrossTotal = totals.taxable + totals.discountAmt;
+  return taxableGrossTotal > 0 ? Math.round(totals.discountAmt / taxableGrossTotal * 10000) / 100 : 0;
+}
+
+// Unsaved-changes leave-guard — shared by toggleCard() (collapsing/switching
+// away from a dirty order) and loadOrders() (refreshing while one is dirty,
+// which would otherwise wipe editState with no warning at all). If the
+// currently-expanded order is dirty, pops the 3-way "Update order / Discard
+// changes / Keep editing" modal and defers `onResolved` until the admin
+// picks one; otherwise returns false immediately so the caller proceeds.
+let dirtyGuardRowIndex = null;
+let dirtyGuardResolve = null;
+
+function requestLeave(rowIndex, onResolved) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  if (o && isDirty(o)) {
+    dirtyGuardRowIndex = rowIndex;
+    dirtyGuardResolve = onResolved;
+    document.getElementById('dirtyGuardOverlay').style.display = 'flex';
+    return true;
+  }
+  return false;
+}
+
+function closeDirtyGuard() {
+  document.getElementById('dirtyGuardOverlay').style.display = 'none';
+  dirtyGuardRowIndex = null;
+  dirtyGuardResolve = null;
+}
+
+async function dirtyGuardUpdate() {
+  const rowIndex = dirtyGuardRowIndex, resolve = dirtyGuardResolve;
+  closeDirtyGuard();
+  await updateOrderVersion(rowIndex);
+  if (resolve) resolve();
+}
+
+function dirtyGuardDiscard() {
+  const rowIndex = dirtyGuardRowIndex, resolve = dirtyGuardResolve;
+  discardChanges(rowIndex);
+  closeDirtyGuard();
+  if (resolve) resolve();
+}
+
+function toggleCard(rowIndex) {
+  const targetExpandedRow = (expandedRow === rowIndex) ? null : rowIndex;
+  if (expandedRow !== null && expandedRow !== targetExpandedRow) {
+    if (requestLeave(expandedRow, () => applyCardSwitch(targetExpandedRow))) return;
+  }
+  applyCardSwitch(targetExpandedRow);
+}
+
+function applyCardSwitch(targetExpandedRow) {
+  const opening = targetExpandedRow !== null;
+  expandedRow = targetExpandedRow;
+  render();
+  // On mobile the expanded body is almost always taller than the viewport —
+  // without this the scroll position stays put and only whatever fits below
+  // the tap point is visible, which reads as the card being "cut off halfway"
+  // rather than as "just scroll down". Scrolling the header to the top of the
+  // viewport maximizes the space below it for the newly revealed content.
+  if (opening) {
+    const head = document.querySelector(`#card-${targetExpandedRow} .order-head`);
+    if (head) head.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Closing the tab or navigating to another page (e.g. the Products/Invoices
+// nav links) bypasses toggleCard()/loadOrders() entirely — this is the
+// browser's own native "leave site?" prompt, the only guard that can catch
+// that path. Most browsers show generic wording regardless of returnValue.
+window.addEventListener('beforeunload', (e) => {
+  const o = expandedRow !== null ? orders.find(x => x.rowIndex === expandedRow) : null;
+  if (o && isDirty(o)) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+function updateItemQty(rowIndex, name, val) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  ed.items[name] = Math.max(0, parseInt(val) || 0);
+  render();
+  reExpand(rowIndex);
+}
+
+function updateItemDisc(rowIndex, name, val) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  ed.itemDiscounts[name] = Math.max(0, Math.min(100, parseFloat(val) || 0));
+  render();
+  reExpand(rowIndex);
+}
+
+// Per-order price override (e.g. giving one item free by setting it to 0) —
+// this order only, the catalog's actual MRP is never touched.
+function updateItemPrice(rowIndex, name, val) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  ed.itemPriceOverrides[name] = Math.max(0, parseFloat(val) || 0);
+  render();
+  reExpand(rowIndex);
+}
+
+function toggleOos(rowIndex, name) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  if (ed.oos.has(name)) ed.oos.delete(name); else ed.oos.add(name);
+  render();
+  reExpand(rowIndex);
+}
+
+function deleteItem(rowIndex, name) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  ed.deleted.add(name);
+  ed.items[name] = 0;
+  ed.adminNotes = (ed.adminNotes ? ed.adminNotes + ' ' : '') + `[Removed: ${name} on ${todayDDMMYYYY()}]`;
+  render();
+  reExpand(rowIndex);
+}
+
+function applyOrderDiscount(rowIndex, val) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  const pct = Math.max(0, Math.min(100, parseFloat(val) || 0));
+
+  // Guard against silently wiping a real discount (e.g. a coupon-seeded
+  // default) via a stray/accidental commit on this blended box — confirm
+  // before any reduction from a currently-applied nonzero discount. A
+  // deliberate per-item override via updateItemDisc() is unaffected.
+  const totals = computeOrderTotals(o);
+  const currentPct = effectiveDiscPct(totals);
+  if (totals.discountAmt > 0 && pct < currentPct) {
+    const itemCount = Object.keys(ed.items).filter(name => !ed.oos.has(name) && !ed.deleted.has(name)).length;
+    if (!confirm(`This will reduce the ${currentPct}% discount currently applied to ${itemCount} item(s) to ${pct}% — continue?`)) {
+      render();
+      reExpand(rowIndex);
+      return;
+    }
+  }
+
+  ed.discountPct = pct;
+  Object.keys(ed.items).forEach(name => {
+    if (!ed.oos.has(name) && !ed.deleted.has(name)) ed.itemDiscounts[name] = pct;
+  });
+  render();
+  reExpand(rowIndex);
+}
+
+function toggleAddItem(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  ed.showAddItem = !ed.showAddItem;
+  render();
+  reExpand(rowIndex);
+}
+
+async function confirmAddItem(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  const nameInput = document.getElementById('addItemName-' + rowIndex).value.trim();
+  const qty = Math.max(1, parseInt(document.getElementById('addItemQty-' + rowIndex).value) || 1);
+  const discPct = Math.max(0, Math.min(100, parseFloat(document.getElementById('addItemDisc-' + rowIndex).value) || 0));
+
+  const product = CATALOG_ACTIVE.find(p => p.waKey === nameInput);
+  if (!product) { toast('Select a valid product from the list', true); return; }
+
+  const newQty = (ed.items[product.waKey] || 0) + qty;
+  ed.items[product.waKey] = newQty;
+  ed.itemDiscounts[product.waKey] = discPct;
+  ed.deleted.delete(product.waKey);
+  ed.showAddItem = false;
+
+  try {
+    const res = await fetch(apiUrl(), {
+      method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ key: apiKey(), action: 'addItemToOrder', rowIndex, itemName: product.waKey, qty: newQty })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+    o.items[product.waKey] = newQty;
+    toast('Item added');
+  } catch (err) {
+    toast('Added locally, but failed to save to sheet: ' + err.message, true);
+  }
+  render();
+  reExpand(rowIndex);
+}
+
+// Total qty (Issue 2 — locked as sum of active line qtys, not item count)
+// and estimated package weight, from the live catalog's Weight (kg) /
+// Pack-Size-derived weightKg. Used by the confirm modal preview, the
+// WhatsApp/email confirmation message, and persisted to the sheet on confirm.
+function computeConfirmPreview(o) {
+  const ed = getEdit(o);
+  let totalQty = 0, estWeight = 0;
+  Object.entries(ed.items).forEach(([name, qty]) => {
+    if (ed.oos.has(name) || ed.deleted.has(name) || qty <= 0) return;
+    totalQty += qty;
+    const product = findCatalogProduct(o, name);
+    if (product) estWeight += qty * (Number(product.weightKg) || 0);
+  });
+  return { totalQty, estWeight: Math.round(estWeight * 100) / 100 };
+}
+
+// The "Confirm order" action — locks in the order's items against the
+// Catalog's Product IDs, decrements Stock there via orders_code.gs's
+// confirmOrder action (which itself calls the Catalog script), and assigns
+// the business-facing GAPL Order ID. Guarded server-side by "Stock
+// Decremented" (Issue A) rather than Status, so calling this again on an
+// order that's already Confirmed is either a safe no-op (if stock was
+// already decremented) or a genuine retry (if a prior attempt failed).
+async function doConfirmOrder(rowIndex) {
+  const o   = orders.find(x => x.rowIndex === rowIndex);
+  const ed  = getEdit(o);
+  const url = apiUrl(), key = apiKey();
+
+  // Refresh the catalog right before resolving Product IDs — CATALOG is
+  // otherwise loaded once per session on Connect, and a product added/
+  // edited/re-added in products.html since then would have a Product ID
+  // this session doesn't know about, causing decrementStock_ to report
+  // "Product not found" even though the product genuinely exists.
+  await loadCatalog();
+
+  const productIdMap = {};
+  const missingIds = [];
+  Object.keys(ed.items).forEach(waKey => {
+    if (ed.oos.has(waKey) || ed.deleted.has(waKey) || !ed.items[waKey]) return;
+    const pid = productId(o, waKey);
+    if (pid) productIdMap[waKey] = pid;
+    else missingIds.push(waKey);
+  });
+  if (missingIds.length > 0) {
+    console.warn('No Product ID on file — stock will not be decremented for:', missingIds);
+  }
+  const { totalQty, estWeight } = computeConfirmPreview(o);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ key, action: 'confirmOrder', rowIndex, productIdMap, totalQty, estWeight })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+
+    o.status = 'Confirmed';
+    ed.status = 'Confirmed';
+    if (data.gaplOrderId) o.gaplOrderId = data.gaplOrderId;
+    o.totalQty = totalQty;
+    o.estWeight = estWeight;
+
+    const negatives = (data.stockResults || []).filter(r => r.warning);
+    const errors = (data.stockResults || []).filter(r => r.error);
+    o.stockDecremented = !(errors.length > 0);
+
+    if (data.alreadyDecremented) {
+      toast('Order confirmed — stock was already decremented from a previous confirm');
+    } else if (negatives.length > 0) {
+      toast(`Order confirmed ⚠ stock went negative for ${negatives.length} item(s) — check catalog`, true);
+    } else if (errors.length > 0) {
+      // Surface the real per-item/connection error instead of a generic
+      // "no matching catalog product" label — that wording used to show
+      // even when the actual cause was e.g. the request to the Catalog
+      // script failing outright (stale/misconfigured CATALOG_API_URL),
+      // which made this toast actively misleading for debugging.
+      const detail = errors.map(r => r.error).filter(Boolean).join('; ');
+      toast(`Order confirmed ⚠ stock not updated for ${errors.length} item(s): ${detail} — you can retry from the Status panel.`, true);
+    } else if (missingIds.length > 0) {
+      toast('Order confirmed — some items have no Product ID yet, stock not decremented for them', true);
+    } else {
+      toast('Order confirmed — stock updated' + (data.gaplOrderId ? ` — ${data.gaplOrderId}` : ''));
+    }
+    render();
+    reExpand(rowIndex);
+  } catch (err) {
+    toast('Confirm failed: ' + err.message, true);
+  }
+}
+
+function updateShippingField(rowIndex, field, value) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  getEdit(o)[field] = value;
+}
+
+async function changeStatus(rowIndex, newStatus) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+
+  // Defense in depth — the status buttons are already disabled while dirty
+  // (renderStatusSection), but block the action itself too: every status
+  // change (Confirm, Invoice, Packed & Shipped, Delivered, Cancel) should
+  // reflect what was actually saved, not whatever's still sitting unsaved in
+  // the edit buffer.
+  if (isDirty(o)) { toast('Update order (save your changes) before changing status', true); return; }
+
+  if (newStatus === 'Confirmed') {
+    openConfirmModal(rowIndex);
+    return;
+  }
+  if (newStatus === 'Invoiced') {
+    await generateInvoice(rowIndex);
+    return;
+  }
+  if (newStatus === 'Cancelled' && !confirm('Cancel this order? This cannot be undone from here.')) return;
+
+  const fields = { 'Status': newStatus };
+  if (newStatus === 'Packed & Shipped' && !ed.shippedDate) { ed.shippedDate = todayDDMMYYYY(); fields['Shipped Date'] = ed.shippedDate; }
+  if (newStatus === 'Delivered') fields['Delivered Date'] = todayDDMMYYYY();
+
+  try {
+    const res = await fetch(apiUrl(), {
+      method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ key: apiKey(), action: 'update', rowIndex, fields })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+    o.status = newStatus;
+    ed.status = newStatus;
+    if (fields['Delivered Date']) o.deliveredDate = fields['Delivered Date'];
+    // Only "Shipped Date" is both ed-tracked (part of the dirty snapshot) and
+    // just persisted here — patch that one key on the saved baseline rather
+    // than syncSavedState(o), which would also wrongly clear the dirty flag
+    // on any other still-unsaved edit (courier, AWB No, item changes, etc.)
+    // sitting in the same edit buffer.
+    if (fields['Shipped Date'] && savedState[rowIndex]) savedState[rowIndex].shippedDate = fields['Shipped Date'];
+    toast('Status updated to ' + newStatus);
+    render();
+    reExpand(rowIndex);
+  } catch (err) {
+    toast('Status update failed: ' + err.message, true);
+  }
+}
+
+async function recordPayment(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  // This payment's amount — the backend accumulates it onto whatever's
+  // already recorded (Issue F/Phase 8), it is not a running total itself.
+  const thisPayment = parseFloat(document.getElementById('payAmount-' + rowIndex).value) || 0;
+  const paymentMode = document.getElementById('payMode-' + rowIndex).value;
+  const paymentRef = document.getElementById('payRef-' + rowIndex).value.trim();
+  const paymentDateIso = document.getElementById('payDate-' + rowIndex).value;
+  const paymentDate = isoToDDMMYYYY(paymentDateIso) || todayDDMMYYYY();
+
+  try {
+    const res = await fetch(apiUrl(), {
+      method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ key: apiKey(), action: 'recordPayment', rowIndex, amountPaid: thisPayment, paymentMode, paymentRef, paymentDate })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
+
+    o.amountPaid = data.amountPaid; // cumulative total from the backend, not just this payment
+    o.balanceDue = data.balanceDue;
+    o.paymentMode = paymentMode;
+    o.paymentRef = paymentRef;
+    o.paymentDate = paymentDate;
+    o.invoiceStatus = data.balanceDue <= 0 ? 'Paid' : 'Partially Paid';
+    // NOTE: order Status is untouched — payment is a sub-state under
+    // "Invoiced", independent of fulfillment (Packed & Shipped/Delivered).
+
+    toast(data.balanceDue <= 0
+      ? 'Payment recorded — fully paid'
+      : `Payment recorded — balance due ₹${data.balanceDue.toLocaleString('en-IN')}`);
+    render();
+    reExpand(rowIndex);
+  } catch (err) {
+    toast('Payment recording failed: ' + err.message, true);
+  }
+}
+
+// Saves the order's current edit-panel state in place. (Previously this
+// appended a new "version" row and left the old one as history — removed
+// per user request: the sheet should only ever hold one row per order, the
+// one the admin last updated.)
+async function updateOrderVersion(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+  const url = apiUrl(), key = apiKey();
+
+  const totals = computeOrderTotals(o);
+  const zeroedItems = {};
+  ed.oos.forEach(name => zeroedItems[name] = 0);
+  Object.entries(ed.items).forEach(([name, qty]) => {
+    if (!ed.oos.has(name)) zeroedItems[name] = qty;
+  });
+
+  // Once an order is invoiced, the backend deliberately ignores "Final
+  // Total" on this generic update path (see updateOrder()'s blockFinalTotal
+  // guard) so an item/discount edit can never silently change what an
+  // already-issued invoice says is owed — only generateInvoice() (via its
+  // explicit "Refresh invoice & totals" affordance) is allowed to move it.
+  // "Discount %"/"Discount Amount" aren't guarded, so they always save.
+  const isInvoiced = !!o.invoiceNo;
+  const effPct = effectiveDiscPct(totals);
+  const invoiceNowStale = isInvoiced && (
+    Math.abs(totals.grandTotal - (o.finalTotal || 0)) > 1 ||
+    Math.abs(totals.discountAmt - (o.discountAmount || 0)) > 1
+  );
+
+  const payload = {
+    key: key,
+    action: 'update',
+    rowIndex: rowIndex,
+    fields: {
+      'Status': ed.status || 'New',
+      'Discount %': effPct,
+      'Discount Amount': totals.discountAmt,
+      'Final Total': totals.grandTotal,
+      // Keeps the sheet's Order Total (a plain reference/sanity-check figure,
+      // not part of the GST invoice math) in sync with the live recalculated
+      // subtotal — previously this only ever held the value from the
+      // original index.html submission, so it silently went stale the moment
+      // an admin edited qty/price/items and the "Recalculated subtotal
+      // differs from sheet's Order Total" warning would never clear.
+      'Order Total': totals.subtotal,
+      'Item Discounts JSON': JSON.stringify(ed.itemDiscounts),
+      'Item Price Overrides JSON': JSON.stringify(ed.itemPriceOverrides),
+      'Free Shipping Override': ed.freeShippingOverride || '',
+      'Courier': ed.courier || '',
+      'AWB No': ed.awbNo || '',
+      'Shipped Date': ed.shippedDate || '',
+      'Expected Delivery': ed.expectedDelivery || '',
+      'Admin Notes': ed.adminNotes || ''
+    },
+    items: zeroedItems
+  };
+
+  try {
+    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+
+    Object.assign(o, {
+      status: ed.status, discountPct: effPct, discountAmount: totals.discountAmt,
+      // Mirror the backend guard above — don't let local state believe
+      // Final Total saved when the server just silently dropped it, or the
+      // "invoice is stale" banner would wrongly stay hidden until reload.
+      ...(isInvoiced ? {} : { finalTotal: totals.grandTotal }),
+      orderTotal: totals.subtotal,
+      itemDiscounts: { ...ed.itemDiscounts },
+      itemPriceOverrides: { ...ed.itemPriceOverrides },
+      freeShippingOverride: ed.freeShippingOverride || '',
+      courier: ed.courier, awbNo: ed.awbNo, shippedDate: ed.shippedDate, expectedDelivery: ed.expectedDelivery,
+      adminNotes: ed.adminNotes
+    });
+    Object.assign(o.items, zeroedItems);
+    syncSavedState(o); // just persisted — nothing left "unsaved" on this order
+    toast(invoiceNowStale ? 'Order updated — invoice now out of date, refresh it below' : 'Order updated');
+    render();
+    reExpand(rowIndex);
+  } catch (err) {
+    toast('Update failed: ' + err.message, true);
+  }
+}
+
+function reExpand(rowIndex) {
+  expandedRow = rowIndex;
+  const card = document.getElementById('card-' + rowIndex);
+  if (card) card.classList.add('expanded');
+}
+
+// Shared pieces for both the WhatsApp draft and the email draft opened from
+// the confirm modal (Issue 9). Takes the already-computed `totals` (from
+// computeOrderTotals) so each item's price/post-discount price can be shown
+// (Issue 11) instead of just name × qty. Items in totals.unknownItems (no
+// catalog match — see Issue 6/10, usually a renamed product) still get a
+// line with name/qty, just without price detail, so a broken catalog match
+// makes an item's price go missing rather than the item itself silently
+// vanishing from what the customer sees.
+function buildConfirmLines(o, totals) {
+  const ed = getEdit(o);
+  const activeItems = Object.entries(ed.items).filter(([name]) => !ed.oos.has(name) && !ed.deleted.has(name) && ed.items[name] > 0);
+  const oosItems = Array.from(ed.oos);
+
+  const priceByName = {};
+  totals.lineItems.forEach(li => { priceByName[li.name] = li; });
+
+  const productLines = activeItems.map(([name, qty]) => {
+    const li = priceByName[name];
+    if (!li) return { name, qty, text: `${name} × ${qty}` };
+    const unitNet = li.qty > 0 ? li.amount / li.qty : li.price;
+    const text = li.discPct > 0
+      ? `${name} × ${qty} — ₹${li.price.toFixed(2)} each (₹${unitNet.toFixed(2)} after ${li.discPct}% off)`
+      : `${name} × ${qty} — ₹${li.price.toFixed(2)} each`;
+    return { name, qty, text };
+  });
+
+  return { productLines, oosItems };
+}
+
+function sendConfirmWhatsApp(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const totals = computeOrderTotals(o);
+  const preview = computeConfirmPreview(o);
+  const { productLines, oosItems } = buildConfirmLines(o, totals);
+
+  let lines = productLines.map(l => `• ${l.text}`).join('\n');
+  let oosLine = oosItems.length ? `\n\n_Unavailable, removed from your order:_\n${oosItems.map(n => `• ${n}`).join('\n')}` : '';
+  let discountLine = totals.discountAmt > 0 ? `\nDiscount applied: ${effectiveDiscPct(totals)}%` : '';
+
+  // Shipping/same-day-delivery aren't part of computeOrderTotals()/
+  // grandTotal (same as the old Delivery Charge column, kept out of the
+  // GST-invoiced total), but they're still owed — must be added here and to
+  // the UPI link, or the amount the customer is asked to pay silently comes
+  // up short whenever either applies.
+  const shipCharge = orderShippingCharge(o, totals);
+  const sameDayCharge = orderSameDayCharge(o);
+  const payable = Math.round((totals.grandTotal + shipCharge + sameDayCharge) * 100) / 100;
+  const shipLine = shipCharge > 0 ? `\nShipping: ₹${shipCharge.toLocaleString('en-IN')}` : '\nShipping: Free';
+  const sameDayLine = sameDayCharge > 0 ? `\nSame-day delivery: ₹${sameDayCharge.toLocaleString('en-IN')}` : '';
+
+  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`);
+
+  const msg = `🌿 *Purnavah — Order Confirmation*
+
+Hi ${o.customerName}, here's your confirmed order (${preview.totalQty} item${preview.totalQty !== 1 ? 's' : ''}, approx. ${preview.estWeight} kg):
+
+${lines}${oosLine}
+${discountLine}${shipLine}${sameDayLine}
+*Total payable: ₹${payable.toLocaleString('en-IN')}*
+
+💳 Pay via UPI: ${upiLink}
+(tap this link on your phone to open GPay/PhonePe/Paytm with the amount pre-filled)
+
+Delivery to: ${o.address}, ${o.pincode}
+
+Thank you for choosing Purnavah! 🙏`;
+
+  const phone = o.phone.length === 10 ? '91' + o.phone : o.phone;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function sendConfirmEmail(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const emailInput = document.getElementById('confirmEmailInput');
+  const email = (emailInput ? emailInput.value : o.email || '').trim();
+  if (!email) { toast('No email address on file — type one in the modal first', true); return; }
+
+  const totals = computeOrderTotals(o);
+  const preview = computeConfirmPreview(o);
+  const { productLines, oosItems } = buildConfirmLines(o, totals);
+
+  let lines = productLines.map(l => l.text).join('\n');
+  let oosLine = oosItems.length ? `\n\nUnavailable, removed from your order:\n${oosItems.map(n => n).join('\n')}` : '';
+  let discountLine = totals.discountAmt > 0 ? `\nDiscount applied: ${effectiveDiscPct(totals)}%` : '';
+
+  // See sendConfirmWhatsApp() — shipping/same-day-delivery are owed but not part of grandTotal.
+  const shipCharge = orderShippingCharge(o, totals);
+  const sameDayCharge = orderSameDayCharge(o);
+  const payable = Math.round((totals.grandTotal + shipCharge + sameDayCharge) * 100) / 100;
+  const shipLine = shipCharge > 0 ? `\nShipping: Rs ${shipCharge.toLocaleString('en-IN')}` : '\nShipping: Free';
+  const sameDayLine = sameDayCharge > 0 ? `\nSame-day delivery: Rs ${sameDayCharge.toLocaleString('en-IN')}` : '';
+
+  const subject = `Purnavah — Order Confirmation (${o.gaplOrderId || (o.orderRef || '').slice(0, 8)})`;
+  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`);
+  const body = `Hi ${o.customerName},
+
+Here's your confirmed order (${preview.totalQty} item${preview.totalQty !== 1 ? 's' : ''}, approx. ${preview.estWeight} kg):
+
+${lines}${oosLine}
+${discountLine}${shipLine}${sameDayLine}
+Total payable: Rs ${payable.toLocaleString('en-IN')}
+
+Pay via UPI: ${upiLink}
+(Tap the link above on your phone to open GPay/PhonePe/Paytm with the amount pre-filled.)
+
+Delivery to: ${o.address}, ${o.pincode}
+
+Thank you for choosing Purnavah!`;
+
+  window.open(`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+}
+
+// ── Confirm modal (Phase 4 / Issue 9) ──────────────────────────────
+let confirmModalRowIndex = null;
+let confirmModalComms = 'whatsapp'; // 'whatsapp' | 'email' | 'both' | 'skip' — Skip is a first-class choice, not just "click nothing"
+
+function openConfirmModal(rowIndex) {
+  // Defense in depth — the "Confirm"/"Retry stock decrement" buttons are
+  // already disabled while dirty (renderStatusSection), but guard the action
+  // itself too in case it's ever reached another way. Confirming locks in
+  // items against the catalog and decrements stock — it must never run
+  // against edits that haven't actually been saved yet.
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  if (o && isDirty(o)) { toast('Update order (save your changes) before confirming', true); return; }
+  confirmModalRowIndex = rowIndex;
+  confirmModalComms = 'whatsapp';
+  renderConfirmModal();
+  document.getElementById('confirmModalOverlay').style.display = 'flex';
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModalOverlay').style.display = 'none';
+  confirmModalRowIndex = null;
+}
+
+function setConfirmComms(choice) {
+  confirmModalComms = choice;
+  renderConfirmModal();
+}
+
+function renderConfirmModal() {
+  const o = orders.find(x => x.rowIndex === confirmModalRowIndex);
+  if (!o) return;
+  const ed = getEdit(o);
+  const totals = computeOrderTotals(o);
+  const preview = computeConfirmPreview(o);
+  const { productLines } = buildConfirmLines(o, totals);
+
+  const itemRows = productLines.map(p => `<div class="confirm-preview-row"><span>${escapeHtml(p.name)} × ${p.qty}</span></div>`).join('');
+
+  const choices = [
+    { key: 'whatsapp', label: 'Send WhatsApp' },
+    { key: 'email', label: 'Send Email' },
+    { key: 'both', label: 'Send Both' },
+    { key: 'skip', label: 'Skip' }
+  ];
+  const choiceButtons = choices.map(c =>
+    `<div class="comms-choice ${confirmModalComms === c.key ? 'active' : ''}" onclick="setConfirmComms('${c.key}')">${c.label}</div>`
+  ).join('');
+
+  const retryNote = (o.status === 'Confirmed' && o.stockDecremented === false)
+    ? `<div style="font-size:11.5px;color:var(--amber);margin-top:8px">Retrying a previously failed stock decrement — a new GAPL Order ID will not be assigned since one already exists.</div>`
+    : '';
+
+  // Shipping/same-day-delivery are deliberately excluded from
+  // computeOrderTotals()/grandTotal (same precedent as the old Delivery
+  // Charge column — not part of the GST-invoiced total), but the customer
+  // still owes them — the amount quoted here and the UPI link built from it
+  // must include both, or the business silently under-collects.
+  const shipCharge = orderShippingCharge(o, totals);
+  const sameDayCharge = orderSameDayCharge(o);
+  const payable = Math.round((totals.grandTotal + shipCharge + sameDayCharge) * 100) / 100;
+
+  // Same link that gets embedded as plain text in the outgoing WhatsApp/email
+  // draft below — shown here as an actual clickable <a> so the admin can
+  // verify/tap it themselves before sending, instead of only ever seeing it
+  // as raw URL text once it's already in the outgoing message.
+  const upiLink = buildUpiPayLink(payable, `Order ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}`);
+
+  document.getElementById('confirmModalBody').innerHTML = `
+    <div style="margin-bottom:10px;font-size:13px;color:var(--stone)">${escapeHtml(o.customerName || '')} · ${escapeHtml(o.phone || '')}</div>
+    ${itemRows}
+    ${retryNote}
+    <div style="margin-top:12px;background:#fff;border:1px solid var(--rule);border-radius:6px;padding:12px 14px;font-size:13px">
+      <div class="totals-row"><span>Total items</span><span>${preview.totalQty}</span></div>
+      <div class="totals-row"><span>Est. weight</span><span>${preview.estWeight} kg</span></div>
+      ${totals.discountAmt > 0 ? `<div class="totals-row"><span>Discount</span><span>− ₹${totals.discountAmt.toLocaleString('en-IN')}</span></div>` : ''}
+      <div class="totals-row"><span>Shipping</span><span>${shipCharge > 0 ? `₹${shipCharge.toLocaleString('en-IN')}` : 'Free'}</span></div>
+      ${sameDayCharge > 0 ? `<div class="totals-row"><span>Same-day delivery</span><span>₹${sameDayCharge.toLocaleString('en-IN')}</span></div>` : ''}
+      <div class="totals-row final"><span>Total payable</span><span>₹${payable.toLocaleString('en-IN')}</span></div>
+      <div class="totals-row"><span>Payment link</span><span><a href="${upiLink}" target="_blank" rel="noopener">Pay via UPI ↗</a></span></div>
+    </div>
+    <div class="panel-label" style="margin-top:14px">How should we notify the customer?</div>
+    <div class="comms-choice-row">${choiceButtons}</div>
+    ${(confirmModalComms === 'email' || confirmModalComms === 'both') ? `
+      <div class="field-row"><label>Email</label><input type="email" id="confirmEmailInput" value="${escAttr(o.email || '')}" placeholder="customer@example.com"></div>
+    ` : ''}
+  `;
+
+  document.getElementById('confirmModalActions').innerHTML = `
+    <button class="btn btn-secondary btn-sm" onclick="closeConfirmModal()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="submitConfirmModal()">Confirm order</button>`;
+}
+
+async function submitConfirmModal() {
+  const rowIndex = confirmModalRowIndex;
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  if (!o) return;
+
+  if (confirmModalComms === 'email' || confirmModalComms === 'both') {
+    const emailInput = document.getElementById('confirmEmailInput');
+    const email = (emailInput ? emailInput.value : '').trim();
+    if (!email) { toast('Enter an email address, or choose WhatsApp/Skip instead', true); return; }
+    o.email = email; // remember locally so the draft below and any later re-send use it
+  }
+
+  if (confirmModalComms === 'whatsapp' || confirmModalComms === 'both') sendConfirmWhatsApp(rowIndex);
+  if (confirmModalComms === 'email' || confirmModalComms === 'both') sendConfirmEmail(rowIndex);
+
+  closeConfirmModal();
+  await doConfirmOrder(rowIndex);
+}
+
+const HOME_STATE = "Chhattisgarh"; // GAPL's registered state — determines IGST vs CGST+SGST
+
+async function generateInvoice(rowIndex) {
+  const o = orders.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(o);
+
+  // Defense in depth — the invoice buttons are already disabled while dirty
+  // (renderBody/renderInvoiceSection), but block the action itself too.
+  // Generating/refreshing an invoice recomputes Final Total from live edit
+  // state but does NOT persist item qty/OOS/deleted changes (only
+  // updateOrderVersion's `items` payload does that) — invoicing while dirty
+  // would let Final Total silently drift ahead of what the sheet's item
+  // columns actually say.
+  if (isDirty(o)) { toast('Update order (save your changes) before generating an invoice', true); return; }
+
+  const totals = computeOrderTotals(o);
+
+  if (totals.unknownItems.length > 0) {
+    toast('Cannot generate invoice — missing price for: ' + totals.unknownItems.join(', '), true);
+    return;
+  }
+
+  // Open the window synchronously so browsers don't treat it as a blocked popup
+  // once we start awaiting the invoice-number fetch below.
+  const win = window.open('', '_blank');
+  if (win) win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">Generating invoice…</p>');
+
+  let invoiceNo = o.invoiceNo;
+  if (!invoiceNo) {
+    try {
+      const res = await fetch(apiUrl(), {
+        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ key: apiKey(), action: 'getNextInvoiceNo' })
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message || 'Could not get invoice number');
+      invoiceNo = data.invoiceNo;
+    } catch (err) {
+      toast('Could not get invoice number: ' + err.message, true);
+      if (win) win.close();
+      return;
+    }
+  }
+
+  const today = new Date();
+  const dueDate = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000);
+  const fmt = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // Catalog-based GST (Issue 1/C) — lineItems/isIntraState/etc. all come from
+  // the same computeOrderTotals() the pricing panel and payment default use,
+  // so the invoice can never disagree with what admin.html displayed.
+  const isIntraState = totals.isIntraState;
+  const lineItems = totals.lineItems;
+  const oosLineItems = Array.from(ed.oos).map(name => ({ name, qty: o.items[name] }));
+
+  // "Sub Total" on the printed invoice is the pre-discount taxable total
+  // (Σ Rate × Qty, ex-GST) — NOT totals.subtotal (the tax-inclusive MRP
+  // figure shown in admin.html's own side panel), so Sub Total − Discount =
+  // Taxable Value reconciles on the document itself. See the `rate` field
+  // added in computeOrderTotals().
+  const subTotal = Math.round((totals.taxable + totals.discountAmt) * 100) / 100;
+  const discountAmt = totals.discountAmt;
+  const taxableValue = totals.taxable;
+  const totalCgst = totals.cgst;
+  const totalSgst = totals.sgst;
+  const totalIgst = totals.igst;
+  const totalGst = totals.totalGst;
+  const grandTotal = totals.grandTotal;
+
+  // Don't downgrade an already Paid/Partially Paid invoice just because it was reprinted.
+  const newInvoiceStatus = ['Paid','Partially Paid'].includes(o.invoiceStatus) ? o.invoiceStatus : 'Unpaid';
+  const payCfg = PAYMENT_STATES[newInvoiceStatus] || PAYMENT_STATES.Unpaid;
+  const paymentReceived = (computePaymentState(o) === 'Paid') ? { mode: o.paymentMode, ref: o.paymentRef, date: o.paymentDate, amount: o.amountPaid } : null;
+  // Reprinting an invoice for an order that's already moved past "Invoiced"
+  // (Packed & Shipped / Delivered) must not regress it back to "Invoiced".
+  const newOrderStatus = ['Packed & Shipped','Delivered','Cancelled'].includes(o.status) ? o.status : 'Invoiced';
+
+  const html = buildInvoiceHtml({
+    invoiceNo, date: fmt(today), dueDate: fmt(dueDate),
+    customer: o, lineItems, oosLineItems, subTotal, discountAmt, taxableValue,
+    totalCgst, totalSgst, totalIgst, totalGst, grandTotal, isIntraState,
+    invoiceBadge: { label: payCfg.label.toUpperCase(), bg: payCfg.bg, color: payCfg.color },
+    paymentReceived
+  });
+
+  if (win) { win.document.open(); win.document.write(html); win.document.close(); }
+
+  // Persist invoice fields back to sheet (fire and forget — invoice is already shown)
+  const url = apiUrl(), key = apiKey();
+  fetch(url, {
+    method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({
+      key, action: 'update', rowIndex,
+      allowFinalTotalUpdate: true, // generateInvoice() is the one flow allowed to (re)compute Final Total, even on a reprint
+      fields: {
+        'Status': newOrderStatus,
+        'Invoice No': invoiceNo,
+        'Invoice Date': todayDDMMYYYY(),
+        'Invoice Status': newInvoiceStatus,
+        'Invoice Sent Date': o.invoiceSentDate || todayDDMMYYYY(),
+        'Discount %': effectiveDiscPct(totals),
+        'Discount Amount': discountAmt,
+        'Final Total': grandTotal,
+        'Order Total': subTotal, // keep in sync with the recalculated subtotal, same as updateOrderVersion()
+        'Item Discounts JSON': JSON.stringify(ed.itemDiscounts),
+        'Item Price Overrides JSON': JSON.stringify(ed.itemPriceOverrides)
+      }
+    })
+  }).then(r => r.json()).then(d => {
+    if (d.status === 'ok') {
+      o.invoiceNo = invoiceNo; o.invoiceDate = todayDDMMYYYY(); o.invoiceStatus = newInvoiceStatus;
+      o.invoiceSentDate = o.invoiceSentDate || todayDDMMYYYY();
+      o.discountPct = effectiveDiscPct(totals); o.discountAmount = discountAmt;
+      o.finalTotal = grandTotal;
+      o.orderTotal = subTotal;
+      o.status = newOrderStatus; ed.status = newOrderStatus;
+      syncSavedState(o);
+      toast('Invoice ' + invoiceNo + ' generated');
+      render(); reExpand(rowIndex);
+    }
+  }).catch(() => toast('Invoice opened, but failed to save status to sheet', true));
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(s) {
+  return String(s).replace(/'/g, "\\'");
+}
+</script>
+</body>
+</html>

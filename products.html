@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Product Catalog Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1C1B17;
+  --moss:#3A5428;
+  --moss-mid:#527A3B;
+  --moss-lt:#EDF2E8;
+  --earth:#7C5C3A;
+  --cream:#F5F0E8;
+  --parchment:#EDE6D6;
+  --rule:#C8BFA8;
+  --stone:#7A6F61;
+  --white:#FDFCF9;
+  --red:#B91C1C;
+  --red-lt:#FBECEC;
+  --amber:#9A6B0F;
+  --amber-lt:#FBF3E1;
+  --wa:#25D366;
+}
+html{scroll-behavior:smooth}
+body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ── LAYOUT ── */
+.app{max-width:1500px;margin:0 auto;padding:0 24px 80px}
+.topbar{background:var(--ink);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar-inner{max-width:1500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#A89E8E}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
+.conn-dot.ok{background:var(--wa)}
+.conn-dot.err{background:var(--red)}
+.conn-status{font-size:12px;color:#A89E8E;display:flex;align-items:center}
+.nav-link{color:#A89E8E;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.nav-link:hover{color:var(--cream)}
+
+/* ── KEY SETUP BAR ── */
+.setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+.setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
+.setup-hint{font-size:11.5px;color:var(--stone);margin-top:6px;flex-basis:100%}
+
+/* ── BUTTONS ── */
+.btn{font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--moss);color:#fff}
+.btn-primary:hover{background:#2d4020}
+.btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
+.btn-secondary:hover{border-color:var(--moss);color:var(--moss)}
+.btn-danger{background:var(--white);color:var(--red);border-color:var(--red)}
+.btn-danger:hover{background:var(--red-lt)}
+.btn-ghost{background:transparent;color:var(--stone);border-color:transparent;padding:6px 10px}
+.btn-ghost:hover{color:var(--ink);background:var(--parchment)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{font-size:12px;padding:6px 12px}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px}
+.stat-num{font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:var(--moss)}
+.stat-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin-top:2px}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+.filter-chip{padding:7px 14px;border-radius:20px;border:1.5px solid var(--rule);background:var(--white);font-size:12.5px;font-weight:600;color:var(--stone);cursor:pointer;transition:all .12s;white-space:nowrap}
+.filter-chip.active{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+.search-input{flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--parchment);border-radius:20px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:var(--white)}
+.search-input:focus{outline:none;border-color:var(--moss)}
+select.filter-select{padding:8px 12px;border-radius:20px;border:1.5px solid var(--rule);background:var(--white);font-size:12.5px;font-family:'Hanken Grotesk',sans-serif;color:var(--ink)}
+
+/* ── ADD PANEL ── */
+.add-panel{background:var(--white);border:1.5px solid var(--moss);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:none}
+.add-panel.show{display:block}
+.add-panel h3{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin-bottom:14px}
+.add-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.add-grid .field-full{grid-column:1/-1}
+.add-grid label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-bottom:5px}
+.add-grid input,.add-grid select{width:100%;padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.add-grid input:focus,.add-grid select:focus{outline:none;border-color:var(--moss)}
+.add-actions{display:flex;gap:8px;margin-top:16px}
+.wa-preview{font-size:11.5px;color:var(--stone);margin-top:10px;font-style:italic}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow-x:auto}
+table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1150px}
+.catalog-table th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);padding:10px 10px;border-bottom:1.5px solid var(--rule);background:var(--parchment);position:sticky;top:0;white-space:nowrap}
+.catalog-table td{padding:8px 10px;border-bottom:1px solid var(--parchment);vertical-align:middle}
+.catalog-table tr:last-child td{border-bottom:none}
+.catalog-table tr.inactive-row{background:#FAF8F4;color:var(--stone)}
+.catalog-table input,.catalog-table select{width:100%;padding:6px 8px;border:1.5px solid var(--parchment);border-radius:5px;font-size:12.5px;font-family:'Hanken Grotesk',sans-serif;background:#fff}
+.catalog-table input:focus,.catalog-table select:focus{outline:none;border-color:var(--moss)}
+.catalog-table input.num{text-align:right}
+.col-name{min-width:170px;font-weight:600}
+.col-narrow{width:80px}
+.col-mid{width:110px}
+.col-mrp{width:115px}
+.col-check{width:34px;text-align:center}
+.col-check input{cursor:pointer;width:16px;height:16px}
+.row-actions{display:flex;gap:6px;white-space:nowrap}
+
+/* ── BULK ACTIONS BAR ── */
+.bulk-bar{display:none;align-items:center;gap:12px;background:var(--moss-lt);border:1.5px solid var(--moss);border-radius:8px;padding:10px 16px;margin-bottom:14px}
+.bulk-bar.show{display:flex}
+.bulk-count{font-size:12.5px;font-weight:700;color:var(--moss);margin-right:auto}
+.badge-active{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:4px;background:var(--moss-lt);color:var(--moss)}
+.badge-inactive{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:4px;background:var(--red-lt);color:var(--red)}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--stone)}
+.empty-state h3{font-family:'Fraunces',serif;font-size:20px;color:var(--ink);margin-bottom:6px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--cream);padding:14px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:100;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--red)}
+.toast.success{background:var(--moss)}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+
+.notice-bar{background:var(--amber-lt);border:1.5px solid var(--amber);border-radius:8px;padding:10px 16px;margin-bottom:18px;font-size:12.5px;font-weight:600;color:var(--amber)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-name">Purnavah</div>
+      <div class="brand-tag">Product Catalog Admin</div>
+    </div>
+    <div class="topbar-actions">
+      <a class="nav-link" href="admin.html">← Orders</a>
+      <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
+      <button class="btn btn-secondary btn-sm" onclick="loadProducts()">↻ Refresh</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="setup-bar" id="setupBar">
+    <div style="flex:2;min-width:260px">
+      <label>Apps Script Web App URL (Catalog sheet)</label><br>
+      <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec">
+    </div>
+    <div style="flex:1;min-width:180px">
+      <label>Admin Key</label><br>
+      <input type="password" id="adminKey" placeholder="your admin key" value="">
+    </div>
+    <button class="btn btn-primary" onclick="loadProducts()" id="connectBtn">Connect</button>
+    <div class="setup-hint">Uses the same admin key as the Orders admin. Deploy <code>google-apps-script/catalog_code.gs</code> against your Catalog sheet and paste its Web App URL here — see the comment header in that file for step-by-step deploy instructions.</div>
+  </div>
+
+  <div class="stats-row" id="statsRow" style="display:none">
+    <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total products</div></div>
+    <div class="stat-card"><div class="stat-num" id="statActive">0</div><div class="stat-label">Active</div></div>
+    <div class="stat-card"><div class="stat-num" id="statInactive">0</div><div class="stat-label">Inactive / OOS</div></div>
+    <div class="stat-card"><div class="stat-num" id="statCategories">0</div><div class="stat-label">Categories</div></div>
+  </div>
+
+  <div id="mainArea" style="display:none">
+    <div class="notice-bar">⚠️ After updating catalog Excel, please refresh the sheet.</div>
+    <div class="toolbar">
+      <div class="filter-bar" style="margin-bottom:0;flex:1">
+        <div class="filter-chip active" data-filter="all" onclick="setFilter('all')">All</div>
+        <div class="filter-chip" data-filter="active" onclick="setFilter('active')">Active</div>
+        <div class="filter-chip" data-filter="inactive" onclick="setFilter('inactive')">Inactive</div>
+        <select class="filter-select" id="categoryFilter" onchange="render()">
+          <option value="">All categories</option>
+        </select>
+        <input class="search-input" id="searchInput" placeholder="Search product or display name…" oninput="render()">
+      </div>
+      <button class="btn btn-primary" onclick="toggleAddPanel()">+ Add product</button>
+    </div>
+
+    <div class="add-panel" id="addPanel">
+      <h3>New product</h3>
+      <div class="add-grid">
+        <div>
+          <label>Product Name *</label>
+          <input type="text" id="add-productName" placeholder="Internal key, e.g. Mustard Oil Organic 1L">
+        </div>
+        <div>
+          <label>Category *</label>
+          <input type="text" id="add-category" list="categoryList" placeholder="e.g. Ghee">
+        </div>
+        <div>
+          <label>Display Name *</label>
+          <input type="text" id="add-displayName" placeholder="Shown to customers" oninput="updateWaPreview()">
+        </div>
+        <div>
+          <label>Unit</label>
+          <input type="text" id="add-unit" placeholder="L, kg, ml, box">
+        </div>
+        <div>
+          <label>Pack Size</label>
+          <input type="text" id="add-packSize" placeholder="1 L, 500 g" oninput="updateWaPreview()">
+        </div>
+        <div>
+          <label>MRP (₹) *</label>
+          <input type="number" id="add-mrp" min="0" step="0.01">
+        </div>
+        <div>
+          <label>HSN/SAC</label>
+          <input type="text" id="add-hsn">
+        </div>
+        <div>
+          <label>GST %</label>
+          <input type="number" id="add-gstPct" min="0" step="0.01">
+        </div>
+        <div>
+          <label>Stock</label>
+          <input type="number" id="add-stock" min="0" value="0">
+        </div>
+        <div>
+          <label>Active</label>
+          <select id="add-active">
+            <option value="Y">Y</option>
+            <option value="N" selected>N</option>
+          </select>
+        </div>
+        <div class="field-full">
+          <label>Notes</label>
+          <input type="text" id="add-notes" placeholder="Optional">
+        </div>
+        <div>
+          <label>Max Order Qty (kg)</label>
+          <input type="number" id="add-maxOrderKg" min="0" step="0.01" placeholder="Blank = no limit">
+        </div>
+        <div class="field-full">
+          <label>Contents</label>
+          <input type="text" id="add-contents" placeholder="For bundles, e.g. Turmeric 50g, Red Chilli 50g, Coriander 50g, Garam Masala 50g — optional">
+        </div>
+      </div>
+      <div class="wa-preview" id="waPreview">WA Key preview: —</div>
+      <div class="add-actions">
+        <button class="btn btn-primary btn-sm" onclick="addProduct()">Save new product</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleAddPanel(false)">Cancel</button>
+      </div>
+    </div>
+
+    <div class="bulk-bar" id="bulkBar">
+      <span class="bulk-count" id="bulkCount">0 selected</span>
+      <button class="btn btn-danger btn-sm" onclick="bulkDelete()">🗑 Delete selected</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearSelection()">Clear</button>
+    </div>
+
+    <div id="tableContainer"></div>
+  </div>
+
+  <div id="notConnected">
+    <div class="empty-state">
+      <h3>Not connected yet</h3>
+      <p>Enter your Catalog Apps Script Web App URL and admin key above, then click Connect.</p>
+    </div>
+  </div>
+
+</div>
+
+<datalist id="categoryList"></datalist>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let products = [];
+let editState = {}; // rowIndex -> cloned editable fields
+let currentFilter = 'all';
+let selectedRows = new Set();
+let sortDir = 'asc'; // Product Name sort direction
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : ' success');
+  setTimeout(() => t.className = 'toast', 2600);
+}
+
+function apiUrl() { return document.getElementById('webhookUrl').value.trim(); }
+function apiKey() { return document.getElementById('adminKey').value.trim(); }
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(s) { return String(s == null ? '' : s).replace(/'/g, "\\'"); }
+
+function computeWaKey(displayName, packSize) {
+  displayName = (displayName || '').trim();
+  packSize = (packSize || '').trim();
+  return packSize ? `${displayName} (${packSize})` : displayName;
+}
+
+async function loadProducts() {
+  const url = apiUrl(), key = apiKey();
+  if (!url || !key) { toast('Enter both URL and admin key', true); return; }
+
+  document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
+  document.getElementById('connectBtn').disabled = true;
+  document.getElementById('connDot').className = 'conn-dot';
+  document.getElementById('connText').textContent = 'Connecting…';
+
+  try {
+    const res = await fetch(`${url}?action=list&key=${encodeURIComponent(key)}`);
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
+
+    products = data.data;
+    editState = {};
+    selectedRows.clear();
+
+    document.getElementById('connDot').className = 'conn-dot ok';
+    document.getElementById('connText').textContent = `Connected · ${products.length} products`;
+    document.getElementById('statsRow').style.display = 'grid';
+    document.getElementById('mainArea').style.display = 'block';
+    document.getElementById('notConnected').style.display = 'none';
+    populateCategoryOptions();
+    toast('Catalog loaded');
+    render();
+  } catch (err) {
+    document.getElementById('connDot').className = 'conn-dot err';
+    document.getElementById('connText').textContent = 'Connection failed';
+    document.getElementById('mainArea').style.display = 'none';
+    document.getElementById('notConnected').style.display = 'block';
+    document.getElementById('notConnected').innerHTML = `
+      <div class="empty-state">
+        <h3>Couldn't connect</h3>
+        <p>${escapeHtml(err.message)}</p>
+        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Catalog Apps Script is deployed as a Web App with "Anyone" access, (2) the admin key matches what's in the script, (3) the "Catalog" sheet tab exists with the expected header row.</p>
+      </div>`;
+    toast('Failed to load: ' + err.message, true);
+  } finally {
+    document.getElementById('connectBtn').innerHTML = 'Connect';
+    document.getElementById('connectBtn').disabled = false;
+  }
+}
+
+// Known category codes (Issue 3) — matches index.html's CATEGORY_LABELS
+// keys exactly, so an admin adding the first Spices product sees the right
+// preset instead of guessing/mistyping the code string index.html expects.
+const KNOWN_CATEGORIES = [
+  'Oils - Organic', 'Oils - Regular', 'Ghee', 'Flour', 'Dal', 'Rice',
+  'Spices - Whole', 'Spices - Ground'
+];
+
+function populateCategoryOptions() {
+  const existingCats = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
+
+  const filterSel = document.getElementById('categoryFilter');
+  const currentVal = filterSel.value;
+  filterSel.innerHTML = '<option value="">All categories</option>' +
+    existingCats.map(c => `<option value="${escAttr(c)}">${escapeHtml(c)}</option>`).join('');
+  filterSel.value = currentVal;
+
+  // The add/edit datalist also suggests the known presets even before any
+  // product uses them yet, on top of whatever categories already exist.
+  const suggestedCats = [...new Set([...KNOWN_CATEGORIES, ...existingCats])].sort();
+  document.getElementById('categoryList').innerHTML = suggestedCats.map(c => `<option value="${escAttr(c)}">`).join('');
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+  render();
+}
+
+function toggleSort() {
+  sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  render();
+}
+
+function getEdit(p) {
+  if (!editState[p.rowIndex]) {
+    editState[p.rowIndex] = {
+      category: p.category, displayName: p.displayName, unit: p.unit, packSize: p.packSize,
+      mrp: p.mrp, hsn: p.hsn, gstPct: p.gstPct, stock: p.stock, active: p.active, notes: p.notes,
+      contents: p.contents, maxOrderKg: p.maxOrderKg
+    };
+  }
+  return editState[p.rowIndex];
+}
+
+function render() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const catFilter = document.getElementById('categoryFilter').value;
+
+  let filtered = products.filter(p => {
+    const ed = getEdit(p);
+    if (currentFilter === 'active' && ed.active !== 'Y') return false;
+    if (currentFilter === 'inactive' && ed.active === 'Y') return false;
+    if (catFilter && ed.category !== catFilter) return false;
+    if (search) {
+      const hay = (p.productName + ' ' + ed.displayName).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => a.productName.localeCompare(b.productName) * (sortDir === 'asc' ? 1 : -1));
+
+  document.getElementById('statTotal').textContent = products.length;
+  document.getElementById('statActive').textContent = products.filter(p => getEdit(p).active === 'Y').length;
+  document.getElementById('statInactive').textContent = products.filter(p => getEdit(p).active !== 'Y').length;
+  document.getElementById('statCategories').textContent = new Set(products.map(p => p.category).filter(Boolean)).size;
+
+  const container = document.getElementById('tableContainer');
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><h3>No products match</h3><p>Try a different filter or search term.</p></div>`;
+    updateBulkBar();
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table class="catalog-table">
+        <thead>
+          <tr>
+            <th class="col-check"><input type="checkbox" id="selectAllChk" onchange="toggleSelectAll(this.checked)"></th>
+            <th class="col-narrow">Product ID</th>
+            <th class="col-name" style="cursor:pointer" onclick="toggleSort()" title="Click to sort">Product Name ${sortDir === 'asc' ? '▲' : '▼'}</th>
+            <th class="col-mid">Category</th>
+            <th class="col-name">Display Name</th>
+            <th class="col-narrow">Unit</th>
+            <th class="col-mid">Pack Size</th>
+            <th class="col-mrp">MRP</th>
+            <th class="col-mid">HSN/SAC</th>
+            <th class="col-narrow">GST%</th>
+            <th class="col-narrow">Stock</th>
+            <th class="col-narrow">Active</th>
+            <th class="col-mid">Max Qty (kg)</th>
+            <th>Notes</th>
+            <th>Contents</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>${filtered.map(renderRow).join('')}</tbody>
+      </table>
+    </div>`;
+
+  const selectAllChk = document.getElementById('selectAllChk');
+  const visibleSelected = filtered.filter(p => selectedRows.has(p.rowIndex)).length;
+  selectAllChk.checked = filtered.length > 0 && visibleSelected === filtered.length;
+  selectAllChk.indeterminate = visibleSelected > 0 && visibleSelected < filtered.length;
+  updateBulkBar();
+}
+
+function renderRow(p) {
+  const ed = getEdit(p);
+  return `
+    <tr class="${ed.active !== 'Y' ? 'inactive-row' : ''}" id="row-${p.rowIndex}">
+      <td class="col-check"><input type="checkbox" class="row-check" data-row="${p.rowIndex}" ${selectedRows.has(p.rowIndex) ? 'checked' : ''} onchange="toggleRowSelect(${p.rowIndex}, this.checked)"></td>
+      <td class="col-narrow" style="font-family:monospace;font-size:11px;color:var(--stone)" title="Auto-generated — not editable">${escapeHtml(p.productId || '—')}</td>
+      <td class="col-name" title="Internal key — not editable to avoid breaking existing order history">${escapeHtml(p.productName)}</td>
+      <td><input type="text" list="categoryList" value="${escAttr(ed.category)}" onchange="updateField(${p.rowIndex}, 'category', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.displayName)}" onchange="updateField(${p.rowIndex}, 'displayName', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.unit)}" onchange="updateField(${p.rowIndex}, 'unit', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.packSize)}" onchange="updateField(${p.rowIndex}, 'packSize', this.value)"></td>
+      <td class="col-mrp"><input type="number" class="num" min="0" step="0.01" value="${ed.mrp}" onchange="updateField(${p.rowIndex}, 'mrp', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.hsn)}" onchange="updateField(${p.rowIndex}, 'hsn', this.value)"></td>
+      <td><input type="number" class="num" min="0" step="0.01" value="${ed.gstPct}" onchange="updateField(${p.rowIndex}, 'gstPct', this.value)"></td>
+      <td><input type="number" class="num" min="0" value="${ed.stock}" onchange="updateField(${p.rowIndex}, 'stock', this.value)"></td>
+      <td>
+        <select onchange="updateField(${p.rowIndex}, 'active', this.value)">
+          <option value="Y" ${ed.active === 'Y' ? 'selected' : ''}>Y</option>
+          <option value="N" ${ed.active !== 'Y' ? 'selected' : ''}>N</option>
+        </select>
+      </td>
+      <td><input type="number" class="num" min="0" step="0.01" value="${ed.maxOrderKg}" placeholder="No limit" onchange="updateField(${p.rowIndex}, 'maxOrderKg', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.notes)}" onchange="updateField(${p.rowIndex}, 'notes', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.contents)}" placeholder="e.g. Turmeric 50g, Red Chilli 50g…" onchange="updateField(${p.rowIndex}, 'contents', this.value)"></td>
+      <td class="row-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveRow(${p.rowIndex})">Save</button>
+      </td>
+    </tr>`;
+}
+
+function updateField(rowIndex, field, val) {
+  const p = products.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(p);
+  if (field === 'mrp' || field === 'gstPct' || field === 'stock' || field === 'maxOrderKg') {
+    ed[field] = Math.max(0, parseFloat(val) || 0);
+  } else {
+    ed[field] = val;
+  }
+  render();
+}
+
+function toggleRowSelect(rowIndex, checked) {
+  if (checked) selectedRows.add(rowIndex); else selectedRows.delete(rowIndex);
+  updateBulkBar();
+  const selectAllChk = document.getElementById('selectAllChk');
+  if (selectAllChk) {
+    const rowChecks = document.querySelectorAll('.row-check');
+    const checkedCount = document.querySelectorAll('.row-check:checked').length;
+    selectAllChk.checked = rowChecks.length > 0 && checkedCount === rowChecks.length;
+    selectAllChk.indeterminate = checkedCount > 0 && checkedCount < rowChecks.length;
+  }
+}
+
+function toggleSelectAll(checked) {
+  document.querySelectorAll('.row-check').forEach(chk => {
+    const rowIndex = parseInt(chk.dataset.row, 10);
+    chk.checked = checked;
+    if (checked) selectedRows.add(rowIndex); else selectedRows.delete(rowIndex);
+  });
+  updateBulkBar();
+}
+
+function clearSelection() {
+  selectedRows.clear();
+  render();
+}
+
+function updateBulkBar() {
+  const count = selectedRows.size;
+  document.getElementById('bulkBar').classList.toggle('show', count > 0);
+  document.getElementById('bulkCount').textContent = `${count} selected`;
+}
+
+async function saveRow(rowIndex) {
+  const p = products.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(p);
+  const url = apiUrl(), key = apiKey();
+
+  const fields = {
+    'Category': ed.category, 'Display Name': ed.displayName, 'Unit': ed.unit,
+    'Pack Size': ed.packSize, 'MRP': ed.mrp, 'HSN/SAC': ed.hsn, 'GST%': ed.gstPct,
+    'Stock': ed.stock, 'Active': ed.active, 'Notes': ed.notes, 'Contents': ed.contents,
+    'Max Order Qty (kg)': ed.maxOrderKg
+  };
+
+  try {
+    // Identified by Product ID, not rowIndex — a row can shift position
+    // (another admin's add/delete) between page load and this save, and
+    // Product ID is the same stable identifier confirmOrder_/decrementStock_
+    // already rely on for stock updates.
+    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ key, action: 'update', productId: p.productId, fields }) });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+    Object.assign(p, ed);
+    p.waKey = computeWaKey(ed.displayName, ed.packSize);
+    populateCategoryOptions();
+    toast('✅ ' + p.productName + ' saved successfully');
+    render();
+  } catch (err) {
+    toast('Save failed: ' + err.message, true);
+  }
+}
+
+async function bulkDelete() {
+  const rows = [...selectedRows].map(idx => products.find(p => p.rowIndex === idx)).filter(Boolean);
+  if (rows.length === 0) return;
+  if (!confirm(`Permanently delete ${rows.length} product${rows.length === 1 ? '' : 's'} from the catalog sheet? This can't be undone.`)) return;
+
+  const url = apiUrl(), key = apiKey();
+  let okCount = 0, failCount = 0;
+  for (const p of rows) {
+    try {
+      const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ key, action: 'delete', productId: p.productId }) });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message);
+      okCount++;
+    } catch (err) {
+      failCount++;
+    }
+  }
+  selectedRows.clear();
+  toast(failCount ? `Deleted ${okCount}, failed ${failCount}` : `✅ Deleted ${okCount} product${okCount === 1 ? '' : 's'} successfully`, failCount > 0);
+  await loadProducts();
+}
+
+function toggleAddPanel(show) {
+  const panel = document.getElementById('addPanel');
+  const willShow = show !== undefined ? show : !panel.classList.contains('show');
+  panel.classList.toggle('show', willShow);
+  if (!willShow) clearAddForm();
+}
+
+function clearAddForm() {
+  ['productName','category','displayName','unit','packSize','mrp','hsn','gstPct','stock','notes','contents','maxOrderKg'].forEach(f => {
+    document.getElementById('add-' + f).value = '';
+  });
+  document.getElementById('add-stock').value = 0;
+  document.getElementById('add-active').value = 'N';
+  updateWaPreview();
+}
+
+function updateWaPreview() {
+  const displayName = document.getElementById('add-displayName').value;
+  const packSize = document.getElementById('add-packSize').value;
+  document.getElementById('waPreview').textContent = 'WA Key preview: ' + (computeWaKey(displayName, packSize) || '—');
+}
+
+async function addProduct() {
+  const productName = document.getElementById('add-productName').value.trim();
+  const category = document.getElementById('add-category').value.trim();
+  const displayName = document.getElementById('add-displayName').value.trim();
+  const mrp = parseFloat(document.getElementById('add-mrp').value);
+
+  if (!productName) { toast('Product Name is required', true); return; }
+  if (!category) { toast('Category is required', true); return; }
+  if (!displayName) { toast('Display Name is required', true); return; }
+  if (isNaN(mrp) || mrp < 0) { toast('Enter a valid MRP', true); return; }
+
+  const fields = {
+    'Product Name': productName,
+    'Category': category,
+    'Display Name': displayName,
+    'Unit': document.getElementById('add-unit').value.trim(),
+    'Pack Size': document.getElementById('add-packSize').value.trim(),
+    'MRP': mrp,
+    'HSN/SAC': document.getElementById('add-hsn').value.trim(),
+    'GST%': parseFloat(document.getElementById('add-gstPct').value) || 0,
+    'Stock': parseInt(document.getElementById('add-stock').value) || 0,
+    'Active': document.getElementById('add-active').value,
+    'Notes': document.getElementById('add-notes').value.trim(),
+    'Contents': document.getElementById('add-contents').value.trim(),
+    'Max Order Qty (kg)': parseFloat(document.getElementById('add-maxOrderKg').value) || 0
+  };
+
+  const url = apiUrl(), key = apiKey();
+  try {
+    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ key, action: 'add', fields }) });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+    toast('✅ ' + productName + ' added successfully');
+    toggleAddPanel(false);
+    await loadProducts();
+  } catch (err) {
+    toast('Add failed: ' + err.message, true);
+  }
+}
+</script>
+</body>
+</html>

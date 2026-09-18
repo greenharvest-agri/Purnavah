@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Order</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1C1B17;
+  --moss:#3A5428;
+  --moss-mid:#527A3B;
+  --moss-lt:#EDF2E8;
+  --earth:#7C5C3A;
+  --cream:#F5F0E8;
+  --parchment:#EDE6D6;
+  --rule:#C8BFA8;
+  --stone:#7A6F61;
+  --white:#FDFCF9;
+  --red:#B91C1C;
+  --wa:#25D366;
+}
+html{scroll-behavior:smooth}
+body{background:var(--cream);font-family:'Hanken Grotesk',sans-serif;color:var(--ink);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── HEADER ── */
+.header{background:var(--ink);color:var(--cream);padding:0;position:relative;overflow:hidden}
+.header-inner{max-width:680px;margin:0 auto;padding:44px 28px 36px;position:relative;z-index:1}
+.header-rule{width:32px;height:2px;background:var(--earth);margin-bottom:18px}
+.brand{font-family:'EB Garamond',serif;font-size:46px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;line-height:1;color:var(--cream)}
+.brand-sub{font-size:10.5px;letter-spacing:.35em;text-transform:uppercase;color:var(--rule);margin-top:10px;font-weight:400}
+.header-desc{margin-top:22px;font-size:13.5px;color:#A89E8E;line-height:1.7;max-width:380px}
+.header-badge{display:inline-flex;align-items:center;gap:7px;margin-top:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:6px 14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#A89E8E}
+.header-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--wa);flex-shrink:0}
+
+/* ── BODY ── */
+.body{max-width:680px;margin:0 auto;padding:36px 28px 60px}
+
+/* ── SECTION ── */
+.section{margin-bottom:36px}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.section-num{font-family:'EB Garamond',serif;font-size:13px;font-weight:500;color:var(--earth);min-width:20px}
+.section-title{font-family:'EB Garamond',serif;font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.01em}
+
+/* ── PRODUCT CARDS ── */
+.category-label{font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--stone);margin:20px 0 10px}
+.category-label:first-of-type{margin-top:0}
+.catalog-status{font-size:12.5px;color:var(--stone);font-style:italic;margin-bottom:14px}
+.catalog-status-error{color:var(--red)}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.product-row{display:flex;flex-direction:column;background:var(--white);border:1px solid var(--parchment);border-radius:8px;padding:12px;gap:10px;transition:border-color .15s,background .15s}
+.product-row:hover{border-color:var(--rule);background:#FEFDFB}
+.product-row.has-qty{border-color:var(--moss);background:var(--moss-lt)}
+.product-row.oos{opacity:.6}
+.product-row.oos:hover{border-color:var(--parchment);background:var(--white)}
+.oos-tag{font-size:11.5px;font-weight:600;color:var(--red)}
+.qty-ctrl input:disabled,.qty-ctrl button:disabled{cursor:not-allowed;color:var(--stone)}
+.same-day-row{margin:14px 0}
+.same-day-label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer}
+.same-day-label input{width:16px;height:16px;cursor:pointer}
+.product-contents{margin-top:2px}
+.contents-details summary{font-size:11px;color:var(--moss-mid);cursor:pointer;list-style:none}
+.contents-details summary::-webkit-details-marker{display:none}
+.contents-body{font-size:11px;color:var(--stone);margin-top:3px;line-height:1.5}
+.product-info{flex:1}
+.product-name{font-size:13.5px;font-weight:500;color:var(--ink);line-height:1.35;overflow-wrap:break-word}
+.product-meta{font-size:11px;color:var(--stone);margin-top:3px}
+.pack-select{margin-top:5px;width:auto;max-width:100%;font-size:11.5px;font-weight:500;color:var(--ink);padding:5px 24px 5px 8px;border:1.5px solid var(--parchment);border-radius:5px;background-color:#fff;font-family:'Hanken Grotesk',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A6F61' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;transition:border-color .15s}
+.pack-select:focus{outline:none;border-color:var(--moss)}
+.pack-select:hover{border-color:var(--rule)}
+.product-price{font-family:'EB Garamond',serif;font-size:16px;font-weight:500;color:var(--moss);white-space:nowrap}
+.qty-ctrl{display:flex;align-items:center;gap:0;border:1.5px solid var(--rule);border-radius:5px;overflow:hidden;background:#fff;width:100%}
+.qty-ctrl button{width:28px;height:28px;flex-shrink:0;border:none;background:transparent;font-size:16px;font-weight:600;color:var(--moss);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.qty-ctrl button:hover{background:var(--moss-lt)}
+.qty-ctrl input{flex:1;min-width:0;height:28px;border:none;border-left:1px solid var(--rule);border-right:1px solid var(--rule);text-align:center;font-size:13px;font-weight:600;color:var(--ink);background:transparent;-moz-appearance:textfield;font-family:'Hanken Grotesk',sans-serif}
+.qty-ctrl input::-webkit-outer-spin-button,.qty-ctrl input::-webkit-inner-spin-button{-webkit-appearance:none}
+.qty-ctrl input:focus{outline:none;background:var(--moss-lt)}
+.max-note{font-size:10.5px;color:var(--stone);min-height:13px}
+.max-note-blocked{color:var(--red);font-weight:600}
+
+/* ── CUSTOMER DETAILS ── */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
+.field input,.field textarea,.field select{width:100%;padding:10px 13px;border:1.5px solid var(--parchment);border-radius:6px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;color:var(--ink);background:var(--white);transition:border-color .15s;outline:none}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--moss)}
+.field input::placeholder,.field textarea::placeholder{color:#BDB5A6}
+.field textarea{resize:vertical;min-height:72px}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A6F61' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.field-hint{font-size:11px;color:var(--stone);margin-top:3px}
+.required-star{color:var(--red);margin-left:2px}
+
+/* ── ORDER SUMMARY ── */
+.summary-box{background:var(--white);border:1px solid var(--rule);border-radius:8px;overflow:hidden;margin-bottom:20px}
+.summary-header{background:var(--ink);color:var(--cream);padding:12px 18px;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+.summary-items{padding:14px 18px;min-height:48px}
+.summary-empty{font-size:13px;color:var(--stone);font-style:italic}
+.summary-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--parchment)}
+.summary-item:last-child{border-bottom:none}
+.summary-item-name{color:var(--ink)}
+.summary-item-val{font-weight:600;color:var(--moss);white-space:nowrap;margin-left:12px}
+.summary-footer{background:var(--parchment);padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
+.summary-total-label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--stone)}
+.summary-total-val{font-family:'EB Garamond',serif;font-size:24px;font-weight:600;color:var(--moss)}
+.summary-weight-note{font-size:11px;color:var(--stone);margin-top:3px}
+
+/* ── SUMMARY SECTIONS (items / GST / grand total / discounts) ── */
+.summary-subtotal-row{display:flex;justify-content:space-between;padding:8px 18px;font-size:13px;color:var(--stone);border-top:1px dashed var(--parchment)}
+.summary-grandtotal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;font-size:14.5px;font-weight:700;color:var(--ink);background:var(--moss-lt);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.summary-discounts{padding:8px 18px;border-bottom:1px solid var(--parchment)}
+.summary-discount-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--moss)}
+
+/* ── COUPON ── */
+.coupon-row{display:flex;gap:8px;margin-bottom:8px}
+.coupon-row input{flex:1;padding:10px 13px;border:1.5px solid var(--parchment);border-radius:6px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;text-transform:uppercase;color:var(--ink);background:var(--white);outline:none;transition:border-color .15s}
+.coupon-row input:focus{border-color:var(--moss)}
+.coupon-row input::placeholder{color:#BDB5A6;text-transform:none}
+.coupon-row button{padding:10px 18px;background:var(--ink);color:var(--cream);border:none;border-radius:6px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:background .15s}
+.coupon-row button:hover{background:var(--moss)}
+.coupon-msg{display:none;font-size:12.5px;margin-bottom:16px}
+.coupon-msg.ok{display:block;color:var(--moss)}
+.coupon-msg.err{display:block;color:var(--red)}
+.coupon-msg a{color:inherit;text-decoration:underline;cursor:pointer;margin-left:6px}
+
+/* ── SHIPPING NOTE ── */
+.ship-note{background:var(--parchment);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;font-size:12.5px;color:var(--stone);line-height:1.6;margin-bottom:20px}
+.ship-note strong{color:var(--ink)}
+
+/* ── WHATSAPP BUTTON ── */
+.wa-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px 24px;background:var(--wa);color:#fff;border:none;border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.02em;transition:background .15s,transform .1s;box-shadow:0 4px 14px rgba(37,211,102,.3)}
+.wa-btn:hover{background:#1ebe5d;transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,211,102,.4)}
+.wa-btn:active{transform:translateY(0)}
+.wa-btn svg{width:22px;height:22px;flex-shrink:0}
+.wa-btn:disabled{background:#A8C9B0;cursor:not-allowed;transform:none;box-shadow:none}
+.error-msg{display:none;color:var(--red);font-size:12.5px;margin-top:10px;text-align:center}
+
+/* ── FOOTER ── */
+.footer{text-align:center;font-size:11px;color:var(--stone);margin-top:32px;line-height:1.8;padding-top:20px;border-top:1px solid var(--rule)}
+
+
+.product-price-block{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.mrp-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);font-family:'Hanken Grotesk',sans-serif;display:block;margin-bottom:1px}
+.product-subtotal{font-family:'EB Garamond',serif;font-size:12.5px;font-weight:600;color:var(--moss);white-space:nowrap}
+
+.reset-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 24px;background:transparent;color:var(--stone);border:1.5px solid var(--rule);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;transition:border-color .15s,color .15s}
+.reset-btn:hover{border-color:var(--red);color:var(--red)}
+
+@media(max-width:500px){
+  .brand{font-size:36px}
+  .field-grid{grid-template-columns:1fr}
+  .field.full{grid-column:1}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-rule"></div>
+    <div class="brand">Purnavah</div>
+    <div class="brand-sub">Farm · Cold-pressed · Stone-ground</div>
+    <div class="header-desc">Organic and natural foods sourced directly from farms. Place your order below and we'll confirm on WhatsApp.</div>
+    
+  </div>
+</div>
+
+<div class="body">
+
+  <!-- ── SECTION 1: PRODUCTS ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">01</div>
+      <div class="section-title">Choose your products</div>
+    </div>
+
+    <div class="catalog-status" id="catalogStatus">Loading products…</div>
+    <div id="categoriesContainer"></div>
+  </div>
+
+  <!-- ── SECTION 2: DELIVERY ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">02</div>
+      <div class="section-title">Delivery details</div>
+    </div>
+    <div class="field-grid">
+      <div class="field full">
+        <label>Full name<span class="required-star">*</span></label>
+        <input type="text" id="fname" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Phone<span class="required-star">*</span></label>
+        <input type="tel" id="fphone" placeholder="10-digit mobile" autocomplete="tel" maxlength="10">
+      </div>
+      <div class="field">
+        <label>Email<span class="required-star">*</span></label>
+        <input type="email" id="femail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Pincode<span class="required-star">*</span></label>
+        <input type="text" id="fpincode" placeholder="6-digit pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+      <div class="field">
+        <label>State<span class="required-star">*</span></label>
+        <select id="fstate">
+          <option value="">Select state</option>
+          <option>Andaman and Nicobar Islands</option>
+          <option>Andhra Pradesh</option>
+          <option>Arunachal Pradesh</option>
+          <option>Assam</option>
+          <option>Bihar</option>
+          <option>Chandigarh</option>
+          <option>Chhattisgarh</option>
+          <option>Dadra and Nagar Haveli and Daman and Diu</option>
+          <option>Delhi</option>
+          <option>Goa</option>
+          <option>Gujarat</option>
+          <option>Haryana</option>
+          <option>Himachal Pradesh</option>
+          <option>Jammu and Kashmir</option>
+          <option>Jharkhand</option>
+          <option>Karnataka</option>
+          <option>Kerala</option>
+          <option>Ladakh</option>
+          <option>Lakshadweep</option>
+          <option>Madhya Pradesh</option>
+          <option>Maharashtra</option>
+          <option>Manipur</option>
+          <option>Meghalaya</option>
+          <option>Mizoram</option>
+          <option>Nagaland</option>
+          <option>Odisha</option>
+          <option>Puducherry</option>
+          <option>Punjab</option>
+          <option>Rajasthan</option>
+          <option>Sikkim</option>
+          <option>Tamil Nadu</option>
+          <option>Telangana</option>
+          <option>Tripura</option>
+          <option>Uttar Pradesh</option>
+          <option>Uttarakhand</option>
+          <option>West Bengal</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Full address<span class="required-star">*</span></label>
+        <textarea id="faddress" placeholder="House/flat, street, locality, city, state"></textarea>
+      </div>
+      <div class="field full">
+        <label>Order notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" id="fnotes" placeholder="Allergies, preferences, gift packaging, etc.">
+        <div class="field-hint">Leave blank if none</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: REVIEW & SEND ── -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">03</div>
+      <div class="section-title">Review & send order</div>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-header">Your order</div>
+      <div class="summary-items" id="summaryItems">
+        <div class="summary-empty">No items selected yet</div>
+      </div>
+      <div class="summary-footer">
+        <div>
+          <div class="summary-total-label">Order total</div>
+          <div class="summary-weight-note" id="summaryWeight"></div>
+        </div>
+        <div class="summary-total-val" id="summaryTotal">₹0</div>
+      </div>
+    </div>
+
+    <div class="coupon-row">
+      <input type="text" id="couponInput" placeholder="Have a coupon code?" maxlength="20">
+      <button type="button" id="couponBtn" onclick="applyCoupon()">Apply</button>
+    </div>
+    <div class="coupon-msg" id="couponMsg"></div>
+
+    <div class="same-day-row" id="sameDayRow" style="display:none">
+      <label class="same-day-label">
+        <input type="checkbox" id="sameDayDelivery" onchange="updateSummary()">
+        Same-day delivery (+₹199)
+      </label>
+    </div>
+
+    <div class="ship-note">
+      <strong>Free delivery</strong> on orders above ₹2890 — a ₹199 delivery charge applies below that. Our team will confirm availability, share payment details, and dispatch within 1–2 business days after payment. Questions? Call or WhatsApp <strong>+91 83389 62474</strong>.
+    </div>
+
+    <button class="wa-btn" id="waBtn" onclick="sendWhatsApp()">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.533 5.856L0 24l6.334-1.507A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.79 9.79 0 01-5.002-1.37l-.36-.214-3.757.894.952-3.656-.235-.376A9.786 9.786 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+      </svg>
+      Send order on WhatsApp
+    </button>
+    <div class="error-msg" id="errorMsg"></div>
+    <button class="reset-btn" onclick="resetForm()">
+      ↺ &nbsp;Reset form
+    </button>
+  </div>
+
+  <div class="footer">
+    Purnavah · Greenharvest Agriculture Pvt. Ltd.<br>
+    Plot 122/3, Anjani, Gaurela-Pendra-Marwahi, Chhattisgarh – 495117<br>
+    FSSAI Lic. No. 10718005000824 · GSTIN: 22AALCG0905G1Z1<br>
+    priyam.jaiswal@globalgreenharvest.com
+  </div>
+
+</div>
+
+<script>
+const WA_NUMBER = "918338962474"; // +91 83389 62474
+
+// Delivery charge policy — free above the threshold, flat fee below it.
+// Checked against the raw item subtotal (before any coupon discount), so a
+// coupon can't accidentally push an order below the free-delivery line.
+const FREE_DELIVERY_THRESHOLD = 2890;
+const DELIVERY_CHARGE = 199;
+
+function computeDeliveryCharge(subtotal) {
+  return subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_CHARGE : 0;
+}
+
+// Same-day delivery add-on — built and wired end-to-end (summary, WhatsApp
+// message, order payload, orders_code.gs logging), but kept off customers'
+// screens for now via this flag. To launch it: flip this to true — the
+// checkbox (#sameDayRow, currently display:none in the markup) will start
+// showing itself, no other change needed.
+const SHOW_SAME_DAY_DELIVERY = false;
+const SAME_DAY_DELIVERY_CHARGE = 199;
+if (SHOW_SAME_DAY_DELIVERY) document.getElementById('sameDayRow').style.display = 'block';
+
+function isSameDayDeliverySelected() {
+  const el = document.getElementById('sameDayDelivery');
+  return !!(el && el.checked);
+}
+
+// Live catalog — pulled from the Catalog Google Sheet on load (Active = Y
+// and Stock > 0 rows only; filtering happens server-side in the Apps Script).
+const CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
+
+let PRODUCTS = []; // [{id, grid, category, displayName, packSize, unit, mrp, gstPct, waKey, inStock}, ...] — one entry per catalog row (one per pack size)
+let PRODUCT_GROUPS = []; // [{groupId, grid, displayName, variants: [product, ...]}, ...] — variants sharing a Display Name are merged into one tile
+const selectedVariant = {}; // groupId -> currently-selected variant's product id (drives which variant the tile's price/qty controls act on)
+const qty = {};
+let appliedCoupon = null; // { code, value } — value is the discount %, validated server-side against the Coupons sheet
+
+// Sheet's Category column holds short internal codes — map to the
+// customer-facing section headings shown on the form. Anything not listed
+// here falls back to the raw Category text as-is.
+const CATEGORY_LABELS = {
+  "Oils - Organic": "Cold-Pressed Oils — Organic",
+  "Oils - Regular": "Cold-Pressed Oils — Regular",
+  "Ghee": "Ghee",
+  "Flour": "Flour",
+  "Dal": "Dal & Pulses — Organic",
+  "Rice": "Rice — Organic",
+  "Spices - Whole": "Spices — Whole",
+  "Spices - Ground": "Spices — Ground"
+};
+
+function slugify(str) {
+  return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
+}
+
+function toProduct(p) {
+  return {
+    id: slugify(p.productName),
+    grid: 'pg-' + slugify(p.category),
+    category: p.category,
+    displayName: p.displayName,
+    packSize: p.packSize,
+    unit: p.unit,
+    mrp: Number(p.mrp) || 0,
+    gstPct: Number(p.gstPct) || 0,
+    waKey: p.waKey,
+    inStock: p.inStock !== false,
+    contents: p.contents || '',
+    // weightKg/maxOrderKg drive the per-product order cap below — the
+    // Catalog script already applies the same Weight (kg)-or-parsed-from-
+    // Pack-Size fallback server-side, so estimateWeightKg() here is only a
+    // safety net if an older deployment omits the field.
+    weightKg: Number(p.weightKg) || estimateWeightKg(p.packSize),
+    maxOrderKg: Number(p.maxOrderKg) || 0 // 0 = no limit
+  };
+}
+
+function buildCategorySections() {
+  const container = document.getElementById('categoriesContainer');
+  container.innerHTML = '';
+  const seen = new Set();
+  PRODUCTS.forEach(p => {
+    if (seen.has(p.grid)) return;
+    seen.add(p.grid);
+    const label = document.createElement('div');
+    label.className = 'category-label';
+    label.textContent = CATEGORY_LABELS[p.category] || p.category;
+    container.appendChild(label);
+    const gridEl = document.createElement('div');
+    gridEl.className = 'product-grid';
+    gridEl.id = p.grid;
+    container.appendChild(gridEl);
+  });
+}
+
+// Products sharing the same Display Name (typically the same item in
+// different pack sizes) are folded into a single tile with a pack-size
+// dropdown, instead of one tile per catalog row.
+function groupProductVariants() {
+  const groups = new Map();
+  PRODUCTS.forEach(p => {
+    // Collapse repeated whitespace before matching — the Catalog sheet has
+    // occasional double-space typos between pack-size rows of the same
+    // product (e.g. "Red Rajma  - Organic" vs "Red Rajma - Organic") that
+    // would otherwise split one product into two tiles.
+    const key = p.grid + '::' + p.displayName.trim().replace(/\s+/g, ' ');
+    if (!groups.has(key)) {
+      groups.set(key, { groupId: slugify(key), grid: p.grid, displayName: p.displayName, variants: [] });
+    }
+    groups.get(key).variants.push(p);
+  });
+  // Max order cap is a per-product (not per-pack-size) setting — admins are
+  // expected to enter the same "Max Order Qty (kg)" value on every variant
+  // row of a product, but take the max across variants so one blank row
+  // doesn't accidentally disable a cap set on a sibling row.
+  groups.forEach(g => { g.maxOrderKg = Math.max(0, ...g.variants.map(v => v.maxOrderKg || 0)); });
+  return Array.from(groups.values());
+}
+
+function getGroupById(gid) {
+  return PRODUCT_GROUPS.find(g => g.groupId === gid);
+}
+
+// Total kg of a product already in the cart, summed across every pack-size
+// variant of its group — a customer mixing pack sizes of the same product
+// (e.g. one 1kg pack + two 500g packs) still counts against one shared cap.
+function groupWeightUsed(group) {
+  return group.variants.reduce((sum, v) => sum + (qty[v.id] || 0) * (v.weightKg || 0), 0);
+}
+
+// Briefly flags the tile's order-limit note red, then reverts it back to
+// the normal "Max Xkg per order" text via updateVariantDisplay.
+function flashLimitNote(gid) {
+  const el = document.getElementById('maxnote-' + gid);
+  if (!el) return;
+  el.textContent = 'Order limit reached';
+  el.classList.add('max-note-blocked');
+  clearTimeout(el._limitTimer);
+  el._limitTimer = setTimeout(() => updateVariantDisplay(gid), 1500);
+}
+
+// Default pack size, when a product comes in more than one: "1 kg" if the
+// group has one, else whatever variant happens to be listed first in the
+// Catalog sheet (products only sold in g/ml/bundles have no "1kg" option to
+// prefer). Whitespace-insensitive since the sheet has inconsistent spacing
+// ("1kg" vs "1 kg").
+function normalizePackSize(s) {
+  return String(s || '').toLowerCase().replace(/\s+/g, '');
+}
+function pickDefaultVariant(variants) {
+  // Prefer an in-stock variant so the tile doesn't default to a pack size
+  // nobody can actually buy while a different pack size of the same
+  // product is available — only fall back to an out-of-stock one (still
+  // preferring "1 kg" among those) when every variant in the group is OOS,
+  // so the tile still renders instead of having nothing to select.
+  const inStock = variants.filter(v => v.inStock);
+  const pool = inStock.length ? inStock : variants;
+  return pool.find(v => normalizePackSize(v.packSize) === '1kg') || pool[0];
+}
+
+// Build product rows — one per Display Name group, with a pack-size
+// selector when a group has more than one variant.
+function renderProductGrid() {
+  buildCategorySections();
+  PRODUCTS.forEach(p => { qty[p.id] = 0; });
+  PRODUCT_GROUPS = groupProductVariants();
+
+  PRODUCT_GROUPS.forEach(group => {
+    const gid = group.groupId;
+    selectedVariant[gid] = pickDefaultVariant(group.variants).id;
+    const container = document.getElementById(group.grid);
+    const row = document.createElement('div');
+    row.className = 'product-row';
+    row.id = 'row-' + gid;
+
+    const packControl = group.variants.length > 1
+      ? `<select class="pack-select" id="pack-${gid}" onchange="selectVariant('${gid}', this.value)" aria-label="Pack size for ${group.displayName}">
+          ${group.variants.map(v => `<option value="${v.id}" ${v.inStock ? '' : 'disabled'}>${v.packSize || v.unit}${v.inStock ? '' : ' (Out of stock)'}</option>`).join('')}
+        </select>`
+      : `<div class="product-meta">${group.variants[0].packSize || group.variants[0].unit}</div>`;
+
+    row.innerHTML = `
+      <div class="product-info">
+        <div class="product-name">${group.displayName}</div>
+        ${packControl}
+        <div class="product-contents" id="contents-${gid}"></div>
+      </div>
+      <div class="product-price-block">
+        <div class="product-price"><span class="mrp-label">MRP</span><span id="price-${gid}"></span></div>
+        <div class="product-subtotal" id="sub-${gid}"></div>
+      </div>
+      <div class="qty-ctrl">
+        <button type="button" onclick="changeQty('${gid}',-1)" aria-label="Decrease">−</button>
+        <input type="number" id="qty-${gid}" value="0" min="0" max="99"
+          oninput="setQty('${gid}',this.value)" aria-label="Quantity for ${group.displayName}">
+        <button type="button" onclick="changeQty('${gid}',1)" aria-label="Increase">+</button>
+      </div>
+      <div class="max-note" id="maxnote-${gid}"></div>
+    `;
+    container.appendChild(row);
+    // The <option> list has no `selected` attribute, so the browser would
+    // otherwise always show its first entry regardless of selectedVariant.
+    const select = document.getElementById('pack-' + gid);
+    if (select) select.value = selectedVariant[gid];
+    updateVariantDisplay(gid);
+  });
+}
+
+async function loadCatalog() {
+  const statusEl = document.getElementById('catalogStatus');
+  try {
+    const res = await fetch(`${CATALOG_API_URL}?action=catalog`);
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || 'Unexpected response');
+
+    PRODUCTS = data.data.map(toProduct);
+    if (PRODUCTS.length === 0) {
+      statusEl.textContent = 'No products available right now — please check back soon.';
+      return;
+    }
+    statusEl.style.display = 'none';
+    renderProductGrid();
+  } catch (err) {
+    console.warn('Failed to load catalog:', err);
+    statusEl.textContent = "Couldn't load our product list. Please refresh the page, or message us on WhatsApp to order.";
+    statusEl.classList.add('catalog-status-error');
+  }
+}
+
+loadCatalog();
+
+// Quantity is tracked per variant (so switching the pack-size dropdown never
+// loses a quantity already entered against a different pack size); the
+// group's tile controls always read/write whichever variant is currently
+// selected for that group.
+function changeQty(gid, delta) {
+  const variantId = selectedVariant[gid];
+  const prod = PRODUCTS.find(p => p.id === variantId);
+  if (prod && !prod.inStock) return; // buttons are disabled while OOS — belt and suspenders
+  if (delta > 0 && prod) {
+    const group = getGroupById(gid);
+    // Cap only enforceable when both a limit and a known unit weight exist
+    // — a product with no Weight (kg) and an unparseable Pack Size has no
+    // way to convert its packet count to kg, so the cap is skipped for it.
+    if (group && group.maxOrderKg > 0 && prod.weightKg > 0) {
+      const wouldBeWeight = groupWeightUsed(group) + delta * prod.weightKg;
+      if (wouldBeWeight > group.maxOrderKg + 1e-9) {
+        flashLimitNote(gid);
+        return;
+      }
+    }
+  }
+  qty[variantId] = Math.max(0, (qty[variantId] || 0) + delta);
+  updateVariantDisplay(gid);
+  updateSummary();
+}
+
+function setQty(gid, val) {
+  const variantId = selectedVariant[gid];
+  const prod = PRODUCTS.find(p => p.id === variantId);
+  if (prod && !prod.inStock) return; // input is disabled while OOS — belt and suspenders
+  let newQty = Math.max(0, parseInt(val) || 0);
+  const group = getGroupById(gid);
+  let blocked = false;
+  if (group && group.maxOrderKg > 0 && prod && prod.weightKg > 0) {
+    // How much of the cap the OTHER variants of this product are already
+    // using, so the max allowed for the variant being typed into accounts
+    // for pack sizes already in the cart.
+    const otherWeight = groupWeightUsed(group) - (qty[variantId] || 0) * prod.weightKg;
+    const maxUnits = Math.max(0, Math.floor((group.maxOrderKg - otherWeight + 1e-9) / prod.weightKg));
+    if (newQty > maxUnits) { newQty = maxUnits; blocked = true; }
+  }
+  qty[variantId] = newQty;
+  updateVariantDisplay(gid);
+  updateSummary();
+  // Flash after updateVariantDisplay, not before — that call resets the
+  // note to its normal text, which would otherwise stomp the flash in the
+  // same tick before the user ever sees it.
+  if (blocked) flashLimitNote(gid);
+}
+
+function selectVariant(gid, variantId) {
+  selectedVariant[gid] = variantId;
+  updateVariantDisplay(gid);
+}
+
+function updateVariantDisplay(gid) {
+  const variantId = selectedVariant[gid];
+  const prod = PRODUCTS.find(p => p.id === variantId);
+  if (!prod) return;
+
+  const row = document.getElementById('row-' + gid);
+  const qtyInput = document.getElementById('qty-' + gid);
+  const priceEl = document.getElementById('price-' + gid);
+  const subEl = document.getElementById('sub-' + gid);
+  const contentsEl = document.getElementById('contents-' + gid);
+  const maxNoteEl = document.getElementById('maxnote-' + gid);
+
+  // Persistent "Max Xkg per order" hint — shown regardless of stock status
+  // (still useful info while OOS) and regardless of which variant is
+  // selected, since the cap is per-product, not per-pack-size.
+  const group = getGroupById(gid);
+  if (maxNoteEl) {
+    maxNoteEl.classList.remove('max-note-blocked');
+    maxNoteEl.textContent = (group && group.maxOrderKg > 0) ? `Max ${group.maxOrderKg}kg per order` : '';
+  }
+
+  // What's-inside disclosure — mainly for sachet/multi-item bundles (e.g.
+  // "Ground Spice Bundle (4 sachets)"). Keyed to the selected variant, not
+  // the group, since different pack sizes of the same product can contain
+  // different things. Shown regardless of stock status — still useful
+  // information even for an out-of-stock pack size.
+  contentsEl.innerHTML = prod.contents
+    ? `<details class="contents-details"><summary>What's inside? ▾</summary><div class="contents-body">${prod.contents}</div></details>`
+    : '';
+
+  row.classList.toggle('oos', !prod.inStock);
+  qtyInput.disabled = !prod.inStock;
+  row.querySelectorAll('.qty-ctrl button').forEach(b => { b.disabled = !prod.inStock; });
+
+  if (!prod.inStock) {
+    // Selecting an OOS pack size (or it becoming OOS on a catalog refresh)
+    // can't carry a quantity forward — there's nothing to fulfil it with.
+    qty[variantId] = 0;
+    qtyInput.value = 0;
+    priceEl.innerHTML = '<span class="oos-tag">Out of stock</span>';
+    subEl.style.display = 'none';
+    subEl.textContent = '';
+    row.classList.remove('has-qty');
+    return;
+  }
+
+  priceEl.textContent = '₹' + prod.mrp.toLocaleString('en-IN');
+  qtyInput.value = qty[variantId] || 0;
+  const q = qty[variantId] || 0;
+  row.classList.toggle('has-qty', q > 0);
+  if (q > 0) {
+    subEl.textContent = '= ₹' + (q * prod.mrp).toLocaleString('en-IN');
+    subEl.style.display = 'block';
+  } else {
+    subEl.style.display = 'none';
+    subEl.textContent = '';
+  }
+}
+
+// Approximate weight from a product's Pack Size text ("500 g", "1 L", "2 kg",
+// "250 ml") — liquids (oils/ghee) are treated as ~1:1 with kg, same
+// approximation the Catalog Apps Script uses server-side. Lets the customer
+// gauge parcel weight without us tracking exact weights per SKU.
+function estimateWeightKg(packSize) {
+  const s = String(packSize || '').trim().toLowerCase();
+  const m = s.match(/([\d.]+)\s*(kg|g|l|ml)\b/);
+  if (!m) return 0;
+  const num = parseFloat(m[1]);
+  if (isNaN(num)) return 0;
+  switch (m[2]) {
+    case 'kg': return num;
+    case 'g':  return num / 1000;
+    case 'l':  return num;
+    case 'ml': return num / 1000;
+    default:   return 0;
+  }
+}
+
+function updateSummary() {
+  const items = PRODUCTS.filter(p => qty[p.id] > 0);
+  const container = document.getElementById('summaryItems');
+  const totalEl = document.getElementById('summaryTotal');
+  const weightEl = document.getElementById('summaryWeight');
+
+  if (items.length === 0) {
+    container.innerHTML = '<div class="summary-empty">No items selected yet</div>';
+    totalEl.textContent = '₹0';
+    weightEl.textContent = '';
+    return;
+  }
+
+  // Sectioned bill: Items (tax-inclusive MRP) -> GST (extracted, informational
+  // breakdown) -> Coupon deducted -> Delivery -> Final Payable. MRP already
+  // includes GST (India's legal MRP definition), so "GST" here is the portion
+  // of the subtotal that's tax, not an addition on top of it — there's no
+  // separate pre-discount "Grand Total" row since that would just repeat the
+  // subtotal figure.
+  let subtotal = 0;
+  let taxableTotal = 0;
+  let gstTotal = 0;
+  let totalWeight = 0;
+  let itemsHtml = '';
+  items.forEach(p => {
+    const q = qty[p.id];
+    const lineAmount = q * p.mrp; // tax-inclusive
+    const gstPct = p.gstPct || 0;
+    const lineTaxable = lineAmount * 100 / (100 + gstPct); // extract embedded GST
+    subtotal += lineAmount;
+    taxableTotal += lineTaxable;
+    gstTotal += lineAmount - lineTaxable;
+    totalWeight += q * estimateWeightKg(p.packSize);
+    itemsHtml += `<div class="summary-item">
+      <span class="summary-item-name">${p.displayName} <span style="color:var(--stone);font-size:12px">${p.packSize || p.unit} × ${q}</span></span>
+      <span class="summary-item-val">₹${lineAmount.toLocaleString('en-IN')}</span>
+    </div>`;
+  });
+  taxableTotal = Math.round(taxableTotal * 100) / 100;
+  gstTotal = Math.round(gstTotal * 100) / 100;
+
+  let html = itemsHtml;
+  html += `<div class="summary-subtotal-row"><span>Items subtotal (incl. GST)</span><span>₹${subtotal.toLocaleString('en-IN')}</span></div>`;
+  html += `<div class="summary-subtotal-row"><span>GST (included above)</span><span>₹${gstTotal.toLocaleString('en-IN')}</span></div>`;
+
+  let payable = subtotal;
+  if (appliedCoupon) {
+    // Discount applies to the tax-extracted (post-GST-removal) amount, then
+    // GST is recomputed proportionally on the discounted taxable value —
+    // since the coupon % is uniform across every line, scaling taxableTotal
+    // and gstTotal by the same factor is equivalent to doing this per line
+    // and summing (each line's own rate stays fixed).
+    const factor = 1 - appliedCoupon.value / 100;
+    const discTaxable = Math.round(taxableTotal * factor * 100) / 100;
+    const discGst = Math.round(gstTotal * factor * 100) / 100;
+    payable = discTaxable + discGst;
+    const discAmt = Math.round((subtotal - payable) * 100) / 100;
+    html += `<div class="summary-discounts">
+      <div class="summary-discount-row"><span>Coupon ${appliedCoupon.code} (−${appliedCoupon.value}%)</span><span>− ₹${discAmt.toLocaleString('en-IN')}</span></div>
+    </div>`;
+  }
+
+  const deliveryCharge = computeDeliveryCharge(subtotal);
+  payable += deliveryCharge;
+  html += `<div class="summary-subtotal-row">
+    <span>Delivery</span>
+    <span>${deliveryCharge > 0 ? '₹' + deliveryCharge.toLocaleString('en-IN') : 'Free'}</span>
+  </div>`;
+
+  if (isSameDayDeliverySelected()) {
+    payable += SAME_DAY_DELIVERY_CHARGE;
+    html += `<div class="summary-subtotal-row"><span>Same-day delivery</span><span>₹${SAME_DAY_DELIVERY_CHARGE}</span></div>`;
+  }
+
+  container.innerHTML = html;
+  totalEl.textContent = '₹' + payable.toLocaleString('en-IN');
+  weightEl.textContent = totalWeight > 0 ? `Est. weight ≈ ${Math.round(totalWeight * 10) / 10} kg (±2 kg)` : '';
+}
+
+async function applyCoupon() {
+  const input = document.getElementById('couponInput');
+  const msgEl = document.getElementById('couponMsg');
+  const code = input.value.trim().toUpperCase();
+
+  if (!code) { msgEl.textContent = 'Enter a coupon code first.'; msgEl.className = 'coupon-msg err'; return; }
+
+  msgEl.textContent = 'Checking…';
+  msgEl.className = 'coupon-msg ok';
+
+  try {
+    const res = await fetch(`${CATALOG_API_URL}?action=coupon&code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (data.status === 'ok' && data.valid) {
+      appliedCoupon = { code: data.code, value: Number(data.value) || 0 };
+      msgEl.innerHTML = `✓ "${data.code}" applied — ${appliedCoupon.value}% off <a onclick="removeCoupon()">Remove</a>`;
+      msgEl.className = 'coupon-msg ok';
+    } else {
+      appliedCoupon = null;
+      msgEl.textContent = data.message || 'Invalid coupon code';
+      msgEl.className = 'coupon-msg err';
+    }
+  } catch (err) {
+    appliedCoupon = null;
+    msgEl.textContent = "Couldn't verify the coupon — check your connection and try again.";
+    msgEl.className = 'coupon-msg err';
+  }
+  updateSummary();
+}
+
+function removeCoupon() {
+  appliedCoupon = null;
+  document.getElementById('couponInput').value = '';
+  const msgEl = document.getElementById('couponMsg');
+  msgEl.textContent = '';
+  msgEl.className = 'coupon-msg';
+  updateSummary();
+}
+
+// Business's own WhatsApp number, without the country-code prefix — a
+// customer accidentally typing this as their own phone used to cause both
+// the business tab and the "send me a copy" tab to open the same chat
+// (Issue 4). Only one tab opens now (to the business), but the check stays
+// as a data-quality guard so an order isn't logged with the business's own
+// number as the customer's contact.
+const BUSINESS_PHONE = "8338962474";
+
+function sendWhatsApp() {
+  const waBtn = document.getElementById('waBtn');
+  if (waBtn.disabled) return; // ignore rapid repeat clicks while a submission is in flight (Issue 5/G)
+
+  const name    = document.getElementById('fname').value.trim();
+  const phone   = document.getElementById('fphone').value.trim();
+  const email   = document.getElementById('femail').value.trim();
+  const pincode = document.getElementById('fpincode').value.trim();
+  const state   = document.getElementById('fstate').value.trim();
+  const address = document.getElementById('faddress').value.trim();
+  const notes   = document.getElementById('fnotes').value.trim();
+  const errEl   = document.getElementById('errorMsg');
+
+  errEl.style.display = 'none';
+
+  // Validate
+  const items = PRODUCTS.filter(p => qty[p.id] > 0);
+  if (items.length === 0)  { showError('Please select at least one product.'); return; }
+  if (!name)               { showError('Please enter your name.'); document.getElementById('fname').focus(); return; }
+  if (!/^\d{10}$/.test(phone)) { showError('Please enter a valid 10-digit phone number.'); document.getElementById('fphone').focus(); return; }
+  if (phone === BUSINESS_PHONE) { showError('That looks like our business number — please enter your own phone number.'); document.getElementById('fphone').focus(); return; }
+  if (!email)              { showError('Please enter your email address.'); document.getElementById('femail').focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('Please enter a valid email address.'); document.getElementById('femail').focus(); return; }
+  if (!/^\d{6}$/.test(pincode)) { showError('Please enter a valid 6-digit pincode.'); document.getElementById('fpincode').focus(); return; }
+  if (!state)              { showError('Please select your state.'); document.getElementById('fstate').focus(); return; }
+  if (!address)            { showError('Please enter your delivery address.'); document.getElementById('faddress').focus(); return; }
+
+  // Lock the button for the duration of this submission so a double-click
+  // (or an impatient re-tap while the WA tab is opening) can't fire twice.
+  const originalLabel = waBtn.innerHTML;
+  waBtn.disabled = true;
+
+  // Build message
+  let total = 0;
+  let orderLines = '';
+  items.forEach(p => {
+    const q = qty[p.id];
+    const sub = q * p.mrp;
+    total += sub;
+    orderLines += `• ${p.displayName} (${p.packSize || p.unit}) × ${q} = ₹${sub.toLocaleString('en-IN')}\n`;
+  });
+
+  let couponLine = '';
+  let payable = total;
+  if (appliedCoupon) {
+    const discAmt = Math.round(total * appliedCoupon.value) / 100;
+    payable = total - discAmt;
+    couponLine = `Coupon: ${appliedCoupon.code} (−${appliedCoupon.value}%) = −₹${discAmt.toLocaleString('en-IN')}\n`;
+  }
+
+  const deliveryCharge = computeDeliveryCharge(total);
+  payable += deliveryCharge;
+  const deliveryLine = `Delivery: ${deliveryCharge > 0 ? '₹' + deliveryCharge.toLocaleString('en-IN') : 'Free'}\n`;
+
+  const sameDayDelivery = isSameDayDeliverySelected();
+  const sameDayCharge = sameDayDelivery ? SAME_DAY_DELIVERY_CHARGE : 0;
+  payable += sameDayCharge;
+  const sameDayLine = sameDayDelivery ? `Same-day delivery: ₹${sameDayCharge.toLocaleString('en-IN')}\n` : '';
+
+  const msg = `🌿 *New Order — Purnavah*
+
+*ORDER DETAILS*
+${orderLines}
+${couponLine}${deliveryLine}${sameDayLine}*Order Total: ₹${payable.toLocaleString('en-IN')}*
+
+*DELIVERY DETAILS*
+Name: ${name}
+Phone: ${phone}${email ? `\nEmail: ${email}` : ''}
+Pincode: ${pincode}
+State: ${state}
+Address: ${address}${notes ? `\nNotes: ${notes}` : ''}`;
+
+  // ── GOOGLE SHEETS: silently log order ──────────────────
+  const SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxCdUCpYoqY3Mg-UuGWuJswnbXsCTVIqaB891_ncDiBDrJvvPniOWnOVzAManjuhkE6/exec";
+
+  // A fresh id per submission attempt — a genuine retry (e.g. after a
+  // network error) gets a new one, but the server can still collapse two
+  // deliveries of the *same* click (double-fetch, browser retry, etc.)
+  // within its short dedup window (Issue 5).
+  const clientOrderId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2));
+
+  const orderPayload = {
+    name:    name,
+    phone:   phone,
+    email:   email,
+    pincode: pincode,
+    state:   state,
+    address: address,
+    notes:   notes,
+    total:   total,
+    couponCode:  appliedCoupon ? appliedCoupon.code : '',
+    couponValue: appliedCoupon ? appliedCoupon.value : 0,
+    deliveryCharge: deliveryCharge,
+    sameDayDeliveryCharge: sameDayCharge,
+    clientOrderId: clientOrderId,
+    items:   {}
+  };
+
+  // Build items object: WA display key → quantity (waKey comes straight
+  // from the Catalog sheet, so it always matches what the admin backend expects)
+  items.forEach(p => {
+    orderPayload.items[p.waKey] = qty[p.id];
+  });
+
+  // Fire and forget — never blocks WhatsApp send even if Sheets fails
+  fetch(SHEETS_WEBHOOK_URL, {
+    method:  "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body:    JSON.stringify(orderPayload)
+  }).then(r => r.json())
+    .then(d => { if (d.status !== "ok") console.warn("Sheets log:", d); })
+    .catch(err => console.warn("Sheets webhook failed (non-blocking):", err));
+  // ── END GOOGLE SHEETS ───────────────────────────────────
+
+  // Send to Purnavah — the only WhatsApp tab opened (Issue 4; there used to
+  // be a second tab to the customer's own number, gated by a "send me a
+  // copy" checkbox that's been removed).
+  const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+
+  // Re-enable after a short cooldown — long enough to absorb a double-tap,
+  // short enough that a genuine failed attempt isn't stuck unable to retry.
+  setTimeout(() => { waBtn.disabled = false; waBtn.innerHTML = originalLabel; }, 4000);
+}
+
+function resetForm() {
+  PRODUCTS.forEach(p => { qty[p.id] = 0; });
+  PRODUCT_GROUPS.forEach(group => {
+    const gid = group.groupId;
+    selectedVariant[gid] = pickDefaultVariant(group.variants).id;
+    const select = document.getElementById('pack-' + gid);
+    if (select) select.value = selectedVariant[gid];
+    updateVariantDisplay(gid);
+  });
+  ['fname','fphone','femail','fpincode','fstate','faddress','fnotes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('sameDayDelivery').checked = false;
+  document.getElementById('errorMsg').style.display = 'none';
+  removeCoupon();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+</script>
+</body>
+</html>
