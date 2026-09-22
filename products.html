@@ -184,6 +184,10 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
         <select class="filter-select" id="categoryFilter" onchange="render()">
           <option value="">All categories</option>
         </select>
+        <!-- Per-hub stock (DEV-only, PER_HUB_INVENTORY_PLAN.md) — hidden unless DEV_MODE -->
+        <select class="filter-select" id="hubFilter" style="display:none" onchange="render()">
+          <option value="">All hubs</option>
+        </select>
         <input class="search-input" id="searchInput" placeholder="Search product or display name…" oninput="render()">
       </div>
       <button class="btn btn-primary" onclick="toggleAddPanel()">+ Add product</button>
@@ -224,10 +228,13 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
           <label>GST %</label>
           <input type="number" id="add-gstPct" min="0" step="0.01">
         </div>
-        <div>
+        <div id="add-stock-single">
           <label>Stock</label>
           <input type="number" id="add-stock" min="0" value="0">
         </div>
+        <!-- Per-hub stock (DEV-only, PER_HUB_INVENTORY_PLAN.md) — populated by
+             renderAddStockHubs(), shown instead of add-stock-single when DEV_MODE -->
+        <div class="field-full" id="add-stock-hubs" style="display:none"></div>
         <div>
           <label>Active</label>
           <select id="add-active">
@@ -329,6 +336,54 @@ async function loadWhoAmI() {
     console.warn('whoAmI failed', e);
   }
 }
+
+// ─────────────────────────────────────────────
+//  PER-HUB STOCK (DEV-only) — see PER_HUB_INVENTORY_PLAN.md. Prod keeps the
+//  single flat "Stock" field/column exactly as before; every branch below is
+//  gated on DEV_MODE.
+// ─────────────────────────────────────────────
+let HUBS = []; // [{adminId, name}] — active hub-admin roster, from ?action=hubs
+
+async function loadHubs() {
+  if (!DEV_MODE) return;
+  try {
+    const res = await fetch(`${apiUrl()}?action=hubs&${authQuery()}`);
+    const data = await res.json();
+    if (data.status === 'ok') HUBS = data.data;
+    else { HUBS = []; console.warn('hubs failed', data.message); }
+  } catch (e) {
+    HUBS = [];
+    console.warn('hubs failed', e);
+  }
+}
+
+// Own hub only, Super Admin any (PER_HUB_INVENTORY_PLAN.md decision 3) —
+// mirrors the server-side check in catalog_code.dev.gs's handleUpdate/handleAdd.
+function canEditHub(hubId) {
+  return !!CURRENT_ADMIN && (CURRENT_ADMIN.role === 'Super Admin' || CURRENT_ADMIN.adminId === hubId);
+}
+
+function populateHubFilter() {
+  const sel = document.getElementById('hubFilter');
+  if (!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">All hubs</option>' +
+    HUBS.map(h => `<option value="${escAttr(h.adminId)}">${escapeHtml(h.name)}</option>`).join('');
+  sel.value = currentVal;
+}
+
+function renderAddStockHubs() {
+  const container = document.getElementById('add-stock-hubs');
+  if (!container) return;
+  container.innerHTML = `<label>Stock per hub</label><div class="add-grid" style="margin-top:0">` +
+    HUBS.map(h => {
+      const editable = canEditHub(h.adminId);
+      return `<div>
+        <label style="text-transform:none;font-weight:600;font-size:11px">${escapeHtml(h.name)}</label>
+        <input type="number" min="0" id="add-stock-hub-${escAttr(h.adminId)}" placeholder="—" ${editable ? '' : 'disabled'}>
+      </div>`;
+    }).join('') + `</div>`;
+}
 function renderIdentityBar() {
   const bar = document.getElementById('identityBar');
   if (!bar) return;
@@ -360,7 +415,7 @@ async function loadProducts() {
   try {
     const [res] = await Promise.all([
       fetch(`${url}?action=list&${authQuery()}`),
-      loadWhoAmI()
+      loadWhoAmI().then(loadHubs)
     ]);
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
@@ -376,6 +431,8 @@ async function loadProducts() {
     document.getElementById('notConnected').style.display = 'none';
     renderIdentityBar();
     populateCategoryOptions();
+    populateHubFilter();
+    renderAddStockHubs();
     toast('Catalog loaded');
     render();
   } catch (err) {
@@ -432,11 +489,20 @@ function toggleSort() {
 
 function getEdit(p) {
   if (!editState[p.rowIndex]) {
-    editState[p.rowIndex] = {
+    const ed = {
       category: p.category, displayName: p.displayName, unit: p.unit, packSize: p.packSize,
-      mrp: p.mrp, hsn: p.hsn, gstPct: p.gstPct, stock: p.stock, active: p.active, notes: p.notes,
+      mrp: p.mrp, hsn: p.hsn, gstPct: p.gstPct, active: p.active, notes: p.notes,
       contents: p.contents, maxOrderKg: p.maxOrderKg
     };
+    if (DEV_MODE) {
+      // Per-hub stock (PER_HUB_INVENTORY_PLAN.md) — '' (not 0) means "not
+      // sold at this hub," matching the sheet's blank-cell convention.
+      ed.stockByHub = {};
+      (p.stockByHub || []).forEach(h => { ed.stockByHub[h.adminId] = h.stock === null ? '' : h.stock; });
+    } else {
+      ed.stock = p.stock;
+    }
+    editState[p.rowIndex] = ed;
   }
   return editState[p.rowIndex];
 }
@@ -444,12 +510,17 @@ function getEdit(p) {
 function render() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   const catFilter = document.getElementById('categoryFilter').value;
+  const hubFilterEl = document.getElementById('hubFilter');
+  const hubFilter = DEV_MODE && hubFilterEl ? hubFilterEl.value : '';
 
   let filtered = products.filter(p => {
     const ed = getEdit(p);
     if (currentFilter === 'active' && ed.active !== 'Y') return false;
     if (currentFilter === 'inactive' && ed.active === 'Y') return false;
     if (catFilter && ed.category !== catFilter) return false;
+    // Per-hub stock filter (DEV-only, PER_HUB_INVENTORY_PLAN.md) — "actually
+    // sold there" means a non-blank Stock: <hub> cell, i.e. not ''.
+    if (hubFilter && (ed.stockByHub[hubFilter] === undefined || ed.stockByHub[hubFilter] === '')) return false;
     if (search) {
       const hay = (p.productName + ' ' + ed.displayName).toLowerCase();
       if (!hay.includes(search)) return false;
@@ -471,6 +542,13 @@ function render() {
     return;
   }
 
+  // Per-hub stock (DEV-only, PER_HUB_INVENTORY_PLAN.md) — one column per
+  // active hub, always shown regardless of the hub filter, so any admin can
+  // compare hubs side by side. Prod keeps the single "Stock" column.
+  const stockHeaderHtml = DEV_MODE
+    ? HUBS.map(h => `<th class="col-narrow">${escapeHtml(h.name)}</th>`).join('')
+    : `<th class="col-narrow">Stock</th>`;
+
   container.innerHTML = `
     <div class="table-wrap">
       <table class="catalog-table">
@@ -486,7 +564,7 @@ function render() {
             <th class="col-mrp">MRP</th>
             <th class="col-mid">HSN/SAC</th>
             <th class="col-narrow">GST%</th>
-            <th class="col-narrow">Stock</th>
+            ${stockHeaderHtml}
             <th class="col-narrow">Active</th>
             <th class="col-mid">Max Qty (kg)</th>
             <th>Notes</th>
@@ -507,6 +585,18 @@ function render() {
 
 function renderRow(p) {
   const ed = getEdit(p);
+  // Per-hub stock (DEV-only, PER_HUB_INVENTORY_PLAN.md) — editable when this
+  // admin owns the hub or is Super Admin, matching handleUpdate's server
+  // check; blank cell displays empty, not "0". Prod keeps the single
+  // editable "Stock" cell.
+  const stockCellsHtml = DEV_MODE
+    ? HUBS.map(h => {
+        const val = ed.stockByHub[h.adminId];
+        const displayVal = (val === '' || val === undefined) ? '' : val;
+        const editable = canEditHub(h.adminId);
+        return `<td><input type="number" class="num" min="0" placeholder="—" value="${displayVal}" ${editable ? `onchange="updateStockField(${p.rowIndex}, '${escAttr(h.adminId)}', this.value)"` : 'disabled'}></td>`;
+      }).join('')
+    : `<td><input type="number" class="num" min="0" value="${ed.stock}" onchange="updateField(${p.rowIndex}, 'stock', this.value)"></td>`;
   return `
     <tr class="${ed.active !== 'Y' ? 'inactive-row' : ''}" id="row-${p.rowIndex}">
       <td class="col-check"><input type="checkbox" class="row-check" data-row="${p.rowIndex}" ${selectedRows.has(p.rowIndex) ? 'checked' : ''} onchange="toggleRowSelect(${p.rowIndex}, this.checked)"></td>
@@ -519,7 +609,7 @@ function renderRow(p) {
       <td class="col-mrp"><input type="number" class="num" min="0" step="0.01" value="${ed.mrp}" onchange="updateField(${p.rowIndex}, 'mrp', this.value)"></td>
       <td><input type="text" value="${escAttr(ed.hsn)}" onchange="updateField(${p.rowIndex}, 'hsn', this.value)"></td>
       <td><input type="number" class="num" min="0" step="0.01" value="${ed.gstPct}" onchange="updateField(${p.rowIndex}, 'gstPct', this.value)"></td>
-      <td><input type="number" class="num" min="0" value="${ed.stock}" onchange="updateField(${p.rowIndex}, 'stock', this.value)"></td>
+      ${stockCellsHtml}
       <td>
         <select onchange="updateField(${p.rowIndex}, 'active', this.value)">
           <option value="Y" ${ed.active === 'Y' ? 'selected' : ''}>Y</option>
@@ -543,6 +633,17 @@ function updateField(rowIndex, field, val) {
   } else {
     ed[field] = val;
   }
+  render();
+}
+
+// Per-hub stock (DEV-only, PER_HUB_INVENTORY_PLAN.md) — blank stays blank
+// ("not sold at this hub"); typing a value, including 0, makes the product
+// available there going forward.
+function updateStockField(rowIndex, hubId, val) {
+  const p = products.find(x => x.rowIndex === rowIndex);
+  const ed = getEdit(p);
+  const trimmed = String(val).trim();
+  ed.stockByHub[hubId] = trimmed === '' ? '' : Math.max(0, parseFloat(trimmed) || 0);
   render();
 }
 
@@ -586,9 +687,21 @@ async function saveRow(rowIndex) {
   const fields = {
     'Category': ed.category, 'Display Name': ed.displayName, 'Unit': ed.unit,
     'Pack Size': ed.packSize, 'MRP': ed.mrp, 'HSN/SAC': ed.hsn, 'GST%': ed.gstPct,
-    'Stock': ed.stock, 'Active': ed.active, 'Notes': ed.notes, 'Contents': ed.contents,
+    'Active': ed.active, 'Notes': ed.notes, 'Contents': ed.contents,
     'Max Order Qty (kg)': ed.maxOrderKg
   };
+  if (DEV_MODE) {
+    // One "Stock: <hubId>" key per hub this admin can actually edit —
+    // disabled cells never fire onchange, so editState only ever holds a
+    // value for hubs this admin owns (or all of them, for Super Admin).
+    HUBS.forEach(h => {
+      if (!canEditHub(h.adminId)) return;
+      const val = ed.stockByHub[h.adminId];
+      fields['Stock: ' + h.adminId] = (val === '' || val === undefined) ? '' : val;
+    });
+  } else {
+    fields['Stock'] = ed.stock;
+  }
 
   try {
     // Identified by Product ID, not rowIndex — a row can shift position
@@ -598,7 +711,17 @@ async function saveRow(rowIndex) {
     const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ ...authParam(), action: 'update', productId: p.productId, fields }) });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
-    Object.assign(p, ed);
+    if (DEV_MODE) {
+      const { stockByHub, ...rest } = ed;
+      Object.assign(p, rest);
+      p.stockByHub = HUBS.map(h => ({
+        adminId: h.adminId, name: h.name,
+        stock: (stockByHub[h.adminId] === '' || stockByHub[h.adminId] === undefined) ? null : stockByHub[h.adminId]
+      }));
+      p.totalStock = p.stockByHub.reduce((sum, h) => sum + (h.stock || 0), 0);
+    } else {
+      Object.assign(p, ed);
+    }
     p.waKey = computeWaKey(ed.displayName, ed.packSize);
     populateCategoryOptions();
     toast('✅ ' + p.productName + ' saved successfully');
@@ -643,6 +766,12 @@ function clearAddForm() {
   });
   document.getElementById('add-stock').value = 0;
   document.getElementById('add-active').value = 'N';
+  if (DEV_MODE) {
+    HUBS.forEach(h => {
+      const el = document.getElementById('add-stock-hub-' + h.adminId);
+      if (el) el.value = '';
+    });
+  }
   updateWaPreview();
 }
 
@@ -672,12 +801,21 @@ async function addProduct() {
     'MRP': mrp,
     'HSN/SAC': document.getElementById('add-hsn').value.trim(),
     'GST%': parseFloat(document.getElementById('add-gstPct').value) || 0,
-    'Stock': parseInt(document.getElementById('add-stock').value) || 0,
     'Active': document.getElementById('add-active').value,
     'Notes': document.getElementById('add-notes').value.trim(),
     'Contents': document.getElementById('add-contents').value.trim(),
     'Max Order Qty (kg)': parseFloat(document.getElementById('add-maxOrderKg').value) || 0
   };
+  if (DEV_MODE) {
+    HUBS.forEach(h => {
+      if (!canEditHub(h.adminId)) return;
+      const el = document.getElementById('add-stock-hub-' + h.adminId);
+      const val = el ? el.value.trim() : '';
+      fields['Stock: ' + h.adminId] = val === '' ? '' : (parseInt(val, 10) || 0);
+    });
+  } else {
+    fields['Stock'] = parseInt(document.getElementById('add-stock').value) || 0;
+  }
 
   const url = apiUrl(), key = apiKey();
   try {
@@ -698,6 +836,9 @@ async function addProduct() {
 (function initDevMode() {
   if (!DEV_MODE) return;
   document.getElementById('webhookUrl').value = DEV_CATALOG_API_URL;
+  document.getElementById('add-stock-single').style.display = 'none';
+  document.getElementById('add-stock-hubs').style.display = 'block';
+  document.getElementById('hubFilter').style.display = '';
   document.querySelectorAll('.nav-link[href]').forEach(a => {
     a.setAttribute('href', a.getAttribute('href') + '?dev=1');
   });

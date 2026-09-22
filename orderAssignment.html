@@ -82,6 +82,12 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
 
 .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.hub-info-card{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.hub-info-card h4{font-family:'Fraunces',serif;font-size:16px;margin-bottom:10px;color:var(--ink)}
+.hub-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:12px}
+.hub-info-grid label{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);display:block;margin-bottom:3px}
+.hub-info-grid input{width:100%;padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif}
 </style>
 </head>
 <body>
@@ -98,6 +104,7 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
       <a class="nav-link" href="invoices.html">Invoices →</a>
       <a class="nav-link" href="finance.html">Finance →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
+      <button class="btn btn-secondary btn-sm" onclick="toggleHubInfo()">Manage Hub Info</button>
       <button class="btn btn-secondary btn-sm" onclick="loadAll()">↻ Refresh</button>
     </div>
   </div>
@@ -129,6 +136,8 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
   <div class="status-count-bar" id="statusCountBar" style="display:none">
     <!-- rendered by renderStatusBar() -->
   </div>
+
+  <div id="hubInfoSection" style="display:none;margin-bottom:24px"></div>
 
   <div id="accessDenied" style="display:none">
     <div class="empty-state">
@@ -264,10 +273,14 @@ async function loadAll() {
   }
 }
 
+// Blank Assigned To means plain "unassigned" (PER_HUB_INVENTORY_PLAN.md's
+// "Assigning to Hub Central" revision) — it no longer implicitly means
+// Super Admin, who is now a normal roster entry with a real Admin ID like
+// any other hub. Labelled with Hub Name, falling back to personal Name.
 function adminName(adminId) {
-  if (!adminId) return 'Super Admin';
+  if (!adminId) return 'Unassigned';
   const a = ALL_ADMINS.find(x => x.adminId === adminId);
-  return a ? a.name : adminId;
+  return a ? (a.hubName || a.name) : adminId;
 }
 
 // The per-admin breakdown is a filter, not multiple simultaneous sections
@@ -276,13 +289,15 @@ function adminName(adminId) {
 function renderFilterBar() {
   const bar = document.getElementById('filterBar');
   bar.style.display = 'flex';
-  const active = ALL_ADMINS.filter(a => a.active && a.role !== 'Super Admin');
+  // Every active hub-admin, Super Admin included (Hub Central is a real hub
+  // too — PER_HUB_INVENTORY_PLAN.md).
+  const active = ALL_ADMINS.filter(a => a.active);
   bar.innerHTML = `
     <label style="font-size:12.5px;color:var(--stone);font-weight:600">Filter by admin</label>
     <select onchange="setFilterAdmin(this.value)">
       <option value="all" ${filterAdminId === 'all' ? 'selected' : ''}>All orders</option>
-      <option value="" ${filterAdminId === '' ? 'selected' : ''}>Super Admin</option>
-      ${active.map(a => `<option value="${escAttr(a.adminId)}" ${filterAdminId === a.adminId ? 'selected' : ''}>${escapeHtml(a.name)}</option>`).join('')}
+      <option value="" ${filterAdminId === '' ? 'selected' : ''}>Unassigned</option>
+      ${active.map(a => `<option value="${escAttr(a.adminId)}" ${filterAdminId === a.adminId ? 'selected' : ''}>${escapeHtml(a.hubName || a.name)}</option>`).join('')}
     </select>`;
 }
 function setFilterAdmin(v) { filterAdminId = v; render(); }
@@ -338,7 +353,10 @@ function render() {
 
 function renderCard(o) {
   const itemCount = Object.keys(o.items || {}).length;
-  const active = ALL_ADMINS.filter(a => a.active && a.role !== 'Super Admin');
+  // Every active hub-admin, Super Admin included (Hub Central is a real hub
+  // too — PER_HUB_INVENTORY_PLAN.md); blank stays selectable as "Unassigned"
+  // for a not-yet-confirmed order (the server rejects it once confirmed).
+  const active = ALL_ADMINS.filter(a => a.active);
   const statusCfg = ORDER_STATUSES[o.status] || ORDER_STATUSES.New;
   return `
   <div class="order-card">
@@ -353,8 +371,8 @@ function renderCard(o) {
     <div class="order-right">
       <div class="order-total">₹${(o.finalTotal || o.orderTotal || 0).toLocaleString('en-IN')}</div>
       <select class="assign-select" onchange="assignOrder(${o.rowIndex}, this.value)">
-        <option value="" ${!o.assignedTo ? 'selected' : ''}>Assign to: Super Admin</option>
-        ${active.map(a => `<option value="${escAttr(a.adminId)}" ${o.assignedTo === a.adminId ? 'selected' : ''}>Assign to: ${escapeHtml(a.name)}</option>`).join('')}
+        <option value="" ${!o.assignedTo ? 'selected' : ''}>Unassigned</option>
+        ${active.map(a => `<option value="${escAttr(a.adminId)}" ${o.assignedTo === a.adminId ? 'selected' : ''}>Assign to: ${escapeHtml(a.hubName || a.name)}</option>`).join('')}
       </select>
     </div>
   </div>`;
@@ -363,10 +381,18 @@ function renderCard(o) {
 async function assignOrder(rowIndex, adminId) {
   const o = ALL_ORDERS.find(x => x.rowIndex === rowIndex);
   const previousAssignee = o.assignedTo;
+  // Only meaningful server-side when reassigning an already-confirmed
+  // order to a different hub (see moveConfirmedOrderStock_ in
+  // orders_code.dev.gs) — harmless to send otherwise.
+  const newAdmin = ALL_ADMINS.find(a => a.adminId === adminId);
   try {
     const res = await fetch(ordersUrl(), {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ password: apiKey(), action: 'update', rowIndex, fields: { 'Assigned To': adminId } })
+      body: JSON.stringify({
+        password: apiKey(), action: 'update', rowIndex,
+        fields: { 'Assigned To': adminId },
+        newAssignedAdminUpi: newAdmin ? newAdmin.upiVpa : ''
+      })
     });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
@@ -406,6 +432,63 @@ Items: ${itemCount}
 Open it here: ${deepLink}`;
   const phone = admin.whatsapp.length === 10 ? '91' + admin.whatsapp : admin.whatsapp;
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// "Manage Hub Info" (PER_HUB_INVENTORY_PLAN.md) — Super-Admin-only editable
+// form per active hub-admin (Hub Central included) for the display name and
+// printed invoice legal identity of that hub.
+const HUB_INFO_FIELDS = [
+  ['hubName', 'Hub Name'], ['companyName', 'Company Name'], ['companyAddress', 'Company Address'],
+  ['gstin', 'GSTIN'], ['companyEmail', 'Company Email'], ['companyWebsite', 'Company Website'],
+  ['companyPhone', 'Company Phone']
+];
+let hubInfoOpen = false;
+
+function toggleHubInfo() {
+  hubInfoOpen = !hubInfoOpen;
+  document.getElementById('hubInfoSection').style.display = hubInfoOpen ? 'block' : 'none';
+  if (hubInfoOpen) renderHubInfoSection();
+}
+
+function renderHubInfoSection() {
+  const container = document.getElementById('hubInfoSection');
+  const active = ALL_ADMINS.filter(a => a.active);
+  container.innerHTML = active.map(a => `
+    <div class="hub-info-card">
+      <h4>${escapeHtml(a.hubName || a.name)} <span style="font-size:11px;font-weight:400;color:var(--stone)">(${escapeHtml(a.name)} · ${escapeHtml(a.role)})</span></h4>
+      <div class="hub-info-grid">
+        ${HUB_INFO_FIELDS.map(([key, label]) => `
+          <div>
+            <label>${label}</label>
+            <input type="text" id="hubInfo-${escAttr(a.adminId)}-${key}" value="${escAttr(a[key] || '')}">
+          </div>`).join('')}
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveHubInfo('${escAttr(a.adminId)}')">Save</button>
+    </div>`).join('') || `<div class="empty-state"><p>No active hub-admins found.</p></div>`;
+}
+
+async function saveHubInfo(adminId) {
+  const fields = {};
+  HUB_INFO_FIELDS.forEach(([key, label]) => {
+    fields[label] = document.getElementById(`hubInfo-${adminId}-${key}`).value.trim();
+  });
+  try {
+    const res = await fetch(catalogUrl(), {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ password: apiKey(), action: 'updateHubInfo', adminId, fields })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message);
+    const a = ALL_ADMINS.find(x => x.adminId === adminId);
+    if (a) {
+      HUB_INFO_FIELDS.forEach(([key, label]) => { a[key] = fields[label]; });
+    }
+    renderFilterBar();
+    render();
+    toast('Hub info saved');
+  } catch (err) {
+    toast('Save failed: ' + err.message, true);
+  }
 }
 
 (function init() {

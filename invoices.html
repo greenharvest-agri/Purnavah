@@ -273,7 +273,8 @@ function buildInvoiceFromOrder(o) {
     isIntraState: tax.isIntra,
     invoiceBadge: { label: payCfg.label.toUpperCase(), bg: payCfg.bg, color: payCfg.color },
     paymentReceived,
-    confirmingAdminUpi: o.confirmingAdminUpi // multi-admin workflow (DEV-only); blank on every other order, see invoice-shared.js
+    confirmingAdminUpi: o.confirmingAdminUpi, // multi-admin workflow (DEV-only); blank on every other order, see invoice-shared.js
+    hub: resolveHubInfo(o.assignedTo) // per-hub inventory (DEV-only); null on every other order, see invoice-shared.js
   });
 }
 
@@ -332,6 +333,42 @@ function renderIdentityBar() {
   if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
   bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
+}
+
+// Per-hub invoice identity (PER_HUB_INVENTORY_PLAN.md) — only Super Admin
+// ever sees an order NOT assigned to themselves (via listAll), so only Super
+// Admin needs the full roster to resolve some other hub's identity; a
+// regular admin's every visible order already belongs to their own bucket,
+// resolved straight from CURRENT_ADMIN with no extra fetch. ?action=admins
+// is Super-Admin-gated server-side anyway, so a non-Super-Admin never calls it.
+let ALL_ADMINS = [];
+
+async function loadAdminsRosterIfSuperAdmin() {
+  if (!DEV_MODE || !CURRENT_ADMIN || CURRENT_ADMIN.role !== 'Super Admin') return;
+  try {
+    const res = await fetch(`${catalogUrl()}?action=admins&${authQuery()}`);
+    const data = await res.json();
+    if (data.status === 'ok') ALL_ADMINS = data.data;
+    else { ALL_ADMINS = []; console.warn('admins failed', data.message); }
+  } catch (e) {
+    ALL_ADMINS = [];
+    console.warn('admins failed', e);
+  }
+}
+
+// Resolves an order's assignedTo into the shape buildInvoiceHtml's d.hub
+// expects. null if unresolved (e.g. a legacy order with no assignee, or an
+// id this identity has no roster access to) — buildInvoiceHtml falls back
+// to the hardcoded company block in that case.
+function resolveHubInfo(assignedTo) {
+  if (!DEV_MODE || !assignedTo) return null;
+  const a = (CURRENT_ADMIN && CURRENT_ADMIN.adminId === assignedTo) ? CURRENT_ADMIN : ALL_ADMINS.find(x => x.adminId === assignedTo);
+  if (!a) return null;
+  return {
+    name: a.hubName || a.name,
+    companyName: a.companyName, address: a.companyAddress, gstin: a.gstin,
+    email: a.companyEmail, website: a.companyWebsite, phone: a.companyPhone
+  };
 }
 
 function escapeHtml(s) {
@@ -397,7 +434,8 @@ async function connect() {
     const [ordersRes, catalogRes, creditNotesRes] = await Promise.all([
       fetch(`${oUrl}?action=${ordersAction}&${authQuery()}`),
       fetch(`${cUrl}?action=list&${authQuery()}`),
-      fetch(`${oUrl}?action=listCreditNotes&${authQuery()}`)
+      fetch(`${oUrl}?action=listCreditNotes&${authQuery()}`),
+      loadAdminsRosterIfSuperAdmin() // per-hub invoice identity — see resolveHubInfo
     ]);
     const ordersData = await ordersRes.json();
     const catalogData = await catalogRes.json();

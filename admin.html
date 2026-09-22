@@ -354,6 +354,22 @@ function assignedAdminUpi(o) {
   return CURRENT_ADMIN.upiVpa || '';
 }
 
+// Resolves d.hub for buildInvoiceHtml (PER_HUB_INVENTORY_PLAN.md) — every
+// order visible on this page already belongs to CURRENT_ADMIN's own bucket
+// (see doGet's "list" scoping), so unlike invoices.html/orderAssignment.html
+// (which see other hubs' orders too) no separate roster fetch is needed
+// here. null for a legacy order with no resolvable assignee (blank
+// Assigned To) — buildInvoiceHtml falls back to the hardcoded company block.
+function resolveHubInfo(o) {
+  if (!DEV_MODE || !CURRENT_ADMIN || o.assignedTo !== CURRENT_ADMIN.adminId) return null;
+  const a = CURRENT_ADMIN;
+  return {
+    name: a.hubName || a.name,
+    companyName: a.companyName, address: a.companyAddress, gstin: a.gstin,
+    email: a.companyEmail, website: a.companyWebsite, phone: a.companyPhone
+  };
+}
+
 function renderIdentityBar() {
   const bar = document.getElementById('identityBar');
   const navLink = document.getElementById('superAdminNavLink');
@@ -2216,7 +2232,8 @@ async function generateInvoice(rowIndex) {
     totalCgst, totalSgst, totalIgst, totalGst, grandTotal, isIntraState,
     invoiceBadge: { label: payCfg.label.toUpperCase(), bg: payCfg.bg, color: payCfg.color },
     paymentReceived,
-    confirmingAdminUpi: o.confirmingAdminUpi // multi-admin workflow (DEV-only); blank on every other order, see invoice-shared.js
+    confirmingAdminUpi: o.confirmingAdminUpi, // multi-admin workflow (DEV-only); blank on every other order, see invoice-shared.js
+    hub: resolveHubInfo(o) // per-hub inventory (DEV-only); null on every other order, see invoice-shared.js
   });
 
   if (win) { win.document.open(); win.document.write(html); win.document.close(); }

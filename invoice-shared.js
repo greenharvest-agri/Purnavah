@@ -21,10 +21,12 @@ const UPI_PAYEE_NAME = 'Greenharvest Agriculture Private Limited';
 // amount: number (rupees); note: short text shown as the UPI transaction note;
 // vpa: optional override (e.g. an assigned admin's own UPI VPA — see the
 // multi-admin workflow, MULTI_ADMIN_WORKFLOW_PLAN.md §6/§11), defaults to the
-// company UPI_VPA so every existing caller is unaffected.
-function buildUpiPayLink(amount, note, vpa) {
+// company UPI_VPA so every existing caller is unaffected. payeeName: optional
+// override (e.g. a hub's own Company Name — see PER_HUB_INVENTORY_PLAN.md),
+// defaults to UPI_PAYEE_NAME the same way.
+function buildUpiPayLink(amount, note, vpa, payeeName) {
   const params = new URLSearchParams({
-    pa: vpa || UPI_VPA, pn: UPI_PAYEE_NAME, am: amount.toFixed(2), cu: 'INR', tn: note
+    pa: vpa || UPI_VPA, pn: payeeName || UPI_PAYEE_NAME, am: amount.toFixed(2), cu: 'INR', tn: note
   });
   // URLSearchParams encodes spaces as "+" (form encoding), but UPI apps parse
   // this as a plain URI and don't decode "+" back to a space — that breaks
@@ -55,10 +57,15 @@ function numberToWords(num) {
 // d: { invoiceNo, date, dueDate, customer, lineItems, oosLineItems, subTotal,
 //      discountAmt, taxableValue, totalCgst, totalSgst, totalIgst, totalGst,
 //      grandTotal, isIntraState, invoiceBadge:{label,bg,color}, paymentReceived,
-//      confirmingAdminUpi }
+//      confirmingAdminUpi, hub }
 // confirmingAdminUpi is optional (multi-admin workflow, DEV-only) — the
 // assigned admin's own UPI VPA snapshotted at order-confirm time; omitted/
 // blank falls back to the company UPI_VPA (see buildUpiPayLink).
+// hub is optional (per-hub inventory, DEV-only — PER_HUB_INVENTORY_PLAN.md):
+// { name, companyName, address, gstin, email, website, phone }, resolved
+// live from the order's current assignee. Omitted/null (every prod invoice,
+// and any dev order with no resolvable assignee) falls back to the
+// hardcoded Greenharvest block below, byte-for-byte identical to today.
 // lineItems entries: { sn, name, qty, price, rate, hsn, discPct, discAmt, cgstRate,
 //      cgstAmt, sgstRate, sgstAmt, igstRate, igstAmt, totalTaxAmt, amount, grossAmount }
 // `rate` is the ex-GST per-unit rate (drives the "Rate" column below) —
@@ -126,8 +133,10 @@ function buildInvoiceHtml(d) {
   // d.confirmingAdminUpi (multi-admin workflow, DEV-only) is only ever
   // populated for an order confirmed through the dev-gated assignment flow —
   // blank/undefined here falls back to the company UPI_VPA, so this is a
-  // no-op for every order created outside that flow.
-  const upiLink = buildUpiPayLink(payableAmount, `Invoice ${d.invoiceNo}`, d.confirmingAdminUpi);
+  // no-op for every order created outside that flow. d.hub?.companyName
+  // (per-hub invoice identity, PER_HUB_INVENTORY_PLAN.md) keeps the UPI
+  // payee name in step with whichever hub's letterhead this invoice shows.
+  const upiLink = buildUpiPayLink(payableAmount, `Invoice ${d.invoiceNo}`, d.confirmingAdminUpi, d.hub?.companyName);
   const upiQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(upiLink)}`;
   const upiSection = payableAmount > 0 ? `
     <a href="${upiLink}" style="text-decoration:none;text-align:center;flex-shrink:0">
@@ -145,7 +154,7 @@ function buildInvoiceHtml(d) {
         <div style="font-weight:700;font-size:12px;color:#333;margin-bottom:4px">Place your next order</div>
         Scan the QR code or visit:<br>
         <a href="${ORDER_FORM_URL}" style="color:#3A5428">${ORDER_FORM_URL}</a><br>
-        Call / WhatsApp: +91 83389 62474
+        Call / WhatsApp: ${d.hub?.phone || '+91 83389 62474'}
       </div>
     </div>`;
 
@@ -198,11 +207,11 @@ th.num{text-align:right}
     </div>
   </div>
   <div class="company">
-    <b>Greenharvest Agriculture Private Limited</b><br>
-    Plot 122/3, Anjani, Gaurela-Pendra-Marwahi, Chhattisgarh – 495117<br>
-    GSTIN: 22AALCG0905G1Z1<br>
-    Email: priyam.jaiswal@globalgreenharvest.com<br>
-    Web: www.purnavah.com
+    <b>${escapeHtml(d.hub?.companyName || 'Greenharvest Agriculture Private Limited')}</b><br>
+    ${escapeHtml(d.hub?.address || 'Plot 122/3, Anjani, Gaurela-Pendra-Marwahi, Chhattisgarh – 495117')}<br>
+    GSTIN: ${escapeHtml(d.hub?.gstin || '22AALCG0905G1Z1')}<br>
+    Email: ${escapeHtml(d.hub?.email || 'priyam.jaiswal@globalgreenharvest.com')}<br>
+    Web: ${escapeHtml(d.hub?.website || 'www.purnavah.com')}
   </div>
 </div>
 <hr>
@@ -227,7 +236,7 @@ th.num{text-align:right}
 ${qrSection}
 ${paymentSection}
 <div class="notes">
-  Thank you, ${escapeHtml(d.customer.customerName)}! We appreciate your trust in Purnavah / Greenharvest Agriculture. Your order has been carefully packed to ensure the freshest natural products reach you. For queries, write to priyam.jaiswal@globalgreenharvest.com or visit www.purnavah.com.<br><br>
+  Thank you, ${escapeHtml(d.customer.customerName)}! We appreciate your trust in Purnavah / Greenharvest Agriculture. Your order has been carefully packed to ensure the freshest natural products reach you. For queries, write to ${escapeHtml(d.hub?.email || 'priyam.jaiswal@globalgreenharvest.com')} or visit ${escapeHtml(d.hub?.website || 'www.purnavah.com')}.<br><br>
   This is a computer-generated invoice. Goods once sold will not be taken back. All disputes are subject to Raipur jurisdiction.
 </div>
 </body></html>`;
