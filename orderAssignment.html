@@ -104,7 +104,6 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
       <a class="nav-link" href="invoices.html">Invoices →</a>
       <a class="nav-link" href="finance.html">Finance →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
-      <button class="btn btn-secondary btn-sm" onclick="toggleHubInfo()">Manage Hub Info</button>
       <button class="btn btn-secondary btn-sm" onclick="loadAll()">↻ Refresh</button>
     </div>
   </div>
@@ -137,6 +136,10 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
     <!-- rendered by renderStatusBar() -->
   </div>
 
+  <div class="setup-bar" id="hubInfoToggleBar" style="display:none;margin-bottom:12px">
+    <button class="btn btn-secondary btn-sm" onclick="toggleHubInfo()">Manage Hub Info</button>
+  </div>
+
   <div id="hubInfoSection" style="display:none;margin-bottom:24px"></div>
 
   <div id="accessDenied" style="display:none">
@@ -166,7 +169,7 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
 // nav links below purely so navigating to another page keeps ITS dev mode
 // on — those pages *do* have a prod path, and would otherwise silently drop
 // back to it.
-const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbys7_tYwd4Oo5SKXvOsjCpcuI6uTzibMyhktgnUfdXUi543VqIYWlLJ1U1KDDeH5YQsEA/exec";
+const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
 const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
 
 let ALL_ORDERS = [];   // every order, unfiltered — from ?action=listAll
@@ -226,6 +229,7 @@ async function loadAll() {
   document.getElementById('accessDenied').style.display = 'none';
   document.getElementById('filterBar').style.display = 'none';
   document.getElementById('statusCountBar').style.display = 'none';
+  document.getElementById('hubInfoToggleBar').style.display = 'none';
 
   try {
     const whoAmIError = await loadWhoAmI();
@@ -255,6 +259,7 @@ async function loadAll() {
 
     document.getElementById('connDot').className = 'conn-dot ok';
     document.getElementById('connText').textContent = `Connected · ${ALL_ORDERS.length} orders`;
+    document.getElementById('hubInfoToggleBar').style.display = 'flex';
     renderFilterBar();
     render();
     toast('Orders loaded');
