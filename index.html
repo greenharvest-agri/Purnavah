@@ -90,7 +90,7 @@ button{touch-action:manipulation}
 .field{display:flex;flex-direction:column;gap:5px}
 .field.full{grid-column:1/-1}
 .field label{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--stone);text-transform:uppercase}
-.field input,.field select,.field textarea{padding:12px 13px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:var(--paper);outline:none;transition:.15s}
+.field input,.field select,.field textarea{width:100%;min-width:0;padding:12px 13px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:var(--paper);outline:none;transition:.15s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pine);box-shadow:0 0 0 3px var(--sage)}
 .field input::placeholder,.field textarea::placeholder{color:#BDB5A6}
 .field textarea{resize:vertical;min-height:70px}
@@ -372,7 +372,7 @@ const DEV_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzg3SBM3
 
 // Live catalog — pulled from the Catalog Google Sheet on load (Active = Y
 // and Stock > 0 rows only; filtering happens server-side in the Apps Script).
-const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
+const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbyGpdeGS1ulJLEDqqQsJBZcvkxP_gbsmiDgdK-gZB-tzD4hEm1P2-3XmLq32zymyerIVA/exec";
 
 let PRODUCTS = []; // [{id, grid, category, displayName, packSize, unit, mrp, gstPct, waKey, inStock}, ...] — one entry per catalog row (one per pack size)
 let PRODUCT_GROUPS = []; // [{groupId, grid, displayName, variants: [product, ...]}, ...] — variants sharing a Display Name are merged into one tile
@@ -956,7 +956,7 @@ State: ${state}
 Address: ${address}${notes ? `\nNotes: ${notes}` : ''}`;
 
   // ── GOOGLE SHEETS: silently log order ──────────────────
-  const SHEETS_WEBHOOK_URL = DEV_MODE ? DEV_SHEETS_WEBHOOK_URL : "https://script.google.com/macros/s/AKfycbxCdUCpYoqY3Mg-UuGWuJswnbXsCTVIqaB891_ncDiBDrJvvPniOWnOVzAManjuhkE6/exec";
+  const SHEETS_WEBHOOK_URL = DEV_MODE ? DEV_SHEETS_WEBHOOK_URL : "https://script.google.com/macros/s/AKfycbwk9RsPnwpUfcEXNW1xRdLL8Wde996xq9KZPKXcize1h_hAgWyzmjXNZ-NFYkLecFZj/exec";
 
   // A fresh id per submission attempt — a genuine retry (e.g. after a
   // network error) gets a new one, but the server can still collapse two
