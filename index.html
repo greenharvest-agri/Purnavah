@@ -70,7 +70,7 @@ button{touch-action:manipulation}
 .card-mrp-label{font-size:9px;letter-spacing:.08em;color:var(--stone);text-transform:uppercase;display:block}
 .card-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
 .subtotal{font-size:12px;color:var(--pine-dim);font-weight:600}
-.qty{display:flex;align-items:center;border:1.5px solid var(--rule);border-radius:999px;overflow:hidden;background:#fff}
+.qty{display:flex;align-items:center;border:1.5px solid var(--rule);border-radius:999px;overflow:hidden;background:#fff;margin-left:auto}
 .qty button{width:36px;height:36px;border:none;background:transparent;color:var(--pine);font-size:17px;font-weight:700;cursor:pointer}
 .qty button:hover{background:var(--sage)}
 .qty input{width:34px;height:36px;border:none;text-align:center;font-size:13px;font-weight:700;color:var(--ink);background:transparent;-moz-appearance:textfield}
@@ -132,6 +132,8 @@ button{touch-action:manipulation}
 .ship-note strong{color:var(--ink)}
 
 .wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;background:var(--wa);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 .wa-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
 .wa-btn:active{transform:translateY(0)}
 .wa-btn svg{width:20px;height:20px}
@@ -287,7 +289,7 @@ button{touch-action:manipulation}
 
     <div class="coupon-row">
       <input type="text" id="couponInput" placeholder="Have a coupon code?" maxlength="20">
-      <button type="button" id="couponBtn" onclick="applyCoupon()">Apply</button>
+      <button type="button" id="couponBtn" onclick="applyCoupon(this)">Apply</button>
     </div>
     <div class="coupon-msg" id="couponMsg"></div>
 
@@ -830,7 +832,7 @@ function updateSummary() {
   stickybarEl.classList.toggle('show', payable > 0);
 }
 
-async function applyCoupon() {
+async function applyCoupon(btn) {
   const input = document.getElementById('couponInput');
   const msgEl = document.getElementById('couponMsg');
   const code = input.value.trim().toUpperCase();
@@ -839,6 +841,7 @@ async function applyCoupon() {
 
   msgEl.textContent = 'Checking…';
   msgEl.className = 'coupon-msg ok';
+  if (btn) btn.disabled = true; // guard against a double-click firing two lookups while this one is in flight
 
   try {
     const res = await fetch(`${CATALOG_API_URL}?action=coupon&code=${encodeURIComponent(code)}`);
@@ -856,6 +859,8 @@ async function applyCoupon() {
     appliedCoupon = null;
     msgEl.textContent = "Couldn't verify the coupon — check your connection and try again.";
     msgEl.className = 'coupon-msg err';
+  } finally {
+    if (btn) btn.disabled = false;
   }
   updateSummary();
 }
@@ -908,6 +913,7 @@ function sendWhatsApp() {
   // (or an impatient re-tap while the WA tab is opening) can't fire twice.
   const originalLabel = waBtn.innerHTML;
   waBtn.disabled = true;
+  waBtn.innerHTML = '<span class="spinner"></span> Sending…';
 
   // Build message
   let total = 0;

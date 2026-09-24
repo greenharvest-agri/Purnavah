@@ -161,14 +161,15 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
 <div class="toast" id="toast"></div>
 
 <script>
-// This page only ever exists in the multi-admin DEV workflow (§13) — there
-// is no prod counterpart, so unlike admin.html/invoices.html/products.html/
-// finance.html there's no DEV_MODE on/off branch here: every request always
-// sends a per-admin "password" (never a shared "key"), and the setup fields
-// always default to the DEV deployments. ?dev=1 is still appended to the
-// nav links below purely so navigating to another page keeps ITS dev mode
-// on — those pages *do* have a prod path, and would otherwise silently drop
-// back to it.
+// This page exists only for Super Admin — every request always sends a
+// per-admin "password" (never a shared "key"), same as every other admin
+// page now that §13 is promoted to prod (2026-09-22). Same ?dev=1
+// URL-switch pattern as admin.html/invoices.html/etc: the setup fields
+// default to PROD, and dev=1 carries onto the nav links so navigating to
+// another page keeps ITS dev mode on too.
+const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
+const PROD_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbyMsQNtV7yy9j1668PgRiz2bTaKmwYqpupy3BmZ1nz8Pbiq_vnjALDl71Z4e8if7WW5CQ/exec";
+const PROD_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbxCdUCpYoqY3Mg-UuGWuJswnbXsCTVIqaB891_ncDiBDrJvvPniOWnOVzAManjuhkE6/exec";
 const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
 const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
 
@@ -195,6 +196,22 @@ function toast(msg, isError) {
   t.textContent = msg;
   t.className = 'toast show' + (isError ? ' error' : '');
   setTimeout(() => t.className = 'toast', 2600);
+}
+
+// Disables `btn` and swaps in the same .spinner used by the Connect button
+// for the duration of `fn`, so a double-click can't fire the same request
+// twice.
+async function withButtonLoading(btn, loadingLabel, fn) {
+  if (!btn) return fn();
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> ${loadingLabel}`;
+  try {
+    return await fn();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
 }
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -375,7 +392,7 @@ function renderCard(o) {
     </div>
     <div class="order-right">
       <div class="order-total">₹${(o.finalTotal || o.orderTotal || 0).toLocaleString('en-IN')}</div>
-      <select class="assign-select" onchange="assignOrder(${o.rowIndex}, this.value)">
+      <select class="assign-select" onchange="assignOrder(this, ${o.rowIndex}, this.value)">
         <option value="" ${!o.assignedTo ? 'selected' : ''}>Unassigned</option>
         ${active.map(a => `<option value="${escAttr(a.adminId)}" ${o.assignedTo === a.adminId ? 'selected' : ''}>Assign to: ${escapeHtml(a.hubName || a.name)}</option>`).join('')}
       </select>
@@ -383,13 +400,14 @@ function renderCard(o) {
   </div>`;
 }
 
-async function assignOrder(rowIndex, adminId) {
+async function assignOrder(sel, rowIndex, adminId) {
   const o = ALL_ORDERS.find(x => x.rowIndex === rowIndex);
   const previousAssignee = o.assignedTo;
   // Only meaningful server-side when reassigning an already-confirmed
   // order to a different hub (see moveConfirmedOrderStock_ in
   // orders_code.dev.gs) — harmless to send otherwise.
   const newAdmin = ALL_ADMINS.find(a => a.adminId === adminId);
+  if (sel) sel.disabled = true; // re-enabled by the render() call in every branch below
   try {
     const res = await fetch(ordersUrl(), {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -468,40 +486,44 @@ function renderHubInfoSection() {
             <input type="text" id="hubInfo-${escAttr(a.adminId)}-${key}" value="${escAttr(a[key] || '')}">
           </div>`).join('')}
       </div>
-      <button class="btn btn-primary btn-sm" onclick="saveHubInfo('${escAttr(a.adminId)}')">Save</button>
+      <button class="btn btn-primary btn-sm" onclick="saveHubInfo(this, '${escAttr(a.adminId)}')">Save</button>
     </div>`).join('') || `<div class="empty-state"><p>No active hub-admins found.</p></div>`;
 }
 
-async function saveHubInfo(adminId) {
+async function saveHubInfo(btn, adminId) {
   const fields = {};
   HUB_INFO_FIELDS.forEach(([key, label]) => {
     fields[label] = document.getElementById(`hubInfo-${adminId}-${key}`).value.trim();
   });
-  try {
-    const res = await fetch(catalogUrl(), {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ password: apiKey(), action: 'updateHubInfo', adminId, fields })
-    });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message);
-    const a = ALL_ADMINS.find(x => x.adminId === adminId);
-    if (a) {
-      HUB_INFO_FIELDS.forEach(([key, label]) => { a[key] = fields[label]; });
+  await withButtonLoading(btn, 'Saving…', async () => {
+    try {
+      const res = await fetch(catalogUrl(), {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ password: apiKey(), action: 'updateHubInfo', adminId, fields })
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message);
+      const a = ALL_ADMINS.find(x => x.adminId === adminId);
+      if (a) {
+        HUB_INFO_FIELDS.forEach(([key, label]) => { a[key] = fields[label]; });
+      }
+      renderFilterBar();
+      render();
+      toast('Hub info saved');
+    } catch (err) {
+      toast('Save failed: ' + err.message, true);
     }
-    renderFilterBar();
-    render();
-    toast('Hub info saved');
-  } catch (err) {
-    toast('Save failed: ' + err.message, true);
-  }
+  });
 }
 
 (function init() {
-  document.getElementById('ordersUrl').value = DEV_ORDERS_API_URL;
-  document.getElementById('catalogUrl').value = DEV_CATALOG_API_URL;
-  document.querySelectorAll('.nav-link[href]').forEach(a => {
-    a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-  });
+  document.getElementById('ordersUrl').value = DEV_MODE ? DEV_ORDERS_API_URL : PROD_ORDERS_API_URL;
+  document.getElementById('catalogUrl').value = DEV_MODE ? DEV_CATALOG_API_URL : PROD_CATALOG_API_URL;
+  if (DEV_MODE) {
+    document.querySelectorAll('.nav-link[href]').forEach(a => {
+      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
+    });
+  }
 })();
 </script>
 </body>

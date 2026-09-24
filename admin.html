@@ -331,7 +331,6 @@ async function loadCatalog() {
 let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at Connect via ?action=whoAmI
 
 async function loadWhoAmI() {
-  if (!DEV_MODE) return;
   try {
     const res = await fetch(`${CATALOG_API_URL}?action=whoAmI&${authQuery()}`);
     const data = await res.json();
@@ -350,7 +349,7 @@ async function loadWhoAmI() {
 // (meaning: buildUpiPayLink uses the company UPI_VPA) outside dev mode/
 // before identity resolves.
 function assignedAdminUpi(o) {
-  if (!DEV_MODE || !CURRENT_ADMIN) return '';
+  if (!CURRENT_ADMIN) return '';
   return CURRENT_ADMIN.upiVpa || '';
 }
 
@@ -361,7 +360,7 @@ function assignedAdminUpi(o) {
 // here. null for a legacy order with no resolvable assignee (blank
 // Assigned To) — buildInvoiceHtml falls back to the hardcoded company block.
 function resolveHubInfo(o) {
-  if (!DEV_MODE || !CURRENT_ADMIN || o.assignedTo !== CURRENT_ADMIN.adminId) return null;
+  if (!CURRENT_ADMIN || o.assignedTo !== CURRENT_ADMIN.adminId) return null;
   const a = CURRENT_ADMIN;
   return {
     name: a.hubName || a.name,
@@ -373,9 +372,9 @@ function resolveHubInfo(o) {
 function renderIdentityBar() {
   const bar = document.getElementById('identityBar');
   const navLink = document.getElementById('superAdminNavLink');
-  if (navLink) navLink.style.display = (DEV_MODE && CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? '' : 'none';
+  if (navLink) navLink.style.display = (CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? '' : 'none';
   if (!bar) return;
-  if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  if (!CURRENT_ADMIN) { bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
   bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
 }
@@ -447,30 +446,32 @@ function computeChecklistData(o) {
 // always built from what's live on the sheet, per the "always fetch the
 // latest order details" requirement — not from `orders`/`editState`, which
 // can be stale or hold this tab's own unsaved edits.
-async function downloadPackingChecklist(rowIndex) {
+async function downloadPackingChecklist(btn, rowIndex) {
   const existing = orders.find(x => x.rowIndex === rowIndex);
   if (!existing) return;
   const url = apiUrl(), key = apiKey();
   if (!url || !key) { toast('Connect first', true); return; }
 
-  // Open synchronously so the browser doesn't treat it as a blocked popup
-  // once we start awaiting the fetch below (same pattern as generateInvoice).
-  const win = window.open('', '_blank');
-  if (win) win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">Loading latest order details…</p>');
+  await withButtonLoading(btn, 'Loading…', async () => {
+    // Open synchronously so the browser doesn't treat it as a blocked popup
+    // once we start awaiting the fetch below (same pattern as generateInvoice).
+    const win = window.open('', '_blank');
+    if (win) win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">Loading latest order details…</p>');
 
-  try {
-    const res = await fetch(`${url}?action=list&${authQuery()}`);
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message || 'Could not load latest order data');
-    const fresh = data.data.find(x => (existing.orderRef && x.orderRef === existing.orderRef) || x.rowIndex === rowIndex);
-    if (!fresh) throw new Error('Order not found — it may have been deleted or moved');
+    try {
+      const res = await fetch(`${url}?action=list&${authQuery()}`);
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message || 'Could not load latest order data');
+      const fresh = data.data.find(x => (existing.orderRef && x.orderRef === existing.orderRef) || x.rowIndex === rowIndex);
+      if (!fresh) throw new Error('Order not found — it may have been deleted or moved');
 
-    const html = buildPackingChecklistHtml(computeChecklistData(fresh));
-    if (win) { win.document.open(); win.document.write(html); win.document.close(); }
-  } catch (err) {
-    toast('Could not build packing checklist: ' + err.message, true);
-    if (win) win.close();
-  }
+      const html = buildPackingChecklistHtml(computeChecklistData(fresh));
+      if (win) { win.document.open(); win.document.write(html); win.document.close(); }
+    } catch (err) {
+      toast('Could not build packing checklist: ' + err.message, true);
+      if (win) win.close();
+    }
+  });
 }
 
 // Pincode → State lookup, based on the first 2 digits of the postal circle.
@@ -662,21 +663,39 @@ function toast(msg, isError) {
   setTimeout(() => t.className = 'toast', 2600);
 }
 
+// Disables `btn` and swaps in the same .spinner used by the Connect button
+// (see loadOrdersConfirmed) for the duration of `fn`, so a double-click can't
+// fire the same request twice. `btn` may be null for actions triggered from
+// a modal that's already closed by the time the request goes out — those
+// just run `fn` with no visual treatment.
+async function withButtonLoading(btn, loadingLabel, fn) {
+  if (!btn) return fn();
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> ${loadingLabel}`;
+  try {
+    return await fn();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
 function apiUrl() {
   return document.getElementById('webhookUrl').value.trim();
 }
 function apiKey() {
   return document.getElementById('adminKey').value.trim();
 }
-// Prod talks to catalog_code.gs/orders_code.gs, which still check a shared
-// "key" — DEV talks to the *.dev.gs rewrite, which resolves a per-admin
-// "password" instead (§13). Same input field either way; only the wire
-// field name sent to the backend differs, based on DEV_MODE.
+// Both prod (catalog_code.gs/orders_code.gs) and dev (*.dev.gs) now resolve
+// a per-admin "password" (§13, promoted to prod 2026-09-22) — same input
+// field, same wire field name, regardless of DEV_MODE. DEV_MODE only still
+// controls which deployment (dev vs prod sheet) these functions talk to.
 function authParam() {
-  return DEV_MODE ? { password: apiKey() } : { key: apiKey() };
+  return { password: apiKey() };
 }
 function authQuery() {
-  return (DEV_MODE ? 'password=' : 'key=') + encodeURIComponent(apiKey());
+  return 'password=' + encodeURIComponent(apiKey());
 }
 
 // Public entry point (Connect / ↻ Refresh buttons) — guarded, since the real
@@ -1073,7 +1092,7 @@ function renderBody(o) {
       <span>⚠ Unsaved changes on this order</span>
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary btn-sm" onclick="discardChanges(${o.rowIndex})">Discard changes</button>
-        <button class="btn btn-primary btn-sm" onclick="updateOrderVersion(${o.rowIndex})">Update changes</button>
+        <button class="btn btn-primary btn-sm" onclick="updateOrderVersion(this, ${o.rowIndex})">Update changes</button>
       </div>
     </div>` : ''}
     <div class="body-grid">
@@ -1152,8 +1171,8 @@ function renderBody(o) {
 
         ${status === 'Revised' ? `<div class="locked-note">This is a superseded version — see the latest version for current actions.</div>` : `
         <div class="action-row">
-          <button class="btn btn-secondary btn-sm" onclick="generateInvoice(${o.rowIndex})" ${(canGenerateInvoice && !dirty) ? '' : `disabled title="${dirty ? 'Update order (save your changes) first' : 'Confirm the order before generating an invoice'}"`}>${o.invoiceNo ? 'View / reprint invoice' : 'Generate invoice'}</button>
-          <button class="btn btn-secondary btn-sm" onclick="downloadPackingChecklist(${o.rowIndex})" ${canGenerateInvoice ? 'title="Always fetches the latest saved order details from the sheet"' : `disabled title="Confirm the order before generating a packing checklist"`}>📋 Packing checklist</button>
+          <button class="btn btn-secondary btn-sm" onclick="generateInvoice(this, ${o.rowIndex})" ${(canGenerateInvoice && !dirty) ? '' : `disabled title="${dirty ? 'Update order (save your changes) first' : 'Confirm the order before generating an invoice'}"`}>${o.invoiceNo ? 'View / reprint invoice' : 'Generate invoice'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadPackingChecklist(this, ${o.rowIndex})" ${canGenerateInvoice ? 'title="Always fetches the latest saved order details from the sheet"' : `disabled title="Confirm the order before generating a packing checklist"`}>📋 Packing checklist</button>
         </div>`}
       </div>
     </div>
@@ -1172,7 +1191,7 @@ function renderStatusSection(o) {
   const buttons = (orderCfg.next || []).map(next => {
     const label = STATUS_ACTION_LABELS[next] || ('Mark ' + next);
     const cls = next === 'Cancelled' ? 'btn-danger' : 'btn-secondary';
-    return `<button class="btn ${cls} btn-sm" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="changeStatus(${o.rowIndex}, '${next}')">${label}</button>`;
+    return `<button class="btn ${cls} btn-sm" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="changeStatus(this, ${o.rowIndex}, '${next}')">${label}</button>`;
   }).join('');
 
   // Issue A retry path: a prior confirm attempt that failed to decrement
@@ -1226,7 +1245,7 @@ function renderInvoiceSection(o) {
       </div>` : ''}
       <div class="action-btn-group">
         <button class="btn btn-secondary btn-sm" onclick="openInInvoices(${o.rowIndex})">View in Invoices →</button>
-        <button class="btn ${isStale ? 'btn-primary' : 'btn-secondary'} btn-sm" ${dirty ? 'disabled title="Update order (save your changes) first"' : ''} onclick="generateInvoice(${o.rowIndex})">↻ Refresh invoice &amp; totals</button>
+        <button class="btn ${isStale ? 'btn-primary' : 'btn-secondary'} btn-sm" ${dirty ? 'disabled title="Update order (save your changes) first"' : ''} onclick="generateInvoice(this, ${o.rowIndex})">↻ Refresh invoice &amp; totals</button>
       </div>
     </div>`;
 }
@@ -1298,7 +1317,7 @@ function renderPaymentSection(o) {
       <div class="field-hint" style="margin:-4px 0 8px">Added to the ₹${(o.amountPaid || 0).toLocaleString('en-IN')} already recorded — not a running total</div>
       <div class="field-row"><label>UTR / Ref</label><input type="text" id="payRef-${o.rowIndex}" placeholder="Transaction reference"></div>
       <div class="field-row"><label>Payment date</label><input type="date" id="payDate-${o.rowIndex}" value="${todayIso()}"></div>
-      <div class="action-btn-group"><button class="btn btn-primary btn-sm" onclick="recordPayment(${o.rowIndex})">Record payment</button></div>
+      <div class="action-btn-group"><button class="btn btn-primary btn-sm" onclick="recordPayment(this, ${o.rowIndex})">Record payment</button></div>
     </div>`;
 }
 
@@ -1320,7 +1339,7 @@ function renderAddItemForm(o) {
       <datalist id="catalogDL-${o.rowIndex}">${options}</datalist>
       <input type="number" id="addItemQty-${o.rowIndex}" value="1" min="1" title="Qty" placeholder="Qty">
       <input type="number" id="addItemDisc-${o.rowIndex}" value="${ed.discountPct || 0}" min="0" max="100" title="Disc %" placeholder="Disc %">
-      <button class="btn btn-primary btn-sm" onclick="confirmAddItem(${o.rowIndex})">Add item</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmAddItem(this, ${o.rowIndex})">Add item</button>
       <button class="btn btn-secondary btn-sm" onclick="toggleAddItem(${o.rowIndex})">Cancel</button>
     </div>`;
 }
@@ -1490,7 +1509,7 @@ function closeDirtyGuard() {
 async function dirtyGuardUpdate() {
   const rowIndex = dirtyGuardRowIndex, resolve = dirtyGuardResolve;
   closeDirtyGuard();
-  await updateOrderVersion(rowIndex);
+  await updateOrderVersion(null, rowIndex);
   if (resolve) resolve();
 }
 
@@ -1616,7 +1635,7 @@ function toggleAddItem(rowIndex) {
   reExpand(rowIndex);
 }
 
-async function confirmAddItem(rowIndex) {
+async function confirmAddItem(btn, rowIndex) {
   const o = orders.find(x => x.rowIndex === rowIndex);
   const ed = getEdit(o);
   const nameInput = document.getElementById('addItemName-' + rowIndex).value.trim();
@@ -1632,18 +1651,20 @@ async function confirmAddItem(rowIndex) {
   ed.deleted.delete(product.waKey);
   ed.showAddItem = false;
 
-  try {
-    const res = await fetch(apiUrl(), {
-      method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ ...authParam(), action: 'addItemToOrder', rowIndex, itemName: product.waKey, qty: newQty })
-    });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message);
-    o.items[product.waKey] = newQty;
-    toast('Item added');
-  } catch (err) {
-    toast('Added locally, but failed to save to sheet: ' + err.message, true);
-  }
+  await withButtonLoading(btn, 'Adding…', async () => {
+    try {
+      const res = await fetch(apiUrl(), {
+        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ ...authParam(), action: 'addItemToOrder', rowIndex, itemName: product.waKey, qty: newQty })
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message);
+      o.items[product.waKey] = newQty;
+      toast('Item added');
+    } catch (err) {
+      toast('Added locally, but failed to save to sheet: ' + err.message, true);
+    }
+  });
   render();
   reExpand(rowIndex);
 }
@@ -1671,7 +1692,24 @@ function computeConfirmPreview(o) {
 // Decremented" (Issue A) rather than Status, so calling this again on an
 // order that's already Confirmed is either a safe no-op (if stock was
 // already decremented) or a genuine retry (if a prior attempt failed).
+// The confirm modal closes itself (see submitConfirmModal) before this runs,
+// so there's no button left on screen to disable — guard re-entrancy by
+// rowIndex instead, so re-opening the modal and confirming again while a
+// prior confirm is still in flight can't fire a second confirmOrder call.
+const CONFIRM_IN_FLIGHT = new Set();
+
 async function doConfirmOrder(rowIndex) {
+  if (CONFIRM_IN_FLIGHT.has(rowIndex)) return;
+  CONFIRM_IN_FLIGHT.add(rowIndex);
+  toast('Confirming order…');
+  try {
+    await doConfirmOrderInner(rowIndex);
+  } finally {
+    CONFIRM_IN_FLIGHT.delete(rowIndex);
+  }
+}
+
+async function doConfirmOrderInner(rowIndex) {
   const o   = orders.find(x => x.rowIndex === rowIndex);
   const ed  = getEdit(o);
   const url = apiUrl(), key = apiKey();
@@ -1748,7 +1786,7 @@ function updateShippingField(rowIndex, field, value) {
   getEdit(o)[field] = value;
 }
 
-async function changeStatus(rowIndex, newStatus) {
+async function changeStatus(btn, rowIndex, newStatus) {
   const o = orders.find(x => x.rowIndex === rowIndex);
   const ed = getEdit(o);
 
@@ -1764,7 +1802,7 @@ async function changeStatus(rowIndex, newStatus) {
     return;
   }
   if (newStatus === 'Invoiced') {
-    await generateInvoice(rowIndex);
+    await generateInvoice(btn, rowIndex);
     return;
   }
   if (newStatus === 'Cancelled' && !confirm('Cancel this order? This cannot be undone from here.')) return;
@@ -1773,31 +1811,33 @@ async function changeStatus(rowIndex, newStatus) {
   if (newStatus === 'Packed & Shipped' && !ed.shippedDate) { ed.shippedDate = todayDDMMYYYY(); fields['Shipped Date'] = ed.shippedDate; }
   if (newStatus === 'Delivered') fields['Delivered Date'] = todayDDMMYYYY();
 
-  try {
-    const res = await fetch(apiUrl(), {
-      method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ ...authParam(), action: 'update', rowIndex, fields })
-    });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message);
-    o.status = newStatus;
-    ed.status = newStatus;
-    if (fields['Delivered Date']) o.deliveredDate = fields['Delivered Date'];
-    // Only "Shipped Date" is both ed-tracked (part of the dirty snapshot) and
-    // just persisted here — patch that one key on the saved baseline rather
-    // than syncSavedState(o), which would also wrongly clear the dirty flag
-    // on any other still-unsaved edit (courier, AWB No, item changes, etc.)
-    // sitting in the same edit buffer.
-    if (fields['Shipped Date'] && savedState[rowIndex]) savedState[rowIndex].shippedDate = fields['Shipped Date'];
-    toast('Status updated to ' + newStatus);
-    render();
-    reExpand(rowIndex);
-  } catch (err) {
-    toast('Status update failed: ' + err.message, true);
-  }
+  await withButtonLoading(btn, 'Saving…', async () => {
+    try {
+      const res = await fetch(apiUrl(), {
+        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ ...authParam(), action: 'update', rowIndex, fields })
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message);
+      o.status = newStatus;
+      ed.status = newStatus;
+      if (fields['Delivered Date']) o.deliveredDate = fields['Delivered Date'];
+      // Only "Shipped Date" is both ed-tracked (part of the dirty snapshot) and
+      // just persisted here — patch that one key on the saved baseline rather
+      // than syncSavedState(o), which would also wrongly clear the dirty flag
+      // on any other still-unsaved edit (courier, AWB No, item changes, etc.)
+      // sitting in the same edit buffer.
+      if (fields['Shipped Date'] && savedState[rowIndex]) savedState[rowIndex].shippedDate = fields['Shipped Date'];
+      toast('Status updated to ' + newStatus);
+      render();
+      reExpand(rowIndex);
+    } catch (err) {
+      toast('Status update failed: ' + err.message, true);
+    }
+  });
 }
 
-async function recordPayment(rowIndex) {
+async function recordPayment(btn, rowIndex) {
   const o = orders.find(x => x.rowIndex === rowIndex);
   const ed = getEdit(o);
   // This payment's amount — the backend accumulates it onto whatever's
@@ -1808,38 +1848,40 @@ async function recordPayment(rowIndex) {
   const paymentDateIso = document.getElementById('payDate-' + rowIndex).value;
   const paymentDate = isoToDDMMYYYY(paymentDateIso) || todayDDMMYYYY();
 
-  try {
-    const res = await fetch(apiUrl(), {
-      method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ ...authParam(), action: 'recordPayment', rowIndex, amountPaid: thisPayment, paymentMode, paymentRef, paymentDate })
-    });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
+  await withButtonLoading(btn, 'Recording…', async () => {
+    try {
+      const res = await fetch(apiUrl(), {
+        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ ...authParam(), action: 'recordPayment', rowIndex, amountPaid: thisPayment, paymentMode, paymentRef, paymentDate })
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
 
-    o.amountPaid = data.amountPaid; // cumulative total from the backend, not just this payment
-    o.balanceDue = data.balanceDue;
-    o.paymentMode = paymentMode;
-    o.paymentRef = paymentRef;
-    o.paymentDate = paymentDate;
-    o.invoiceStatus = data.balanceDue <= 0 ? 'Paid' : 'Partially Paid';
-    // NOTE: order Status is untouched — payment is a sub-state under
-    // "Invoiced", independent of fulfillment (Packed & Shipped/Delivered).
+      o.amountPaid = data.amountPaid; // cumulative total from the backend, not just this payment
+      o.balanceDue = data.balanceDue;
+      o.paymentMode = paymentMode;
+      o.paymentRef = paymentRef;
+      o.paymentDate = paymentDate;
+      o.invoiceStatus = data.balanceDue <= 0 ? 'Paid' : 'Partially Paid';
+      // NOTE: order Status is untouched — payment is a sub-state under
+      // "Invoiced", independent of fulfillment (Packed & Shipped/Delivered).
 
-    toast(data.balanceDue <= 0
-      ? 'Payment recorded — fully paid'
-      : `Payment recorded — balance due ₹${data.balanceDue.toLocaleString('en-IN')}`);
-    render();
-    reExpand(rowIndex);
-  } catch (err) {
-    toast('Payment recording failed: ' + err.message, true);
-  }
+      toast(data.balanceDue <= 0
+        ? 'Payment recorded — fully paid'
+        : `Payment recorded — balance due ₹${data.balanceDue.toLocaleString('en-IN')}`);
+      render();
+      reExpand(rowIndex);
+    } catch (err) {
+      toast('Payment recording failed: ' + err.message, true);
+    }
+  });
 }
 
 // Saves the order's current edit-panel state in place. (Previously this
 // appended a new "version" row and left the old one as history — removed
 // per user request: the sheet should only ever hold one row per order, the
 // one the admin last updated.)
-async function updateOrderVersion(rowIndex) {
+async function updateOrderVersion(btn, rowIndex) {
   const o = orders.find(x => x.rowIndex === rowIndex);
   const ed = getEdit(o);
   const url = apiUrl(), key = apiKey();
@@ -1892,32 +1934,34 @@ async function updateOrderVersion(rowIndex) {
     items: zeroedItems
   };
 
-  try {
-    const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message);
+  await withButtonLoading(btn, 'Saving…', async () => {
+    try {
+      const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message);
 
-    Object.assign(o, {
-      status: ed.status, discountPct: effPct, discountAmount: totals.discountAmt,
-      // Mirror the backend guard above — don't let local state believe
-      // Final Total saved when the server just silently dropped it, or the
-      // "invoice is stale" banner would wrongly stay hidden until reload.
-      ...(isInvoiced ? {} : { finalTotal: totals.grandTotal }),
-      orderTotal: totals.subtotal,
-      itemDiscounts: { ...ed.itemDiscounts },
-      itemPriceOverrides: { ...ed.itemPriceOverrides },
-      freeShippingOverride: ed.freeShippingOverride || '',
-      courier: ed.courier, awbNo: ed.awbNo, shippedDate: ed.shippedDate, expectedDelivery: ed.expectedDelivery,
-      adminNotes: ed.adminNotes
-    });
-    Object.assign(o.items, zeroedItems);
-    syncSavedState(o); // just persisted — nothing left "unsaved" on this order
-    toast(invoiceNowStale ? 'Order updated — invoice now out of date, refresh it below' : 'Order updated');
-    render();
-    reExpand(rowIndex);
-  } catch (err) {
-    toast('Update failed: ' + err.message, true);
-  }
+      Object.assign(o, {
+        status: ed.status, discountPct: effPct, discountAmount: totals.discountAmt,
+        // Mirror the backend guard above — don't let local state believe
+        // Final Total saved when the server just silently dropped it, or the
+        // "invoice is stale" banner would wrongly stay hidden until reload.
+        ...(isInvoiced ? {} : { finalTotal: totals.grandTotal }),
+        orderTotal: totals.subtotal,
+        itemDiscounts: { ...ed.itemDiscounts },
+        itemPriceOverrides: { ...ed.itemPriceOverrides },
+        freeShippingOverride: ed.freeShippingOverride || '',
+        courier: ed.courier, awbNo: ed.awbNo, shippedDate: ed.shippedDate, expectedDelivery: ed.expectedDelivery,
+        adminNotes: ed.adminNotes
+      });
+      Object.assign(o.items, zeroedItems);
+      syncSavedState(o); // just persisted — nothing left "unsaved" on this order
+      toast(invoiceNowStale ? 'Order updated — invoice now out of date, refresh it below' : 'Order updated');
+      render();
+      reExpand(rowIndex);
+    } catch (err) {
+      toast('Update failed: ' + err.message, true);
+    }
+  });
 }
 
 function reExpand(rowIndex) {
@@ -2151,7 +2195,7 @@ async function submitConfirmModal() {
 
 const HOME_STATE = "Chhattisgarh"; // GAPL's registered state — determines IGST vs CGST+SGST
 
-async function generateInvoice(rowIndex) {
+async function generateInvoice(btn, rowIndex) {
   const o = orders.find(x => x.rowIndex === rowIndex);
   const ed = getEdit(o);
 
@@ -2170,6 +2214,8 @@ async function generateInvoice(rowIndex) {
     toast('Cannot generate invoice — missing price for: ' + totals.unknownItems.join(', '), true);
     return;
   }
+
+  await withButtonLoading(btn, 'Generating…', async () => {
 
   // Open the window synchronously so browsers don't treat it as a blocked popup
   // once we start awaiting the invoice-number fetch below.
@@ -2272,6 +2318,7 @@ async function generateInvoice(rowIndex) {
       render(); reExpand(rowIndex);
     }
   }).catch(() => toast('Invoice opened, but failed to save status to sheet', true));
+  });
 }
 
 function escapeHtml(s) {

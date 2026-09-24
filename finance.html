@@ -312,6 +312,22 @@ function toast(msg, isError) {
   setTimeout(() => t.className = 'toast', 2600);
 }
 
+// Disables `btn` and swaps in the same .spinner used by the Connect button
+// for the duration of `fn`, so a double-click can't fire the same request
+// twice.
+async function withButtonLoading(btn, loadingLabel, fn) {
+  if (!btn) return fn();
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> ${loadingLabel}`;
+  try {
+    return await fn();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -521,7 +537,7 @@ function renderExpenseRow(e) {
     <td class="num">₹${(Number(e.amount) || 0).toLocaleString('en-IN')}</td>
     <td>${escapeHtml(e.paymentMode)}</td>
     <td>${escapeHtml(e.notes)}</td>
-    <td><button class="btn btn-danger btn-sm" onclick="deleteExpense(${e.id})">✕ Delete</button></td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteExpense(this, ${e.id})">✕ Delete</button></td>
   </tr>`;
 }
 
@@ -538,30 +554,30 @@ async function submitExpense(evt) {
   if (!amount || amount <= 0) { toast('Enter an amount greater than ₹0', true); return; }
 
   const btn = document.getElementById('addExpenseBtn');
-  btn.disabled = true;
-  try {
-    const res = await fetch(baseUrl(), {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ ...authParam(), action: 'addExpense', date, category, description, amount, paymentMode, notes })
-    });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message);
+  await withButtonLoading(btn, 'Adding…', async () => {
+    try {
+      const res = await fetch(baseUrl(), {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ ...authParam(), action: 'addExpense', date, category, description, amount, paymentMode, notes })
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message);
 
-    expenses.push(data.expense);
-    document.getElementById('expenseForm').reset();
-    document.getElementById('expDate').value = date; // keep date filled — logging several in a row is common
-    populateCategorySelect();
-    render();
-    toast('Expense logged');
-  } catch (err) {
-    toast('Failed to log expense: ' + err.message, true);
-  } finally {
-    btn.disabled = false;
-  }
+      expenses.push(data.expense);
+      document.getElementById('expenseForm').reset();
+      document.getElementById('expDate').value = date; // keep date filled — logging several in a row is common
+      populateCategorySelect();
+      render();
+      toast('Expense logged');
+    } catch (err) {
+      toast('Failed to log expense: ' + err.message, true);
+    }
+  });
 }
 
-async function deleteExpense(id) {
+async function deleteExpense(btn, id) {
   if (!confirm('Delete this expense entry?')) return;
+  await withButtonLoading(btn, 'Deleting…', async () => {
   try {
     const res = await fetch(baseUrl(), {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -576,6 +592,7 @@ async function deleteExpense(id) {
   } catch (err) {
     toast('Failed to delete expense: ' + err.message, true);
   }
+  });
 }
 
 // DEV MODE init — carries dev=1 onto the Orders/Invoices nav links so dev

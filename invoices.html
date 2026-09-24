@@ -293,15 +293,30 @@ function toast(msg, isError) {
   setTimeout(() => t.className = 'toast', 2600);
 }
 
+// Disables `btn` and swaps in the same .spinner used by the Connect button
+// for the duration of `fn`, so a double-click can't fire the same request
+// twice.
+async function withButtonLoading(btn, loadingLabel, fn) {
+  if (!btn) return fn();
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> ${loadingLabel}`;
+  try {
+    return await fn();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
 function ordersUrl() { return document.getElementById('ordersUrl').value.trim(); }
 function catalogUrl() { return document.getElementById('catalogUrl').value.trim(); }
 function apiKey() { return document.getElementById('adminKey').value.trim(); }
-// Prod talks to catalog_code.gs/orders_code.gs, which still check a shared
-// "key" — DEV talks to the *.dev.gs rewrite, which resolves a per-admin
-// "password" instead (§13). Same input field either way; only the wire
-// field name sent to the backend differs, based on DEV_MODE.
-function authParam() { return DEV_MODE ? { password: apiKey() } : { key: apiKey() }; }
-function authQuery() { return (DEV_MODE ? 'password=' : 'key=') + encodeURIComponent(apiKey()); }
+// Both prod (catalog_code.gs/orders_code.gs) and dev (*.dev.gs) now resolve
+// a per-admin "password" (§13, promoted to prod 2026-09-22) — same input
+// field, same wire field name, regardless of DEV_MODE.
+function authParam() { return { password: apiKey() }; }
+function authQuery() { return 'password=' + encodeURIComponent(apiKey()); }
 
 // ─────────────────────────────────────────────
 //  MULTI-ADMIN WORKFLOW (DEV-only) — real per-admin password auth (§13). The
@@ -315,7 +330,6 @@ function authQuery() { return (DEV_MODE ? 'password=' : 'key=') + encodeURICompo
 let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at connect via ?action=whoAmI
 
 async function loadWhoAmI() {
-  if (!DEV_MODE) return;
   try {
     const res = await fetch(`${catalogUrl()}?action=whoAmI&${authQuery()}`);
     const data = await res.json();
@@ -330,7 +344,7 @@ async function loadWhoAmI() {
 function renderIdentityBar() {
   const bar = document.getElementById('identityBar');
   if (!bar) return;
-  if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  if (!CURRENT_ADMIN) { bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
   bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
 }
@@ -344,7 +358,7 @@ function renderIdentityBar() {
 let ALL_ADMINS = [];
 
 async function loadAdminsRosterIfSuperAdmin() {
-  if (!DEV_MODE || !CURRENT_ADMIN || CURRENT_ADMIN.role !== 'Super Admin') return;
+  if (!CURRENT_ADMIN || CURRENT_ADMIN.role !== 'Super Admin') return;
   try {
     const res = await fetch(`${catalogUrl()}?action=admins&${authQuery()}`);
     const data = await res.json();
@@ -361,7 +375,7 @@ async function loadAdminsRosterIfSuperAdmin() {
 // id this identity has no roster access to) — buildInvoiceHtml falls back
 // to the hardcoded company block in that case.
 function resolveHubInfo(assignedTo) {
-  if (!DEV_MODE || !assignedTo) return null;
+  if (!assignedTo) return null;
   const a = (CURRENT_ADMIN && CURRENT_ADMIN.adminId === assignedTo) ? CURRENT_ADMIN : ALL_ADMINS.find(x => x.adminId === assignedTo);
   if (!a) return null;
   return {
@@ -426,10 +440,9 @@ async function connect() {
   try {
     // whoAmI must resolve first — Super Admin needs "listAll" (every
     // invoice, for GST/CA reporting) while Admin A/B need "list" (server
-    // scopes it to their own assigned orders); prod (DEV_MODE off) always
-    // uses "list", which is unfiltered there, same as it always has been.
+    // scopes it to their own assigned orders).
     await loadWhoAmI();
-    const ordersAction = (DEV_MODE && CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? 'listAll' : 'list';
+    const ordersAction = (CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? 'listAll' : 'list';
 
     const [ordersRes, catalogRes, creditNotesRes] = await Promise.all([
       fetch(`${oUrl}?action=${ordersAction}&${authQuery()}`),
@@ -653,7 +666,7 @@ function openCreditNoteModal(rowIndex) {
   document.getElementById('modalTitle').textContent = 'Create Credit Note — ' + o.invoiceNo;
   document.getElementById('modalActions').innerHTML = `
     <button class="btn btn-secondary btn-sm" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-primary btn-sm" onclick="submitCreditNote()">Create Credit Note</button>`;
+    <button class="btn btn-primary btn-sm" onclick="submitCreditNote(this)">Create Credit Note</button>`;
   renderCreditNoteModal();
   document.getElementById('modalOverlay').style.display = 'flex';
 }
@@ -776,7 +789,7 @@ function updateCnQty(waKey, val, max) {
   renderCreditNoteModal();
 }
 
-async function submitCreditNote() {
+async function submitCreditNote(btn) {
   const o = orders.find(x => x.rowIndex === cnModalRowIndex);
   if (!o) return;
   const preview = getCurrentCnPreview(o);
@@ -787,35 +800,37 @@ async function submitCreditNote() {
   const reason = document.getElementById('cnReason').value.trim();
   if (!reason) { toast('Enter a reason for this credit note', true); return; }
 
-  try {
-    const res = await fetch(ordersUrl(), {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        ...authParam(), action: 'createCreditNote', rowIndex: o.rowIndex, invoiceNo: o.invoiceNo,
-        items: preview.items, taxableValue: preview.taxableValue, cgst: preview.cgst, sgst: preview.sgst,
-        igst: preview.igst, totalGst: preview.totalGst, totalAmount: preview.totalAmount, reason
-      })
-    });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message);
+  await withButtonLoading(btn, 'Creating…', async () => {
+    try {
+      const res = await fetch(ordersUrl(), {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          ...authParam(), action: 'createCreditNote', rowIndex: o.rowIndex, invoiceNo: o.invoiceNo,
+          items: preview.items, taxableValue: preview.taxableValue, cgst: preview.cgst, sgst: preview.sgst,
+          igst: preview.igst, totalGst: preview.totalGst, totalAmount: preview.totalAmount, reason
+        })
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message);
 
-    o.finalTotal = data.newFinalTotal;
-    o.balanceDue = data.newBalanceDue;
-    const newNote = {
-      creditNoteNo: data.creditNoteNo, creditNoteDate: data.creditNoteDate, rowIndex: o.rowIndex,
-      orderId: o.orderRef, invoiceNo: o.invoiceNo, customerName: o.customerName, items: preview.items,
-      taxableValue: preview.taxableValue, cgst: preview.cgst, sgst: preview.sgst, igst: preview.igst,
-      totalGst: preview.totalGst, totalAmount: preview.totalAmount, reason
-    };
-    creditNotes.push(newNote);
+      o.finalTotal = data.newFinalTotal;
+      o.balanceDue = data.newBalanceDue;
+      const newNote = {
+        creditNoteNo: data.creditNoteNo, creditNoteDate: data.creditNoteDate, rowIndex: o.rowIndex,
+        orderId: o.orderRef, invoiceNo: o.invoiceNo, customerName: o.customerName, items: preview.items,
+        taxableValue: preview.taxableValue, cgst: preview.cgst, sgst: preview.sgst, igst: preview.igst,
+        totalGst: preview.totalGst, totalAmount: preview.totalAmount, reason
+      };
+      creditNotes.push(newNote);
 
-    closeModal();
-    render();
-    toast('Credit note ' + data.creditNoteNo + ' created');
-    printCreditNote(newNote, o, preview.isIntra);
-  } catch (err) {
-    toast('Failed to create credit note: ' + err.message, true);
-  }
+      closeModal();
+      render();
+      toast('Credit note ' + data.creditNoteNo + ' created');
+      printCreditNote(newNote, o, preview.isIntra);
+    } catch (err) {
+      toast('Failed to create credit note: ' + err.message, true);
+    }
+  });
 }
 
 function openCreditNoteList(invoiceNo) {
