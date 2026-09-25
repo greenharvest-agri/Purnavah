@@ -372,7 +372,7 @@ const DEV_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzg3SBM3
 
 // Live catalog — pulled from the Catalog Google Sheet on load (Active = Y
 // and Stock > 0 rows only; filtering happens server-side in the Apps Script).
-const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbyGpdeGS1ulJLEDqqQsJBZcvkxP_gbsmiDgdK-gZB-tzD4hEm1P2-3XmLq32zymyerIVA/exec";
+const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec";
 
 let PRODUCTS = []; // [{id, grid, category, displayName, packSize, unit, mrp, gstPct, waKey, inStock}, ...] — one entry per catalog row (one per pack size)
 let PRODUCT_GROUPS = []; // [{groupId, grid, displayName, variants: [product, ...]}, ...] — variants sharing a Display Name are merged into one tile

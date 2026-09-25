@@ -298,7 +298,7 @@ const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsY
 // endpoint) so pricing for items that have since gone inactive/out-of-stock
 // still resolves correctly on old orders — the public endpoint would drop
 // them and break historical pricing.
-const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbyGpdeGS1ulJLEDqqQsJBZcvkxP_gbsmiDgdK-gZB-tzD4hEm1P2-3XmLq32zymyerIVA/exec";
+const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec";
 
 let CATALOG = [];        // full catalog (admin list) — used for price lookups on any item ever ordered
 let CATALOG_ACTIVE = []; // Active=Y && Stock>0 subset — used for the "Add item" picker
