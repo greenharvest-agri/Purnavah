@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Admin Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#26241E; --moss:#2F4A34; --moss-mid:#41613F; --moss-lt:#E7EEE1;
+  --cream:#F6F2E9; --parchment:#EFE7D3; --rule:#DCD4BE; --stone:#79715F;
+  --white:#FCFAF4; --red:#B14A3B; --red-lt:#F7E9E5;
+}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:420px;margin:12vh auto 0;padding:0 24px}
+.brand{text-align:center;margin-bottom:28px}
+.brand-name{font-family:'Fraunces',serif;font-size:28px;font-weight:600;letter-spacing:.04em;color:var(--moss)}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--stone);margin-top:4px}
+.card{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:28px 26px}
+label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);display:block;margin-bottom:6px}
+.field{margin-bottom:16px}
+input[type=password],input[type=text]{width:100%;padding:10px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:14px;font-family:'Inter',sans-serif}
+.details{margin-top:2px}
+.details summary{font-size:12px;color:var(--stone);cursor:pointer;user-select:none}
+.details[open] summary{margin-bottom:10px}
+.btn{width:100%;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:11px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;background:var(--moss);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{background:#2d4020}
+.btn:disabled{opacity:.6;cursor:default}
+.err{color:var(--red);background:var(--red-lt);border-radius:6px;padding:9px 12px;font-size:12.5px;margin-top:14px;display:none}
+.err.show{display:block}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{text-align:center;font-size:12px;color:var(--stone);margin-top:16px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">Purnavah</div>
+    <div class="brand-tag">Admin Login</div>
+  </div>
+
+  <div class="card">
+    <form id="loginForm">
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="adminKey" placeholder="your password" autofocus>
+      </div>
+
+      <!-- URLs are prefilled to the live prod deployments — only override
+           these for dev/testing against the *.dev.gs scripts. -->
+      <details class="details">
+        <summary>Advanced: script URLs</summary>
+        <div class="field" style="margin-top:10px">
+          <label>Orders Script URL</label>
+          <input type="text" id="ordersUrl" value="https://script.google.com/macros/s/AKfycbwk9RsPnwpUfcEXNW1xRdLL8Wde996xq9KZPKXcize1h_hAgWyzmjXNZ-NFYkLecFZj/exec">
+        </div>
+        <div class="field">
+          <label>Catalog Script URL</label>
+          <input type="text" id="catalogUrl" value="https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec">
+        </div>
+      </details>
+
+      <button class="btn" type="submit" id="loginBtn" style="margin-top:6px">Login</button>
+      <div class="err" id="errBox"></div>
+    </form>
+  </div>
+
+  <div class="hint">Logs you into Orders, Products, Invoices, Finance and Super Admin — no need to re-enter your password on each page.</div>
+</div>
+
+<script>
+function apiKey() { return document.getElementById('adminKey').value.trim(); }
+function ordersUrl() { return document.getElementById('ordersUrl').value.trim(); }
+function catalogUrl() { return document.getElementById('catalogUrl').value.trim(); }
+
+function showError(msg) {
+  const box = document.getElementById('errBox');
+  box.textContent = msg;
+  box.className = 'err show';
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const key = apiKey();
+  document.getElementById('errBox').className = 'err';
+  if (!key) { showError('Enter your password.'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  const originalLabel = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Checking…';
+
+  try {
+    const res = await fetch(`${catalogUrl()}?action=whoAmI&password=${encodeURIComponent(key)}`);
+    const data = await res.json();
+    if (data.status !== 'ok' || !data.admin) {
+      showError(data.message || 'Invalid password');
+      return;
+    }
+    // admin.html reads webhookUrl/key from the query string and auto-connects
+    // (see its initDevModeAndQueryParams), then carries `key` onto every
+    // nav-bar link so Products/Invoices/Finance/Super Admin stay logged in.
+    const params = new URLSearchParams({ webhookUrl: ordersUrl(), key });
+    location.href = `admin.html?${params.toString()}`;
+  } catch (err) {
+    showError('Could not reach the script: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalLabel;
+  }
+});
+</script>
+</body>
+</html>

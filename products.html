@@ -833,12 +833,27 @@ async function addProduct(btn) {
   document.getElementById('hubFilter').style.display = '';
 })();
 
-(function initDevMode() {
-  if (!DEV_MODE) return;
-  document.getElementById('webhookUrl').value = DEV_CATALOG_API_URL;
+// Carries the logged-in password (and dev=1) onto every nav-bar link, and
+// auto-connects if a `key` arrives via the query string (from login.html
+// or another admin page's nav bar) — single-login, see login.html.
+(function initDevModeAndQueryParams() {
+  if (DEV_MODE) {
+    document.getElementById('webhookUrl').value = DEV_CATALOG_API_URL;
+  }
+  const params = new URLSearchParams(location.search);
+  const key = params.get('key');
+  if (key) document.getElementById('adminKey').value = key;
+
+  const carryKey = document.getElementById('adminKey').value.trim();
   document.querySelectorAll('.nav-link[href]').forEach(a => {
-    a.setAttribute('href', a.getAttribute('href') + '?dev=1');
+    const extra = new URLSearchParams();
+    if (DEV_MODE) extra.set('dev', '1');
+    if (carryKey) extra.set('key', carryKey);
+    const qs = extra.toString();
+    if (qs) a.setAttribute('href', a.getAttribute('href') + '?' + qs);
   });
+
+  if (carryKey) loadProducts();
 })();
 </script>
 </body>

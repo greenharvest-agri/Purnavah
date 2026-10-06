@@ -2350,17 +2350,16 @@ function jumpToDeepLinkOrder() {
 
 // DEV MODE init — mirrors invoices.html's initFromQueryParams(): pre-fills
 // the Orders URL/key from the query string (sent inside an assignment
-// WhatsApp message) and connects automatically, then jumpToDeepLinkOrder()
-// (called from loadOrdersConfirmed once data loads) scrolls to/expands the
-// order. Also defaults the setup-bar URL to the DEV deployment, and carries
-// dev=1 onto the Products/Invoices/Finance nav links so dev mode doesn't
-// silently drop the moment an admin navigates to another page.
+// WhatsApp message, or from login.html's single sign-on redirect) and
+// connects automatically, then jumpToDeepLinkOrder() (called from
+// loadOrdersConfirmed once data loads) scrolls to/expands the order. Also
+// defaults the setup-bar URL to the DEV deployment, and carries dev=1 +
+// key onto the Products/Invoices/Finance/Super Admin nav links so neither
+// dev mode nor the logged-in password drops the moment an admin navigates
+// to another page (single-login — see login.html).
 (function initDevModeAndQueryParams() {
   if (DEV_MODE) {
     document.getElementById('webhookUrl').value = DEV_ORDERS_API_URL;
-    document.querySelectorAll('.nav-link[href]').forEach(a => {
-      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-    });
   }
   const params = new URLSearchParams(location.search);
   const orderRef = params.get('orderRef');
@@ -2369,7 +2368,17 @@ function jumpToDeepLinkOrder() {
   if (orderRef) deepLinkOrderRef = orderRef;
   if (wUrl) document.getElementById('webhookUrl').value = wUrl;
   if (key) document.getElementById('adminKey').value = key;
-  if (wUrl && key) loadOrders();
+
+  const carryKey = document.getElementById('adminKey').value.trim();
+  document.querySelectorAll('.nav-link[href]').forEach(a => {
+    const extra = new URLSearchParams();
+    if (DEV_MODE) extra.set('dev', '1');
+    if (carryKey) extra.set('key', carryKey);
+    const qs = extra.toString();
+    if (qs) a.setAttribute('href', a.getAttribute('href') + '?' + qs);
+  });
+
+  if (carryKey) loadOrders();
 })();
 </script>
 </body>

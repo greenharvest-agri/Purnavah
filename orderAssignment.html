@@ -519,11 +519,24 @@ async function saveHubInfo(btn, adminId) {
 (function init() {
   document.getElementById('ordersUrl').value = DEV_MODE ? DEV_ORDERS_API_URL : PROD_ORDERS_API_URL;
   document.getElementById('catalogUrl').value = DEV_MODE ? DEV_CATALOG_API_URL : PROD_CATALOG_API_URL;
-  if (DEV_MODE) {
-    document.querySelectorAll('.nav-link[href]').forEach(a => {
-      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-    });
-  }
+
+  // Carries the logged-in password (and dev=1) onto every nav-bar link, and
+  // auto-connects if a `key` arrives via the query string (from admin.html's
+  // "Super Admin →" nav link) — single-login, see login.html.
+  const params = new URLSearchParams(location.search);
+  const key = params.get('key');
+  if (key) document.getElementById('adminKey').value = key;
+
+  const carryKey = document.getElementById('adminKey').value.trim();
+  document.querySelectorAll('.nav-link[href]').forEach(a => {
+    const extra = new URLSearchParams();
+    if (DEV_MODE) extra.set('dev', '1');
+    if (carryKey) extra.set('key', carryKey);
+    const qs = extra.toString();
+    if (qs) a.setAttribute('href', a.getAttribute('href') + '?' + qs);
+  });
+
+  if (carryKey) loadAll();
 })();
 </script>
 </body>

@@ -1192,9 +1192,6 @@ function exportExcel() {
   if (DEV_MODE) {
     document.getElementById('ordersUrl').value = DEV_ORDERS_API_URL;
     document.getElementById('catalogUrl').value = DEV_CATALOG_API_URL;
-    document.querySelectorAll('.nav-link[href]').forEach(a => {
-      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-    });
   }
   const params = new URLSearchParams(location.search);
   const invoiceNo = params.get('invoiceNo');
@@ -1203,7 +1200,20 @@ function exportExcel() {
   if (invoiceNo) deepLinkInvoiceNo = invoiceNo;
   if (oUrl) document.getElementById('ordersUrl').value = oUrl;
   if (key) document.getElementById('adminKey').value = key;
-  if (oUrl && key) connect();
+
+  // Carries the logged-in password (and dev=1) onto every nav-bar link, so
+  // navigating here from admin.html/products.html/orderAssignment.html
+  // doesn't force a second login (single-login — see login.html).
+  const carryKey = document.getElementById('adminKey').value.trim();
+  document.querySelectorAll('.nav-link[href]').forEach(a => {
+    const extra = new URLSearchParams();
+    if (DEV_MODE) extra.set('dev', '1');
+    if (carryKey) extra.set('key', carryKey);
+    const qs = extra.toString();
+    if (qs) a.setAttribute('href', a.getAttribute('href') + '?' + qs);
+  });
+
+  if (carryKey) connect();
 })();
 </script>
 </body>

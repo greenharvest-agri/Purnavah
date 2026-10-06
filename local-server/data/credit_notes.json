@@ -1,0 +1,18 @@
+[
+  {
+    "creditNoteNo": "CN-T-0001",
+    "creditNoteDate": "10/08/2026",
+    "invoiceNo": "INV-T-0002",
+    "customerName": "Test Customer B",
+    "totalAmount": 540,
+    "reason": "1 damaged pack returned"
+  },
+  {
+    "creditNoteNo": "CN-T-0002",
+    "creditNoteDate": "22/07/2026",
+    "invoiceNo": "INV-T-0004",
+    "customerName": "Test Customer F",
+    "totalAmount": 200,
+    "reason": "Goodwill adjustment for delayed delivery"
+  }
+]

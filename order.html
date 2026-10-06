@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#F6F2E9;
+  --paper:#FCFAF4;
+  --ink:#26241E;
+  --pine:#2F4A34;
+  --pine-dim:#41613F;
+  --sage:#E7EEE1;
+  --gold:#B9812E;
+  --gold-dim:#8F631F;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --red:#B14A3B;
+  --wa:#25D366;
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:15px;line-height:1.6;overflow-x:hidden}
+button{touch-action:manipulation}
+
+/* HERO */
+.hero{background:var(--pine);color:var(--sage);padding:40px 24px 28px}
+.hero-inner{max-width:640px;margin:0 auto}
+.hero-eyebrow{font-size:11px;letter-spacing:.14em;color:#B9CBAE;margin-bottom:10px;text-transform:uppercase}
+.hero h1{font-family:'Fraunces',serif;font-weight:500;font-size:38px;letter-spacing:.01em;color:#FBF8EF}
+.hero p{margin-top:12px;font-size:13.5px;color:#C7D6BB;max-width:420px;line-height:1.7}
+
+/* STICKY NAV: steps + category chips */
+.stickynav{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);box-shadow:0 2px 10px rgba(38,36,30,.04)}
+.steps{display:flex;gap:0;max-width:640px;margin:0 auto;padding:10px 24px 0}
+.step{flex:1;text-align:center;font-size:11px;letter-spacing:.06em;color:var(--stone);padding-bottom:9px;border-bottom:3px solid var(--rule);position:relative;font-weight:600;transition:.2s;cursor:pointer}
+.step.active{color:var(--pine);border-color:var(--gold)}
+.step.done{color:var(--pine-dim)}
+.chipbar{display:flex;gap:8px;overflow-x:auto;padding:10px 24px 12px;max-width:640px;margin:0 auto;scrollbar-width:none}
+.chipbar::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;font-size:12.5px;font-weight:600;color:var(--pine-dim);background:var(--sage);border:1px solid transparent;border-radius:20px;padding:9px 14px;cursor:pointer;white-space:nowrap;transition:.15s;touch-action:manipulation}
+.chip:hover{border-color:var(--pine-dim)}
+.chip.active{background:var(--pine);color:#fff}
+
+/* BODY */
+.body{max-width:640px;margin:0 auto;padding:28px 24px 60px}
+.section{margin-bottom:40px;scroll-margin-top:120px}
+.section-title{font-family:'Fraunces',serif;font-size:22px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.section-sub{font-size:12.5px;color:var(--stone);margin-bottom:18px}
+
+.catalog-status{font-size:12.5px;color:var(--stone);font-style:italic;margin-bottom:14px}
+.catalog-status-error{color:var(--red)}
+
+.cat-heading{display:flex;align-items:center;gap:10px;margin:22px 0 12px;scroll-margin-top:120px}
+.cat-heading:first-child{margin-top:0}
+.cat-dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.cat-heading span{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--stone)}
+
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color .15s,background .15s}
+.card.has-qty{border-color:var(--pine);background:#F1F5EC}
+.card.oos{opacity:.6}
+.card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.card-name{font-size:14px;font-weight:600;color:var(--ink);line-height:1.35}
+.card-pack{margin-top:4px}
+.card-pack select{font-size:11.5px;font-weight:600;color:var(--pine-dim);border:1.5px solid var(--rule);border-radius:6px;padding:4px 22px 4px 8px;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2379715F' stroke-width='1.4' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;cursor:pointer}
+.card-price{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--gold-dim);white-space:nowrap;text-align:right}
+.card-mrp-label{font-size:9px;letter-spacing:.08em;color:var(--stone);text-transform:uppercase;display:block}
+.card-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.subtotal{font-size:12px;color:var(--pine-dim);font-weight:600}
+.qty{display:flex;align-items:center;border:1.5px solid var(--rule);border-radius:999px;overflow:hidden;background:#fff;margin-left:auto}
+.qty button{width:36px;height:36px;border:none;background:transparent;color:var(--pine);font-size:17px;font-weight:700;cursor:pointer}
+.qty button:hover{background:var(--sage)}
+.qty input{width:34px;height:36px;border:none;text-align:center;font-size:13px;font-weight:700;color:var(--ink);background:transparent;-moz-appearance:textfield}
+.qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none}
+.qty input:focus{outline:none;background:var(--sage)}
+.qty input:disabled,.qty button:disabled{cursor:not-allowed;color:var(--stone)}
+
+.oos-tag{font-size:11.5px;font-weight:600;color:var(--red)}
+.max-note{font-size:10.5px;color:var(--stone);min-height:13px;margin-top:6px}
+.max-note-blocked{color:var(--red);font-weight:600}
+.product-contents{margin-top:2px}
+.contents-details summary{font-size:11px;color:var(--pine-dim);cursor:pointer;list-style:none}
+.contents-details summary::-webkit-details-marker{display:none}
+.contents-body{font-size:11px;color:var(--stone);margin-top:3px;line-height:1.5}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--stone);text-transform:uppercase}
+.field input,.field select,.field textarea{width:100%;min-width:0;padding:12px 13px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:var(--paper);outline:none;transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pine);box-shadow:0 0 0 3px var(--sage)}
+.field input::placeholder,.field textarea::placeholder{color:#BDB5A6}
+.field textarea{resize:vertical;min-height:70px}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2379715F' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.field-hint{font-size:11px;color:var(--stone);margin-top:3px}
+.req{color:var(--red)}
+
+.summary{background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.summary-head{background:var(--pine);color:#EFE9D8;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.1em}
+.summary-body{padding:12px 16px;min-height:40px}
+.summary-empty{font-size:13px;color:var(--stone);font-style:italic}
+.summary-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13.5px;border-bottom:1px dashed var(--rule)}
+.summary-item:last-child{border-bottom:none}
+.summary-item-name{color:var(--ink)}
+.summary-item-val{font-weight:600;color:var(--pine-dim);white-space:nowrap;margin-left:12px}
+.summary-subtotal-row{display:flex;justify-content:space-between;padding:8px 0 0;font-size:12.5px;color:var(--stone)}
+.summary-discounts{padding:8px 0 0}
+.summary-discount-row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--pine)}
+.summary-foot{background:var(--sage);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.summary-total{font-family:'Fraunces',serif;font-size:23px;font-weight:600;color:var(--pine)}
+.summary-weight-note{font-size:11px;color:var(--stone);margin-top:3px}
+
+.coupon-row{display:flex;gap:8px;margin-bottom:8px}
+.coupon-row input{flex:1;padding:12px 13px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;text-transform:uppercase;color:var(--ink);background:var(--paper);outline:none;transition:border-color .15s}
+.coupon-row input:focus{border-color:var(--pine)}
+.coupon-row input::placeholder{color:#BDB5A6;text-transform:none}
+.coupon-row button{padding:12px 18px;background:var(--pine);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:background .15s}
+.coupon-row button:hover{background:var(--pine-dim)}
+.coupon-msg{display:none;font-size:12.5px;margin-bottom:16px}
+.coupon-msg.ok{display:block;color:var(--pine)}
+.coupon-msg.err{display:block;color:var(--red)}
+.coupon-msg a{color:inherit;text-decoration:underline;cursor:pointer;margin-left:6px}
+
+.same-day-row{margin:14px 0}
+.same-day-label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);cursor:pointer}
+.same-day-label input{width:16px;height:16px;cursor:pointer}
+
+.ship-note{background:var(--sage);border:1px solid var(--rule);border-radius:8px;padding:12px 16px;font-size:12.5px;color:var(--pine-dim);line-height:1.6;margin-bottom:18px}
+.ship-note strong{color:var(--ink)}
+
+.wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;background:var(--wa);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wa-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
+.wa-btn:active{transform:translateY(0)}
+.wa-btn svg{width:20px;height:20px}
+.wa-btn:disabled{background:#9FCDB0;cursor:not-allowed;transform:none}
+.error-msg{display:none;color:var(--red);font-size:12.5px;margin-top:10px;text-align:center}
+
+.reset-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 24px;background:transparent;color:var(--stone);border:1.5px solid var(--rule);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;transition:border-color .15s,color .15s}
+.reset-btn:hover{border-color:var(--red);color:var(--red)}
+
+.footer{text-align:center;font-size:11px;color:var(--stone);margin-top:28px;padding-top:18px;border-top:1px solid var(--rule);line-height:1.8}
+
+.stickybar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--pine);color:#fff;padding:12px 20px calc(12px + env(safe-area-inset-bottom)) 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .25s}
+.stickybar.show{transform:translateY(0)}
+.stickybar-total{font-family:'Fraunces',serif;font-size:18px;font-weight:600}
+.stickybar-label{font-size:10px;letter-spacing:.08em;color:#B9CBAE}
+.stickybar button{background:var(--gold);color:#fff;border:none;border-radius:20px;padding:11px 18px;min-height:40px;font-size:12.5px;font-weight:700;cursor:pointer;touch-action:manipulation}
+
+@media(max-width:480px){
+  .hero h1{font-size:30px}
+  .field-grid{grid-template-columns:1fr}
+  .field.full{grid-column:1}
+  .field input,.field select,.field textarea,.card-pack select{font-size:16px}
+  .hero,.body{padding-left:20px;padding-right:20px}
+  .steps,.chipbar{padding-left:20px;padding-right:20px}
+}
+@media(max-width:360px){
+  .hero{padding-top:32px}
+  .hero h1{font-size:27px}
+  .hero p{font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Farm · Cold-pressed · Stone-ground</div>
+    <h1>Purnavah</h1>
+    <p>Organic and natural foods sourced directly from farms. Place your order below and we'll confirm on WhatsApp.</p>
+  </div>
+</div>
+
+<div class="stickynav">
+  <div class="steps">
+    <div class="step active" id="step-products" onclick="jump('sec-products')">Products</div>
+    <div class="step" id="step-details" onclick="jump('sec-details')">Delivery</div>
+    <div class="step" id="step-review" onclick="jump('sec-review')">Review</div>
+  </div>
+  <div class="chipbar" id="chipbar"></div>
+</div>
+
+<div class="body">
+
+  <!-- ── SECTION: PRODUCTS ── -->
+  <div class="section" id="sec-products">
+    <div class="catalog-status" id="catalogStatus">Loading products…</div>
+    <div id="categoriesContainer"></div>
+  </div>
+
+  <!-- ── SECTION: DELIVERY ── -->
+  <div class="section" id="sec-details">
+    <div class="section-title">Delivery details</div>
+    <div class="section-sub">Where should we send your order?</div>
+    <div class="field-grid">
+      <div class="field full">
+        <label>Full name<span class="req">*</span></label>
+        <input type="text" id="fname" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Phone<span class="req">*</span></label>
+        <input type="tel" id="fphone" placeholder="10-digit mobile" autocomplete="tel" maxlength="10">
+      </div>
+      <div class="field">
+        <label>Email<span class="req">*</span></label>
+        <input type="email" id="femail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Pincode<span class="req">*</span></label>
+        <input type="text" id="fpincode" placeholder="6-digit pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+      <div class="field">
+        <label>State<span class="req">*</span></label>
+        <select id="fstate">
+          <option value="">Select state</option>
+          <option>Andaman and Nicobar Islands</option>
+          <option>Andhra Pradesh</option>
+          <option>Arunachal Pradesh</option>
+          <option>Assam</option>
+          <option>Bihar</option>
+          <option>Chandigarh</option>
+          <option>Chhattisgarh</option>
+          <option>Dadra and Nagar Haveli and Daman and Diu</option>
+          <option>Delhi</option>
+          <option>Goa</option>
+          <option>Gujarat</option>
+          <option>Haryana</option>
+          <option>Himachal Pradesh</option>
+          <option>Jammu and Kashmir</option>
+          <option>Jharkhand</option>
+          <option>Karnataka</option>
+          <option>Kerala</option>
+          <option>Ladakh</option>
+          <option>Lakshadweep</option>
+          <option>Madhya Pradesh</option>
+          <option>Maharashtra</option>
+          <option>Manipur</option>
+          <option>Meghalaya</option>
+          <option>Mizoram</option>
+          <option>Nagaland</option>
+          <option>Odisha</option>
+          <option>Puducherry</option>
+          <option>Punjab</option>
+          <option>Rajasthan</option>
+          <option>Sikkim</option>
+          <option>Tamil Nadu</option>
+          <option>Telangana</option>
+          <option>Tripura</option>
+          <option>Uttar Pradesh</option>
+          <option>Uttarakhand</option>
+          <option>West Bengal</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Full address<span class="req">*</span></label>
+        <textarea id="faddress" placeholder="House/flat, street, locality, city, state"></textarea>
+      </div>
+      <div class="field full">
+        <label>Order notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" id="fnotes" placeholder="Allergies, preferences, gift packaging, etc.">
+        <div class="field-hint">Leave blank if none</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION: REVIEW & SEND ── -->
+  <div class="section" id="sec-review">
+    <div class="section-title">Review & send</div>
+    <div class="section-sub">Double-check your order before sending it over.</div>
+
+    <div class="summary">
+      <div class="summary-head">YOUR ORDER</div>
+      <div class="summary-body" id="summaryItems">
+        <div class="summary-empty">No items selected yet</div>
+      </div>
+      <div class="summary-foot">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--stone)">ORDER TOTAL</div>
+          <div class="summary-weight-note" id="summaryWeight"></div>
+        </div>
+        <div class="summary-total" id="summaryTotal">₹0</div>
+      </div>
+    </div>
+
+    <div class="coupon-row">
+      <input type="text" id="couponInput" placeholder="Have a coupon code?" maxlength="20">
+      <button type="button" id="couponBtn" onclick="applyCoupon(this)">Apply</button>
+    </div>
+    <div class="coupon-msg" id="couponMsg"></div>
+
+    <div class="same-day-row" id="sameDayRow" style="display:none">
+      <label class="same-day-label">
+        <input type="checkbox" id="sameDayDelivery" onchange="updateSummary()">
+        Same-day delivery (+₹199)
+      </label>
+    </div>
+
+    <div class="ship-note">
+      <strong>Free delivery</strong> on orders above ₹2890 — a ₹199 delivery charge applies below that. Our team will confirm availability, share payment details, and dispatch within 1–2 business days after payment. Questions? Call or WhatsApp <strong>+91 83389 62474</strong>.
+    </div>
+
+    <button class="wa-btn" id="waBtn" onclick="sendWhatsApp()">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.533 5.856L0 24l6.334-1.507A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.79 9.79 0 01-5.002-1.37l-.36-.214-3.757.894.952-3.656-.235-.376A9.786 9.786 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+      </svg>
+      Send order on WhatsApp
+    </button>
+    <div class="error-msg" id="errorMsg"></div>
+    <button class="reset-btn" onclick="resetForm()">
+      ↺ &nbsp;Reset form
+    </button>
+  </div>
+
+  <div class="footer">
+    Purnavah · Greenharvest Agriculture Pvt. Ltd.<br>
+    Plot 122/3, Anjani, Gaurela-Pendra-Marwahi, Chhattisgarh – 495117<br>
+    FSSAI Lic. No. 10718005000824 · GSTIN: 22AALCG0905G1Z1<br>
+    priyam.jaiswal@globalgreenharvest.com
+  </div>
+
+</div>
+
+<div class="stickybar" id="stickybar">
+  <div>
+    <div class="stickybar-label">YOUR ORDER</div>
+    <div class="stickybar-total" id="barTotal">₹0</div>
+  </div>
+  <button onclick="jump('sec-review')">Review order</button>
+</div>
+
+<script type="module">
+import { supabase, callFn } from './supabase-client.js';
+
+const WA_NUMBER = "918338962474"; // +91 83389 62474
+
+// Delivery charge policy — free above the threshold, flat fee below it.
+// Checked against the raw item subtotal (before any coupon discount), so a
+// coupon can't accidentally push an order below the free-delivery line.
+const FREE_DELIVERY_THRESHOLD = 2890;
+const DELIVERY_CHARGE = 199;
+
+function computeDeliveryCharge(subtotal) {
+  return subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_CHARGE : 0;
+}
+
+// Same-day delivery add-on — built and wired end-to-end (summary, WhatsApp
+// message, order payload, orders_code.gs logging), but kept off customers'
+// screens for now via this flag. To launch it: flip this to true — the
+// checkbox (#sameDayRow, currently display:none in the markup) will start
+// showing itself, no other change needed.
+const SHOW_SAME_DAY_DELIVERY = false;
+const SAME_DAY_DELIVERY_CHARGE = 199;
+if (SHOW_SAME_DAY_DELIVERY) document.getElementById('sameDayRow').style.display = 'block';
+
+function isSameDayDeliverySelected() {
+  const el = document.getElementById('sameDayDelivery');
+  return !!(el && el.checked);
+}
+
+let PRODUCTS = []; // [{id, grid, category, displayName, packSize, unit, mrp, gstPct, waKey, inStock}, ...] — one entry per catalog row (one per pack size)
+let PRODUCT_GROUPS = []; // [{groupId, grid, displayName, variants: [product, ...]}, ...] — variants sharing a Display Name are merged into one tile
+const selectedVariant = {}; // groupId -> currently-selected variant's product id (drives which variant the tile's price/qty controls act on)
+const qty = {};
+let appliedCoupon = null; // { code, value } — value is the discount %, validated server-side against the Coupons sheet
+
+// Sheet's Category column holds short internal codes — map to the
+// customer-facing section headings shown on the form. Anything not listed
+// here falls back to the raw Category text as-is.
+const CATEGORY_LABELS = {
+  "Oils - Organic": "Cold-Pressed Oils — Organic",
+  "Oils - Regular": "Cold-Pressed Oils — Regular",
+  "Ghee": "Ghee",
+  "Flour": "Flour",
+  "Dal": "Dal & Pulses — Organic",
+  "Rice": "Rice — Organic",
+  "Spices - Whole": "Spices — Whole",
+  "Spices - Ground": "Spices — Ground"
+};
+
+function slugify(str) {
+  return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
+}
+
+function toProduct(p) {
+  return {
+    id: slugify(p.productName),
+    grid: 'pg-' + slugify(p.category),
+    category: p.category,
+    displayName: p.displayName,
+    packSize: p.packSize,
+    unit: p.unit,
+    mrp: Number(p.mrp) || 0,
+    gstPct: Number(p.gstPct) || 0,
+    waKey: p.waKey,
+    inStock: p.inStock !== false,
+    contents: p.contents || '',
+    // weightKg/maxOrderKg drive the per-product order cap below — the
+    // Catalog script already applies the same Weight (kg)-or-parsed-from-
+    // Pack-Size fallback server-side, so estimateWeightKg() here is only a
+    // safety net if an older deployment omits the field.
+    weightKg: Number(p.weightKg) || estimateWeightKg(p.packSize),
+    maxOrderKg: Number(p.maxOrderKg) || 0 // 0 = no limit
+  };
+}
+
+// Builds both the category headings/lists (in the page body) and the
+// matching chip bar (in the sticky nav) in one pass, so chip order always
+// matches section order. Categories aren't known until the catalog loads,
+// so — unlike a static wireframe — both are built here at runtime rather
+// than hardcoded in the HTML.
+function buildCategorySections() {
+  const catContainer = document.getElementById('categoriesContainer');
+  const chipbar = document.getElementById('chipbar');
+  catContainer.innerHTML = '';
+  chipbar.innerHTML = '';
+
+  // One entry per distinct category, in first-seen order.
+  const seen = new Set();
+  const categories = [];
+  PRODUCTS.forEach(p => {
+    if (seen.has(p.grid)) return;
+    seen.add(p.grid);
+    categories.push({ grid: p.grid, fullLabel: CATEGORY_LABELS[p.category] || p.category });
+  });
+
+  // Chips use the short form (before an em dash) for a compact pill, but
+  // only when that short form is unique — e.g. "Cold-Pressed Oils —
+  // Organic" and "Cold-Pressed Oils — Regular" would otherwise both
+  // collapse to an identical-looking "Cold-Pressed Oils" chip.
+  const shortCounts = {};
+  categories.forEach(c => {
+    c.shortLabel = c.fullLabel.split(' — ')[0];
+    shortCounts[c.shortLabel] = (shortCounts[c.shortLabel] || 0) + 1;
+  });
+
+  categories.forEach((c, i) => {
+    const heading = document.createElement('div');
+    heading.className = 'cat-heading';
+    heading.id = 'catlabel-' + c.grid;
+    heading.innerHTML = `<div class="cat-dot"></div><span>${c.fullLabel.toUpperCase()}</span>`;
+    catContainer.appendChild(heading);
+
+    const listEl = document.createElement('div');
+    listEl.className = 'card-list';
+    listEl.id = c.grid;
+    catContainer.appendChild(listEl);
+
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (i === 0 ? ' active' : '');
+    chip.textContent = shortCounts[c.shortLabel] > 1 ? c.fullLabel : c.shortLabel;
+    chip.dataset.grid = c.grid;
+    chip.onclick = () => document.getElementById('catlabel-' + c.grid).scrollIntoView({behavior:'smooth',block:'start'});
+    chipbar.appendChild(chip);
+  });
+}
+
+// Products sharing the same Display Name (typically the same item in
+// different pack sizes) are folded into a single tile with a pack-size
+// dropdown, instead of one tile per catalog row.
+function groupProductVariants() {
+  const groups = new Map();
+  PRODUCTS.forEach(p => {
+    // Collapse repeated whitespace before matching — the Catalog sheet has
+    // occasional double-space typos between pack-size rows of the same
+    // product (e.g. "Red Rajma  - Organic" vs "Red Rajma - Organic") that
+    // would otherwise split one product into two tiles.
+    const key = p.grid + '::' + p.displayName.trim().replace(/\s+/g, ' ');
+    if (!groups.has(key)) {
+      groups.set(key, { groupId: slugify(key), grid: p.grid, displayName: p.displayName, variants: [] });
+    }
+    groups.get(key).variants.push(p);
+  });
+  // Max order cap is a per-product (not per-pack-size) setting — admins are
+  // expected to enter the same "Max Order Qty (kg)" value on every variant
+  // row of a product, but take the max across variants so one blank row
+  // doesn't accidentally disable a cap set on a sibling row.
+  groups.forEach(g => { g.maxOrderKg = Math.max(0, ...g.variants.map(v => v.maxOrderKg || 0)); });
+  return Array.from(groups.values());
+}
+
+function getGroupById(gid) {
+  return PRODUCT_GROUPS.find(g => g.groupId === gid);
+}
+
+// Total kg of a product already in the cart, summed across every pack-size
+// variant of its group — a customer mixing pack sizes of the same product
+// (e.g. one 1kg pack + two 500g packs) still counts against one shared cap.
+function groupWeightUsed(group) {
+  return group.variants.reduce((sum, v) => sum + (qty[v.id] || 0) * (v.weightKg || 0), 0);
+}
+
+// Briefly flags the tile's order-limit note red, then reverts it back to
+// the normal "Max Xkg per order" text via updateVariantDisplay.
+function flashLimitNote(gid) {
+  const el = document.getElementById('maxnote-' + gid);
+  if (!el) return;
+  el.textContent = 'Order limit reached';
+  el.classList.add('max-note-blocked');
+  clearTimeout(el._limitTimer);
+  el._limitTimer = setTimeout(() => updateVariantDisplay(gid), 1500);
+}
+
+// Default pack size, when a product comes in more than one: "1 kg" if the
+// group has one, else whatever variant happens to be listed first in the
+// Catalog sheet (products only sold in g/ml/bundles have no "1kg" option to
+// prefer). Whitespace-insensitive since the sheet has inconsistent spacing
+// ("1kg" vs "1 kg").
+function normalizePackSize(s) {
+  return String(s || '').toLowerCase().replace(/\s+/g, '');
+}
+function pickDefaultVariant(variants) {
+  // Prefer an in-stock variant so the tile doesn't default to a pack size
+  // nobody can actually buy while a different pack size of the same
+  // product is available — only fall back to an out-of-stock one (still
+  // preferring "1 kg" among those) when every variant in the group is OOS,
+  // so the tile still renders instead of having nothing to select.
+  const inStock = variants.filter(v => v.inStock);
+  const pool = inStock.length ? inStock : variants;
+  return pool.find(v => normalizePackSize(v.packSize) === '1kg') || pool[0];
+}
+
+// Build product cards — one per Display Name group, with a pack-size
+// selector when a group has more than one variant.
+function renderProductGrid() {
+  buildCategorySections();
+  PRODUCTS.forEach(p => { qty[p.id] = 0; });
+  PRODUCT_GROUPS = groupProductVariants();
+
+  PRODUCT_GROUPS.forEach(group => {
+    const gid = group.groupId;
+    selectedVariant[gid] = pickDefaultVariant(group.variants).id;
+    const container = document.getElementById(group.grid);
+    const row = document.createElement('div');
+    row.className = 'card';
+    row.id = 'row-' + gid;
+
+    const packControl = group.variants.length > 1
+      ? `<div class="card-pack"><select id="pack-${gid}" onchange="selectVariant('${gid}', this.value)" aria-label="Pack size for ${group.displayName}">
+          ${group.variants.map(v => `<option value="${v.id}" ${v.inStock ? '' : 'disabled'}>${v.packSize || v.unit}${v.inStock ? '' : ' (Out of stock)'}</option>`).join('')}
+        </select></div>`
+      : `<div class="card-pack" style="font-size:11.5px;color:var(--stone)">${group.variants[0].packSize || group.variants[0].unit}</div>`;
+
+    row.innerHTML = `
+      <div class="card-top">
+        <div>
+          <div class="card-name">${group.displayName}</div>
+          ${packControl}
+          <div class="product-contents" id="contents-${gid}"></div>
+        </div>
+        <div>
+          <span class="card-mrp-label">MRP</span>
+          <div class="card-price" id="price-${gid}"></div>
+        </div>
+      </div>
+      <div class="card-bottom">
+        <div class="subtotal" id="sub-${gid}"></div>
+        <div class="qty">
+          <button type="button" onclick="changeQty('${gid}',-1)" aria-label="Decrease">−</button>
+          <input type="number" id="qty-${gid}" value="0" min="0" max="99"
+            oninput="setQty('${gid}',this.value)" aria-label="Quantity for ${group.displayName}">
+          <button type="button" onclick="changeQty('${gid}',1)" aria-label="Increase">+</button>
+        </div>
+      </div>
+      <div class="max-note" id="maxnote-${gid}"></div>
+    `;
+    container.appendChild(row);
+    // The <option> list has no `selected` attribute, so the browser would
+    // otherwise always show its first entry regardless of selectedVariant.
+    const select = document.getElementById('pack-' + gid);
+    if (select) select.value = selectedVariant[gid];
+    updateVariantDisplay(gid);
+  });
+
+  setupCategoryScrollSpy();
+}
+
+// Fallback for rows with no explicit weight_kg — mirrors catalog_code.gs's
+// parseWeightFromPackSize_ (also duplicated server-side in the products
+// Edge Function — small enough not to need a shared module, no build step).
+function parseWeightFromPackSize(packSize) {
+  const s = (packSize || '').toString().trim().toLowerCase();
+  const m = s.match(/([\d.]+)\s*(kg|g|l|ml)\b/);
+  if (!m) return 0;
+  const num = parseFloat(m[1]);
+  if (isNaN(num)) return 0;
+  switch (m[2]) {
+    case 'kg': return num;
+    case 'g':  return num / 1000;
+    case 'l':  return num;
+    case 'ml': return num / 1000;
+    default:   return 0;
+  }
+}
+
+function computeWaKey(displayName, packSize) {
+  displayName = (displayName || '').toString().trim();
+  packSize = (packSize || '').toString().trim();
+  return packSize ? `${displayName} (${packSize})` : displayName;
+}
+
+// Direct supabase-js reads (RLS-scoped to active products/hub-admins/stock
+// only — see "DB_Scripts/Supabase Migration Additions.sql") replacing the
+// old ?action=catalog Apps Script endpoint. Reproduces handlePublicCatalog's
+// exact behavior: only Active products, inStock summed across every active
+// hub-admin's stock row, never exact per-hub counts/HSN/notes.
+async function loadCatalog() {
+  const statusEl = document.getElementById('catalogStatus');
+  try {
+    // td_admins itself has no anon-read policy (RLS silently returns an
+    // empty set, not an error, if queried directly) — this narrow
+    // security-definer RPC exposes only the active hub-admin ids, nothing
+    // else about the admin. See "DB_Scripts/Supabase Migration Additions.sql".
+    const [{ data: products, error: prodErr }, { data: hubIds, error: hubErr }, { data: stockRows, error: stockErr }] = await Promise.all([
+      supabase.from('td_products').select('*').eq('active', true),
+      supabase.rpc('td_active_hub_admin_ids'),
+      supabase.from('td_product_stock').select('product_id, hub_admin_id, stock_qty'),
+    ]);
+    if (prodErr) throw new Error(prodErr.message);
+    if (hubErr) throw new Error(hubErr.message);
+    if (stockErr) throw new Error(stockErr.message);
+
+    const activeHubIds = new Set(hubIds || []);
+    const stockByProduct = {};
+    (stockRows || []).forEach(s => {
+      if (!activeHubIds.has(s.hub_admin_id)) return; // deactivated hub's leftover stock must not count
+      stockByProduct[s.product_id] = (stockByProduct[s.product_id] || 0) + (Number(s.stock_qty) || 0);
+    });
+
+    const data = (products || []).map(p => ({
+      productId: p.product_id,
+      productName: p.product_name,
+      category: p.category || '',
+      displayName: p.display_name || p.product_name || '',
+      unit: p.unit || '',
+      packSize: p.pack_size || '',
+      mrp: Number(p.mrp) || 0,
+      gstPct: Number(p.gst_percent) || 0,
+      waKey: p.wa_key || computeWaKey(p.display_name || p.product_name, p.pack_size),
+      inStock: (stockByProduct[p.product_id] || 0) > 0,
+      contents: p.contents || '',
+      weightKg: Number(p.weight_kg) || parseWeightFromPackSize(p.pack_size),
+      maxOrderKg: Number(p.max_order_qty_kg) || 0,
+    }));
+
+    PRODUCTS = data.map(toProduct);
+    if (PRODUCTS.length === 0) {
+      statusEl.textContent = 'No products available right now — please check back soon.';
+      return;
+    }
+    statusEl.style.display = 'none';
+    renderProductGrid();
+  } catch (err) {
+    console.warn('Failed to load catalog:', err);
+    statusEl.textContent = "Couldn't load our product list. Please refresh the page, or message us on WhatsApp to order.";
+    statusEl.classList.add('catalog-status-error');
+  }
+}
+
+loadCatalog();
+
+// Quantity is tracked per variant (so switching the pack-size dropdown never
+// loses a quantity already entered against a different pack size); the
+// group's tile controls always read/write whichever variant is currently
+// selected for that group.
+function changeQty(gid, delta) {
+  const variantId = selectedVariant[gid];
+  const prod = PRODUCTS.find(p => p.id === variantId);
+  if (prod && !prod.inStock) return; // buttons are disabled while OOS — belt and suspenders
+  if (delta > 0 && prod) {
+    const group = getGroupById(gid);
+    // Cap only enforceable when both a limit and a known unit weight exist
+    // — a product with no Weight (kg) and an unparseable Pack Size has no
+    // way to convert its packet count to kg, so the cap is skipped for it.
+    if (group && group.maxOrderKg > 0 && prod.weightKg > 0) {
+      const wouldBeWeight = groupWeightUsed(group) + delta * prod.weightKg;
+      if (wouldBeWeight > group.maxOrderKg + 1e-9) {
+        flashLimitNote(gid);
+        return;
+      }
+    }
+  }
+  qty[variantId] = Math.max(0, (qty[variantId] || 0) + delta);
+  updateVariantDisplay(gid);
+  updateSummary();
+}
+
+function setQty(gid, val) {
+  const variantId = selectedVariant[gid];
+  const prod = PRODUCTS.find(p => p.id === variantId);
+  if (prod && !prod.inStock) return; // input is disabled while OOS — belt and suspenders
+  let newQty = Math.max(0, parseInt(val) || 0);
+  const group = getGroupById(gid);
+  let blocked = false;
+  if (group && group.maxOrderKg > 0 && prod && prod.weightKg > 0) {
+    // How much of the cap the OTHER variants of this product are already
+    // using, so the max allowed for the variant being typed into accounts
+    // for pack sizes already in the cart.
+    const otherWeight = groupWeightUsed(group) - (qty[variantId] || 0) * prod.weightKg;
+    const maxUnits = Math.max(0, Math.floor((group.maxOrderKg - otherWeight + 1e-9) / prod.weightKg));
+    if (newQty > maxUnits) { newQty = maxUnits; blocked = true; }
+  }
+  qty[variantId] = newQty;
+  updateVariantDisplay(gid);
+  updateSummary();
+  // Flash after updateVariantDisplay, not before — that call resets the
+  // note to its normal text, which would otherwise stomp the flash in the
+  // same tick before the user ever sees it.
+  if (blocked) flashLimitNote(gid);
+}
+
+function selectVariant(gid, variantId) {
+  selectedVariant[gid] = variantId;
+  updateVariantDisplay(gid);
+}
+
+function updateVariantDisplay(gid) {
+  const variantId = selectedVariant[gid];
+  const prod = PRODUCTS.find(p => p.id === variantId);
+  if (!prod) return;
+
+  const row = document.getElementById('row-' + gid);
+  const qtyInput = document.getElementById('qty-' + gid);
+  const priceEl = document.getElementById('price-' + gid);
+  const subEl = document.getElementById('sub-' + gid);
+  const contentsEl = document.getElementById('contents-' + gid);
+  const maxNoteEl = document.getElementById('maxnote-' + gid);
+
+  // Persistent "Max Xkg per order" hint — shown regardless of stock status
+  // (still useful info while OOS) and regardless of which variant is
+  // selected, since the cap is per-product, not per-pack-size.
+  const group = getGroupById(gid);
+  if (maxNoteEl) {
+    maxNoteEl.classList.remove('max-note-blocked');
+    maxNoteEl.textContent = (group && group.maxOrderKg > 0) ? `Max ${group.maxOrderKg}kg per order` : '';
+  }
+
+  // What's-inside disclosure — mainly for sachet/multi-item bundles (e.g.
+  // "Ground Spice Bundle (4 sachets)"). Keyed to the selected variant, not
+  // the group, since different pack sizes of the same product can contain
+  // different things. Shown regardless of stock status — still useful
+  // information even for an out-of-stock pack size.
+  contentsEl.innerHTML = prod.contents
+    ? `<details class="contents-details"><summary>What's inside? ▾</summary><div class="contents-body">${prod.contents}</div></details>`
+    : '';
+
+  row.classList.toggle('oos', !prod.inStock);
+  qtyInput.disabled = !prod.inStock;
+  row.querySelectorAll('.qty button').forEach(b => { b.disabled = !prod.inStock; });
+
+  if (!prod.inStock) {
+    // Selecting an OOS pack size (or it becoming OOS on a catalog refresh)
+    // can't carry a quantity forward — there's nothing to fulfil it with.
+    qty[variantId] = 0;
+    qtyInput.value = 0;
+    priceEl.innerHTML = '<span class="oos-tag">Out of stock</span>';
+    subEl.style.display = 'none';
+    subEl.textContent = '';
+    row.classList.remove('has-qty');
+    return;
+  }
+
+  priceEl.textContent = '₹' + prod.mrp.toLocaleString('en-IN');
+  qtyInput.value = qty[variantId] || 0;
+  const q = qty[variantId] || 0;
+  row.classList.toggle('has-qty', q > 0);
+  if (q > 0) {
+    subEl.textContent = '= ₹' + (q * prod.mrp).toLocaleString('en-IN');
+    subEl.style.display = 'block';
+  } else {
+    subEl.style.display = 'none';
+    subEl.textContent = '';
+  }
+}
+
+// Approximate weight from a product's Pack Size text ("500 g", "1 L", "2 kg",
+// "250 ml") — liquids (oils/ghee) are treated as ~1:1 with kg, same
+// approximation the Catalog Apps Script uses server-side. Lets the customer
+// gauge parcel weight without us tracking exact weights per SKU.
+function estimateWeightKg(packSize) {
+  const s = String(packSize || '').trim().toLowerCase();
+  const m = s.match(/([\d.]+)\s*(kg|g|l|ml)\b/);
+  if (!m) return 0;
+  const num = parseFloat(m[1]);
+  if (isNaN(num)) return 0;
+  switch (m[2]) {
+    case 'kg': return num;
+    case 'g':  return num / 1000;
+    case 'l':  return num;
+    case 'ml': return num / 1000;
+    default:   return 0;
+  }
+}
+
+function updateSummary() {
+  const items = PRODUCTS.filter(p => qty[p.id] > 0);
+  const container = document.getElementById('summaryItems');
+  const totalEl = document.getElementById('summaryTotal');
+  const weightEl = document.getElementById('summaryWeight');
+  const barTotalEl = document.getElementById('barTotal');
+  const stickybarEl = document.getElementById('stickybar');
+
+  if (items.length === 0) {
+    container.innerHTML = '<div class="summary-empty">No items selected yet</div>';
+    totalEl.textContent = '₹0';
+    weightEl.textContent = '';
+    barTotalEl.textContent = '₹0';
+    stickybarEl.classList.remove('show');
+    return;
+  }
+
+  // Sectioned bill: Items (tax-inclusive MRP) -> GST (extracted, informational
+  // breakdown) -> Coupon deducted -> Delivery -> Final Payable. MRP already
+  // includes GST (India's legal MRP definition), so "GST" here is the portion
+  // of the subtotal that's tax, not an addition on top of it — there's no
+  // separate pre-discount "Grand Total" row since that would just repeat the
+  // subtotal figure.
+  let subtotal = 0;
+  let taxableTotal = 0;
+  let gstTotal = 0;
+  let totalWeight = 0;
+  let itemsHtml = '';
+  items.forEach(p => {
+    const q = qty[p.id];
+    const lineAmount = q * p.mrp; // tax-inclusive
+    const gstPct = p.gstPct || 0;
+    const lineTaxable = lineAmount * 100 / (100 + gstPct); // extract embedded GST
+    subtotal += lineAmount;
+    taxableTotal += lineTaxable;
+    gstTotal += lineAmount - lineTaxable;
+    totalWeight += q * estimateWeightKg(p.packSize);
+    itemsHtml += `<div class="summary-item">
+      <span class="summary-item-name">${p.displayName} <span style="color:var(--stone);font-size:12px">${p.packSize || p.unit} × ${q}</span></span>
+      <span class="summary-item-val">₹${lineAmount.toLocaleString('en-IN')}</span>
+    </div>`;
+  });
+  taxableTotal = Math.round(taxableTotal * 100) / 100;
+  gstTotal = Math.round(gstTotal * 100) / 100;
+
+  let html = itemsHtml;
+  html += `<div class="summary-subtotal-row"><span>Items subtotal (incl. GST)</span><span>₹${subtotal.toLocaleString('en-IN')}</span></div>`;
+  html += `<div class="summary-subtotal-row"><span>GST (included above)</span><span>₹${gstTotal.toLocaleString('en-IN')}</span></div>`;
+
+  let payable = subtotal;
+  if (appliedCoupon) {
+    // Discount applies to the tax-extracted (post-GST-removal) amount, then
+    // GST is recomputed proportionally on the discounted taxable value —
+    // since the coupon % is uniform across every line, scaling taxableTotal
+    // and gstTotal by the same factor is equivalent to doing this per line
+    // and summing (each line's own rate stays fixed).
+    const factor = 1 - appliedCoupon.value / 100;
+    const discTaxable = Math.round(taxableTotal * factor * 100) / 100;
+    const discGst = Math.round(gstTotal * factor * 100) / 100;
+    payable = discTaxable + discGst;
+    const discAmt = Math.round((subtotal - payable) * 100) / 100;
+    html += `<div class="summary-discounts">
+      <div class="summary-discount-row"><span>Coupon ${appliedCoupon.code} (−${appliedCoupon.value}%)</span><span>− ₹${discAmt.toLocaleString('en-IN')}</span></div>
+    </div>`;
+  }
+
+  const deliveryCharge = computeDeliveryCharge(subtotal);
+  payable += deliveryCharge;
+  html += `<div class="summary-subtotal-row">
+    <span>Delivery</span>
+    <span>${deliveryCharge > 0 ? '₹' + deliveryCharge.toLocaleString('en-IN') : 'Free'}</span>
+  </div>`;
+
+  if (isSameDayDeliverySelected()) {
+    payable += SAME_DAY_DELIVERY_CHARGE;
+    html += `<div class="summary-subtotal-row"><span>Same-day delivery</span><span>₹${SAME_DAY_DELIVERY_CHARGE}</span></div>`;
+  }
+
+  container.innerHTML = html;
+  totalEl.textContent = '₹' + payable.toLocaleString('en-IN');
+  weightEl.textContent = totalWeight > 0 ? `Est. weight ≈ ${Math.round(totalWeight * 10) / 10} kg (±2 kg)` : '';
+  barTotalEl.textContent = totalEl.textContent;
+  stickybarEl.classList.toggle('show', payable > 0);
+}
+
+async function applyCoupon(btn) {
+  const input = document.getElementById('couponInput');
+  const msgEl = document.getElementById('couponMsg');
+  const code = input.value.trim().toUpperCase();
+
+  if (!code) { msgEl.textContent = 'Enter a coupon code first.'; msgEl.className = 'coupon-msg err'; return; }
+
+  msgEl.textContent = 'Checking…';
+  msgEl.className = 'coupon-msg ok';
+  if (btn) btn.disabled = true; // guard against a double-click firing two lookups while this one is in flight
+
+  try {
+    // Direct read, never select * across all coupons — .eq() + single-code
+    // lookup only, same anti-enumeration intent as handleCouponValidate_
+    // (see "DB_Scripts/Supabase Migration Additions.sql" for the caveat that
+    // the anon key itself could still be used directly to enumerate codes;
+    // this only prevents this page's own code from doing so).
+    const { data: row, error } = await supabase
+      .from('td_coupons').select('coupon_code, value, active').eq('coupon_code', code).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (row && row.active) {
+      appliedCoupon = { code: row.coupon_code, value: Number(row.value) || 0 };
+      msgEl.innerHTML = `✓ "${row.coupon_code}" applied — ${appliedCoupon.value}% off <a onclick="removeCoupon()">Remove</a>`;
+      msgEl.className = 'coupon-msg ok';
+    } else {
+      appliedCoupon = null;
+      msgEl.textContent = row && !row.active ? 'This coupon is no longer active' : 'Invalid coupon code';
+      msgEl.className = 'coupon-msg err';
+    }
+  } catch (err) {
+    appliedCoupon = null;
+    msgEl.textContent = "Couldn't verify the coupon — check your connection and try again.";
+    msgEl.className = 'coupon-msg err';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+  updateSummary();
+}
+
+function removeCoupon() {
+  appliedCoupon = null;
+  document.getElementById('couponInput').value = '';
+  const msgEl = document.getElementById('couponMsg');
+  msgEl.textContent = '';
+  msgEl.className = 'coupon-msg';
+  updateSummary();
+}
+
+// Same GST-extraction + uniform-coupon-scaling math as updateSummary()'s
+// on-screen bill (kept as a separate small pass here rather than merged into
+// that function, to avoid touching its already-working render logic) — used
+// to persist a real pricing breakdown into td_orders at creation time
+// (discount_base_amount/taxable_value/gst_amount/total_payable), instead of
+// leaving those blank until an admin later generates an invoice. Valid here
+// because the only discount in play at order-creation is a single uniform
+// coupon %, never a per-item override (those only exist in admin.html).
+function computeGstBreakdown(items) {
+  let taxableTotal = 0, gstTotal = 0;
+  items.forEach(p => {
+    const q = qty[p.id];
+    const lineAmount = q * p.mrp; // tax-inclusive
+    const gstPct = p.gstPct || 0;
+    const lineTaxable = lineAmount * 100 / (100 + gstPct); // extract embedded GST
+    taxableTotal += lineTaxable;
+    gstTotal += lineAmount - lineTaxable;
+  });
+  taxableTotal = Math.round(taxableTotal * 100) / 100;
+  gstTotal = Math.round(gstTotal * 100) / 100;
+
+  let discTaxable = taxableTotal, discGst = gstTotal;
+  if (appliedCoupon) {
+    const factor = 1 - appliedCoupon.value / 100;
+    discTaxable = Math.round(taxableTotal * factor * 100) / 100;
+    discGst = Math.round(gstTotal * factor * 100) / 100;
+  }
+  return { taxableTotal, gstTotal, discTaxable, discGst };
+}
+
+// Business's own WhatsApp number, without the country-code prefix — a
+// customer accidentally typing this as their own phone used to cause both
+// the business tab and the "send me a copy" tab to open the same chat
+// (Issue 4). Only one tab opens now (to the business), but the check stays
+// as a data-quality guard so an order isn't logged with the business's own
+// number as the customer's contact.
+const BUSINESS_PHONE = "8338962474";
+
+function sendWhatsApp() {
+  const waBtn = document.getElementById('waBtn');
+  if (waBtn.disabled) return; // ignore rapid repeat clicks while a submission is in flight (Issue 5/G)
+
+  const name    = document.getElementById('fname').value.trim();
+  const phone   = document.getElementById('fphone').value.trim();
+  const email   = document.getElementById('femail').value.trim();
+  const pincode = document.getElementById('fpincode').value.trim();
+  const state   = document.getElementById('fstate').value.trim();
+  const address = document.getElementById('faddress').value.trim();
+  const notes   = document.getElementById('fnotes').value.trim();
+  const errEl   = document.getElementById('errorMsg');
+
+  errEl.style.display = 'none';
+
+  // Validate
+  const items = PRODUCTS.filter(p => qty[p.id] > 0);
+  if (items.length === 0)  { showError('Please select at least one product.'); return; }
+  if (!name)               { showError('Please enter your name.'); document.getElementById('fname').focus(); return; }
+  if (!/^\d{10}$/.test(phone)) { showError('Please enter a valid 10-digit phone number.'); document.getElementById('fphone').focus(); return; }
+  if (phone === BUSINESS_PHONE) { showError('That looks like our business number — please enter your own phone number.'); document.getElementById('fphone').focus(); return; }
+  if (!email)              { showError('Please enter your email address.'); document.getElementById('femail').focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('Please enter a valid email address.'); document.getElementById('femail').focus(); return; }
+  if (!/^\d{6}$/.test(pincode)) { showError('Please enter a valid 6-digit pincode.'); document.getElementById('fpincode').focus(); return; }
+  if (!state)              { showError('Please select your state.'); document.getElementById('fstate').focus(); return; }
+  if (!address)            { showError('Please enter your delivery address.'); document.getElementById('faddress').focus(); return; }
+
+  // Lock the button for the duration of this submission so a double-click
+  // (or an impatient re-tap while the WA tab is opening) can't fire twice.
+  const originalLabel = waBtn.innerHTML;
+  waBtn.disabled = true;
+  waBtn.innerHTML = '<span class="spinner"></span> Sending…';
+
+  // Build message
+  let total = 0;
+  let orderLines = '';
+  items.forEach(p => {
+    const q = qty[p.id];
+    const sub = q * p.mrp;
+    total += sub;
+    orderLines += `• ${p.displayName} (${p.packSize || p.unit}) × ${q} = ₹${sub.toLocaleString('en-IN')}\n`;
+  });
+
+  let couponLine = '';
+  let payable = total;
+  if (appliedCoupon) {
+    const discAmt = Math.round(total * appliedCoupon.value) / 100;
+    payable = total - discAmt;
+    couponLine = `Coupon: ${appliedCoupon.code} (−${appliedCoupon.value}%) = −₹${discAmt.toLocaleString('en-IN')}\n`;
+  }
+
+  const deliveryCharge = computeDeliveryCharge(total);
+  payable += deliveryCharge;
+  const deliveryLine = `Delivery: ${deliveryCharge > 0 ? '₹' + deliveryCharge.toLocaleString('en-IN') : 'Free'}\n`;
+
+  const sameDayDelivery = isSameDayDeliverySelected();
+  const sameDayCharge = sameDayDelivery ? SAME_DAY_DELIVERY_CHARGE : 0;
+  payable += sameDayCharge;
+  const sameDayLine = sameDayDelivery ? `Same-day delivery: ₹${sameDayCharge.toLocaleString('en-IN')}\n` : '';
+
+  // Pricing breakdown persisted into td_orders at creation time (see
+  // computeGstBreakdown above) — admin.html overwrites these later if the
+  // order's pricing changes (discount edits, invoice generation, etc.).
+  const gstBreakdown = computeGstBreakdown(items);
+  const totalPayable = Math.round((gstBreakdown.discTaxable + gstBreakdown.discGst + deliveryCharge + sameDayCharge) * 100) / 100;
+
+  const msg = `🌿 *New Order — Purnavah*
+
+*ORDER DETAILS*
+${orderLines}
+${couponLine}${deliveryLine}${sameDayLine}*Order Total: ₹${payable.toLocaleString('en-IN')}*
+
+*DELIVERY DETAILS*
+Name: ${name}
+Phone: ${phone}${email ? `\nEmail: ${email}` : ''}
+Pincode: ${pincode}
+State: ${state}
+Address: ${address}${notes ? `\nNotes: ${notes}` : ''}`;
+
+  // ── ORDER LOG: silently persist the order via the orders Edge Function ──
+  // A fresh id per submission attempt — a genuine retry (e.g. after a
+  // network error) gets a new one, but the server can still collapse two
+  // deliveries of the *same* click (double-fetch, browser retry, etc.)
+  // within its short dedup window (Issue 5).
+  const clientOrderId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2));
+
+  const orderPayload = {
+    name:    name,
+    phone:   phone,
+    email:   email,
+    pincode: pincode,
+    state:   state,
+    address: address,
+    notes:   notes,
+    total:   total,
+    couponCode:  appliedCoupon ? appliedCoupon.code : '',
+    couponValue: appliedCoupon ? appliedCoupon.value : 0,
+    deliveryCharge: deliveryCharge,
+    sameDayDeliveryCharge: sameDayCharge,
+    clientOrderId: clientOrderId,
+    discountBaseAmount: gstBreakdown.taxableTotal,
+    taxableValue: gstBreakdown.discTaxable,
+    gstAmount: gstBreakdown.discGst,
+    totalPayable: totalPayable,
+    items:   {}
+  };
+
+  // Build items object: WA display key → quantity (waKey comes straight
+  // from the Catalog sheet, so it always matches what the admin backend expects)
+  items.forEach(p => {
+    orderPayload.items[p.waKey] = qty[p.id];
+  });
+
+  // Fire and forget — never blocks WhatsApp send even if this fails
+  callFn('orders', 'submitOrder', orderPayload)
+    .then(d => { if (d.status !== "ok") console.warn("Order log:", d); })
+    .catch(err => console.warn("Order log failed (non-blocking):", err));
+  // ── END ORDER LOG ───────────────────────────────────────
+
+  // Send to Purnavah — the only WhatsApp tab opened (Issue 4; there used to
+  // be a second tab to the customer's own number, gated by a "send me a
+  // copy" checkbox that's been removed).
+  const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+
+  // Re-enable after a short cooldown — long enough to absorb a double-tap,
+  // short enough that a genuine failed attempt isn't stuck unable to retry.
+  setTimeout(() => { waBtn.disabled = false; waBtn.innerHTML = originalLabel; }, 4000);
+}
+
+function resetForm() {
+  PRODUCTS.forEach(p => { qty[p.id] = 0; });
+  PRODUCT_GROUPS.forEach(group => {
+    const gid = group.groupId;
+    selectedVariant[gid] = pickDefaultVariant(group.variants).id;
+    const select = document.getElementById('pack-' + gid);
+    if (select) select.value = selectedVariant[gid];
+    updateVariantDisplay(gid);
+  });
+  ['fname','fphone','femail','fpincode','fstate','faddress','fnotes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('sameDayDelivery').checked = false;
+  document.getElementById('errorMsg').style.display = 'none';
+  removeCoupon();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// ── STICKY NAV: step tabs + category chips (scroll-driven) ──────────────
+// jump() is the click handler for the three top-level step tabs (Products/
+// Delivery/Review) and the sticky bar's "Review order" button.
+function jump(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Highlights whichever step tab corresponds to the section currently near
+// the top of the viewport. All three sections exist in the static markup
+// from page load, so this observer is wired up once, unconditionally.
+const STEP_SECTIONS = ['sec-products', 'sec-details', 'sec-review'];
+const STEP_ELS = {
+  'sec-products': document.getElementById('step-products'),
+  'sec-details':  document.getElementById('step-details'),
+  'sec-review':   document.getElementById('step-review')
+};
+const stepObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      STEP_SECTIONS.forEach(id => STEP_ELS[id] && STEP_ELS[id].classList.remove('active'));
+      const target = STEP_ELS[entry.target.id];
+      if (target) target.classList.add('active');
+    }
+  });
+}, {rootMargin:'-140px 0px -60% 0px'});
+STEP_SECTIONS.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) stepObserver.observe(el);
+});
+
+// Category chips are the "sub tabs" within the Products step — this mirrors
+// the step-tab scroll-spy above, but for the category headings created at
+// catalog-load time. Re-created each time the catalog (re)renders, since the
+// set of category headings only exists after buildCategorySections() runs.
+let categoryObserver = null;
+function setupCategoryScrollSpy() {
+  if (categoryObserver) categoryObserver.disconnect();
+  const headings = document.querySelectorAll('.cat-heading');
+  if (headings.length === 0) return;
+  categoryObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const grid = entry.target.id.replace('catlabel-', '');
+      document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.grid === grid));
+      const activeChip = document.querySelector(`.chip[data-grid="${grid}"]`);
+      if (activeChip) activeChip.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    });
+  }, {rootMargin:'-130px 0px -75% 0px'});
+  headings.forEach(h => categoryObserver.observe(h));
+}
+
+// Inline onclick/onchange attributes resolve against `window`, not this
+// module's own scope — a type="module" script (needed for the supabase-js
+// import above) never leaks its top-level declarations onto `window` the
+// way a classic script does, so every function referenced from markup must
+// be exposed explicitly here.
+Object.assign(window, {
+  applyCoupon, changeQty, jump, removeCoupon, resetForm, selectVariant, sendWhatsApp, setQty, updateSummary,
+});
+</script>
+</body>
+</html>
