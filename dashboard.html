@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purnavah — Dashboard</title>
+<link rel="stylesheet" href="admin-shell.css">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#26241E;
+  --moss:#2F4A34;
+  --moss-mid:#41613F;
+  --moss-lt:#E7EEE1;
+  --earth:#B9812E;
+  --cream:#F6F2E9;
+  --parchment:#EFE7D3;
+  --rule:#DCD4BE;
+  --stone:#79715F;
+  --white:#FCFAF4;
+  --red:#B14A3B;
+  --red-lt:#F7E9E5;
+  --amber:#8F631F;
+  --amber-lt:#F6ECD8;
+  --wa:#25D366;
+}
+html{scroll-behavior:smooth}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.app{max-width:1500px;margin:0 auto;padding:0 24px 80px}
+.topbar{background:var(--moss);color:var(--cream);padding:22px 24px;margin-bottom:28px}
+.topbar-inner{max-width:1500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:.04em}
+.brand-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#B9CBAE}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);display:inline-block;margin-right:6px}
+.conn-dot.ok{background:var(--wa)}
+.conn-dot.err{background:var(--red)}
+.conn-status{font-size:12px;color:#B9CBAE;display:flex;align-items:center}
+.nav-link{color:#B9CBAE;font-size:12.5px;font-weight:600;text-decoration:none;padding:6px 4px}
+.nav-link:hover{color:var(--cream)}
+
+.setup-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.setup-bar input[type=text],.setup-bar input[type=password]{flex:1;min-width:220px;padding:9px 12px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif}
+.setup-bar label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--stone)}
+
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:6px;border:1.5px solid transparent;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--moss);color:#fff}
+.btn-primary:hover{background:#2d4020}
+.btn-secondary{background:var(--white);color:var(--ink);border-color:var(--rule)}
+.btn-secondary:hover{border-color:var(--moss);color:var(--moss)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{font-size:12px;padding:6px 12px}
+
+.field-mini-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-bottom:4px;display:block}
+.date-input,.select-input{padding:8px 10px;border:1.5px solid var(--parchment);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;background:#fff}
+.filter-bar{background:var(--white);border:1px solid var(--rule);border-radius:8px;padding:16px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--stone)}
+.empty-state h3{font-family:'Fraunces',serif;font-size:20px;color:var(--ink);margin-bottom:6px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--cream);padding:14px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:100;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--red)}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── KPI tiles ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:800px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi-tile{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:16px 18px}
+.kpi-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-bottom:8px}
+.kpi-value{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--moss)}
+
+/* ── Chart cards ── */
+.viz-root{
+  --surface-1:#FCFAF4;
+  --text-primary:#26241E;
+  --text-secondary:#52514E;
+  --text-muted:#898781;
+  --gridline:#E1E0D9;
+  --baseline:#C3C2B7;
+  --cat-1:#2a78d6; --cat-2:#eb6834; --cat-3:#1baf7a; --cat-4:#eda100;
+  --cat-5:#e87ba4; --cat-6:#008300; --cat-7:#4a3aa7; --cat-8:#e34948;
+  --other:#B9B7AC;
+  --single:#2F4A34;
+}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:16px 18px}
+.chart-card h4{font-family:'Fraunces',serif;font-size:15px;font-weight:600;margin-bottom:4px}
+.chart-sub{font-size:11.5px;color:var(--stone);margin-bottom:10px}
+.chart-empty{padding:30px;text-align:center;color:var(--stone);font-size:12.5px}
+.data-notice{background:var(--amber-lt);color:var(--amber);border:1px solid var(--rule);border-radius:8px;padding:12px 16px;margin-bottom:20px}
+.chart-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--text-secondary)}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-swatch{width:10px;height:10px;border-radius:2px;display:inline-block}
+.mark-bar{transition:opacity .1s}
+.mark-bar:hover,.mark-bar.hovered{opacity:.82}
+.mark-dot{transition:r .1s}
+.chart-tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--cream);font-size:12px;padding:7px 10px;border-radius:6px;z-index:300;opacity:0;transition:opacity .1s;max-width:220px;line-height:1.5}
+.chart-tooltip.show{opacity:1}
+.chart-tooltip .tt-value{font-weight:700}
+.chart-tooltip .tt-label{color:#B9CBAE}
+
+.table-wrap{background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow-x:auto}
+table.export-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+.export-table th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);padding:10px 10px;border-bottom:1.5px solid var(--rule);background:var(--parchment);position:sticky;top:0;white-space:nowrap}
+.export-table td{padding:9px 10px;border-bottom:1px solid var(--parchment);vertical-align:middle;white-space:nowrap}
+.export-table tr:last-child td{border-bottom:none}
+.export-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.status-pill{display:inline-flex;align-items:center;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.section-title{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:24px 0 10px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-name">Purnavah</div>
+      <div class="brand-tag">Dashboard</div>
+    </div>
+    <div class="topbar-actions">
+      <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="setup-bar" id="setupBar">
+    <div style="flex:1;min-width:180px">
+      <label>Password</label><br>
+      <input type="password" id="adminKey" placeholder="your password" value="">
+    </div>
+    <button class="btn btn-primary" onclick="connect()" id="connectBtn">Connect</button>
+  </div>
+
+  <div class="setup-bar" id="identityBar" style="display:none;gap:10px;align-items:center"></div>
+
+  <div id="mainArea" style="display:none">
+    <div class="filter-bar">
+      <div>
+        <label class="field-mini-label">From date</label>
+        <input type="text" id="fromDate" class="date-input" placeholder="dd/mm/yyyy" maxlength="10">
+      </div>
+      <div>
+        <label class="field-mini-label">To date</label>
+        <input type="text" id="toDate" class="date-input" placeholder="dd/mm/yyyy" maxlength="10">
+      </div>
+      <div id="hubFilterWrap" style="display:none">
+        <label class="field-mini-label">Hub</label>
+        <select id="hubFilter" class="select-input"></select>
+      </div>
+      <div>
+        <label class="field-mini-label">Status</label>
+        <select id="statusFilter" class="select-input">
+          <option value="">All statuses</option>
+          <option value="New">New</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Invoiced">Invoiced</option>
+          <option value="Packed & Shipped">Packed & Shipped</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="applyFilters()">Load</button>
+      <button class="btn btn-secondary" id="exportBtn" onclick="exportExcel()" style="display:none">↓ Export Excel</button>
+    </div>
+
+    <div class="data-notice" id="dataNotice" role="status" hidden></div>
+    <div class="kpi-row" id="kpiRow"></div>
+
+    <div class="chart-grid viz-root" id="chartGrid">
+      <div class="chart-card">
+        <h4>Revenue by hub</h4>
+        <div class="chart-sub">Final total, summed per order, grouped by assigned hub</div>
+        <div id="chartRevenueByHub"></div>
+      </div>
+      <div class="chart-card">
+        <h4>Orders by status</h4>
+        <div class="chart-sub">Current fulfillment status of every order in range</div>
+        <div id="chartOrdersByStatus"></div>
+      </div>
+      <div class="chart-card">
+        <h4>Top products by quantity</h4>
+        <div class="chart-sub">Units sold across all orders in range</div>
+        <div id="chartTopProducts"></div>
+      </div>
+      <div class="chart-card">
+        <h4>Orders over time</h4>
+        <div class="chart-sub">Orders placed per day</div>
+        <div id="chartOrdersOverTime"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Orders (financial breakdown)</div>
+    <div class="table-wrap">
+      <div id="ordersTableContainer"></div>
+    </div>
+
+    <div class="section-title">Order items (product, price &amp; discount)</div>
+    <div class="table-wrap">
+      <div id="itemsTableContainer"></div>
+    </div>
+  </div>
+
+  <div id="notConnected">
+    <div class="empty-state">
+      <h3>Not connected yet</h3>
+      <p>Enter your password above, then click Connect.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="chart-tooltip" id="chartTooltip"></div>
+
+<script type="module">
+import { callFn } from './supabase-client.js';
+import { initAdminPage, rememberAdmin, showAdminLogin } from './admin-shell.js';
+
+const ORDER_STATUSES = {
+  New:                { color:'#1D4ED8', bg:'#DBEAFE' },
+  Confirmed:          { color:'#166534', bg:'#DCFCE7' },
+  Invoiced:           { color:'#7C3AED', bg:'#EDE9FE' },
+  'Packed & Shipped':  { color:'#B9812E', bg:'#EFE7D3' },
+  Delivered:          { color:'#14532D', bg:'#F0FDF4' },
+  Cancelled:          { color:'#B14A3B', bg:'#FEE2E2' },
+};
+// Fixed slot assignment (identity, not appearance order) — same six statuses
+// always get the same categorical color regardless of which ones show up in
+// a given date range, so a color never gets reassigned as filters change.
+const STATUS_SLOT = {
+  New: 'var(--cat-1)', Confirmed: 'var(--cat-2)', Invoiced: 'var(--cat-3)',
+  'Packed & Shipped': 'var(--cat-4)', Delivered: 'var(--cat-5)', Cancelled: 'var(--cat-8)',
+};
+const CAT_SLOTS = ['var(--cat-1)','var(--cat-2)','var(--cat-3)','var(--cat-4)','var(--cat-5)','var(--cat-6)','var(--cat-7)','var(--cat-8)'];
+
+let CURRENT_ADMIN = null;
+let rows = []; // raw td_order_export rows, item-grained
+let currentHubFilter = '';
+
+function apiKey() { return document.getElementById('adminKey').value.trim(); }
+function authParam() { return { password: apiKey() }; }
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 3200);
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function todayIso() { return new Date().toISOString().slice(0, 10); }
+function isoDaysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+function ddmmyyyyToIso(str) {
+  const m = (str || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return '';
+  const [, d, mo, y] = m;
+  return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+function isoToDdmmyyyy(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function compactNumber(n) {
+  n = Number(n) || 0;
+  if (Math.abs(n) >= 1e7) return (n / 1e7).toFixed(1).replace(/\.0$/, '') + 'Cr';
+  if (Math.abs(n) >= 1e5) return (n / 1e5).toFixed(1).replace(/\.0$/, '') + 'L';
+  if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toLocaleString('en-IN');
+}
+function rupees(n) { return '₹' + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('en-IN'); }
+
+async function loadWhoAmI() {
+  try {
+    const data = await callFn('admin-auth', 'whoAmI', authParam());
+    if (data.status === 'ok') { CURRENT_ADMIN = data.admin; rememberAdmin(apiKey(), CURRENT_ADMIN); }
+    else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
+  } catch (e) {
+    CURRENT_ADMIN = null;
+    console.warn('whoAmI failed', e);
+  }
+}
+
+function renderIdentityBar() {
+  const bar = document.getElementById('identityBar');
+  if (!CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
+}
+
+async function loadHubsIfSuperAdmin() {
+  const wrap = document.getElementById('hubFilterWrap');
+  const sel = document.getElementById('hubFilter');
+  wrap.style.display = 'none';
+  sel.innerHTML = '<option value="">All hubs</option>';
+  sel.value = '';
+  if (!CURRENT_ADMIN || CURRENT_ADMIN.role !== 'Super Admin') return;
+  try {
+    const data = await callFn('admin-auth', 'hubs', authParam());
+    if (data.status !== 'ok') throw new Error(data.message || 'Failed to load hubs');
+    if (!Array.isArray(data.data)) throw new Error('Invalid hub list response');
+    sel.innerHTML += data.data.map(h => `<option value="${escapeHtml(h.adminId)}">${escapeHtml(h.name)}</option>`).join('');
+    wrap.style.display = 'block';
+    if (!data.data.length) toast('No active hubs configured', true);
+  } catch (e) {
+    console.warn('hubs failed', e);
+    toast('Could not load hub filter: ' + e.message, true);
+  }
+}
+
+async function connect() {
+  const key = apiKey();
+  if (!key) { toast('Enter your password', true); return; }
+
+  document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
+  document.getElementById('connectBtn').disabled = true;
+  document.getElementById('connDot').className = 'conn-dot';
+  document.getElementById('connText').textContent = 'Connecting…';
+
+  try {
+    await loadWhoAmI();
+    if (!CURRENT_ADMIN) throw new Error('Invalid password');
+    await loadHubsIfSuperAdmin();
+
+    document.getElementById('connDot').className = 'conn-dot ok';
+    document.getElementById('connText').textContent = 'Connected';
+    document.getElementById('mainArea').style.display = 'block';
+    document.getElementById('notConnected').style.display = 'none';
+    renderIdentityBar();
+
+    document.getElementById('fromDate').value = isoToDdmmyyyy(isoDaysAgo(30));
+    document.getElementById('toDate').value = isoToDdmmyyyy(todayIso());
+    await applyFilters();
+  } catch (err) {
+    document.getElementById('connDot').className = 'conn-dot err';
+    document.getElementById('connText').textContent = 'Connection failed';
+    showAdminLogin();
+    document.getElementById('mainArea').style.display = 'none';
+    document.getElementById('notConnected').style.display = 'block';
+    document.getElementById('notConnected').innerHTML = `
+      <div class="empty-state">
+        <h3>Couldn't connect</h3>
+        <p>${escapeHtml(err.message)}</p>
+      </div>`;
+  } finally {
+    document.getElementById('connectBtn').innerHTML = 'Connect';
+    document.getElementById('connectBtn').disabled = false;
+  }
+}
+
+async function applyFilters() {
+  const fromIso = ddmmyyyyToIso(document.getElementById('fromDate').value);
+  const toIso = ddmmyyyyToIso(document.getElementById('toDate').value);
+  currentHubFilter = document.getElementById('hubFilter') ? document.getElementById('hubFilter').value : '';
+  const status = document.getElementById('statusFilter').value;
+
+  const payload = { ...authParam() };
+  if (fromIso) payload.fromDate = fromIso + 'T00:00:00';
+  if (toIso) payload.toDate = toIso + 'T23:59:59';
+  if (currentHubFilter) payload.hubId = currentHubFilter;
+  if (status) payload.status = status;
+
+  try {
+    const data = await callFn('orders', 'exportDashboard', payload);
+    if (data.status !== 'ok') throw new Error(data.message || 'Failed to load export data');
+    rows = data.data || [];
+    document.getElementById('exportBtn').style.display = rows.length > 0 ? 'inline-flex' : 'none';
+    render();
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+// ── Aggregation — td_order_export is item-grained (one row per product per
+// order), so every order-level figure (revenue, order count, status counts)
+// must be computed from a distinct-by-order_ref map first, never summed
+// straight off the raw rows (that would multiply an order's final_total by
+// its item count).
+// Order-header fields repeat identically on every item row for a given
+// orderRef — pull them from the FIRST row seen per order rather than the
+// last, so a partially-null trailing item row (e.g. a deleted product) can't
+// blank out an otherwise-populated header field.
+const ORDER_HEADER_FIELDS = [
+  'createdAt', 'status', 'hubName', 'customerName', 'assignedTo', 'finalTotal',
+  'confirmingAdminUpi', 'orderDiscountPercent', 'discountAmount', 'couponCode',
+  'couponDiscountPercent', 'deliveryCharge', 'freeShippingOverride',
+  'discountBaseAmount', 'taxableValue', 'gstAmount', 'totalPayable', 'subtotalMrp',
+  'gaplOrderId', 'orderRef',
+];
+function ordersByRef() {
+  const map = new Map();
+  rows.forEach(r => {
+    if (map.has(r.orderRef)) return;
+    const header = {};
+    ORDER_HEADER_FIELDS.forEach(f => { header[f] = r[f]; });
+    map.set(r.orderRef, header);
+  });
+  return map;
+}
+
+function render() {
+  const orders = ordersByRef();
+  const ordersWithItems = new Set(rows.filter(r => r.productName).map(r => r.orderRef));
+  const missingItems = orders.size - ordersWithItems.size;
+  const notice = document.getElementById('dataNotice');
+  notice.hidden = missingItems === 0;
+  notice.textContent = missingItems
+    ? `${missingItems} order${missingItems === 1 ? ' has' : 's have'} no product items available. Order totals and charts are included, but product quantities and item exports require the original items to be imported into td_order_items.`
+    : '';
+  renderKpis(orders);
+  renderRevenueByHub(orders);
+  renderOrdersByStatus(orders);
+  renderTopProducts();
+  renderOrdersOverTime(orders);
+  renderOrdersTable(orders);
+  renderItemsTable();
+}
+
+function renderKpis(orders) {
+  const totalOrders = orders.size;
+  let totalRevenue = 0;
+  orders.forEach(o => { totalRevenue += Number(o.finalTotal) || 0; });
+  const unitsSold = rows.reduce((s, r) => s + (Number(r.qty) || 0), 0);
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+  const tile = (label, value) => `
+    <div class="kpi-tile">
+      <div class="kpi-label">${label}</div>
+      <div class="kpi-value">${value}</div>
+    </div>`;
+  document.getElementById('kpiRow').innerHTML =
+    tile('Total orders', totalOrders.toLocaleString('en-IN')) +
+    tile('Total revenue', rupees(totalRevenue)) +
+    tile('Units sold', compactNumber(unitsSold)) +
+    tile('Avg order value', rupees(avgOrderValue));
+}
+
+// ── Shared tooltip ──
+const tooltipEl = document.getElementById('chartTooltip');
+function showTooltip(evt, labelText, valueText) {
+  const valueEl = document.createElement('div');
+  valueEl.className = 'tt-value';
+  valueEl.textContent = valueText;
+  const labelEl = document.createElement('div');
+  labelEl.className = 'tt-label';
+  labelEl.textContent = labelText;
+  tooltipEl.textContent = '';
+  tooltipEl.appendChild(valueEl);
+  tooltipEl.appendChild(labelEl);
+  tooltipEl.classList.add('show');
+  moveTooltip(evt);
+}
+function moveTooltip(evt) {
+  const x = evt.clientX, y = evt.clientY;
+  tooltipEl.style.left = Math.min(x + 14, window.innerWidth - 230) + 'px';
+  tooltipEl.style.top = Math.max(y - 40, 8) + 'px';
+}
+function hideTooltip() { tooltipEl.classList.remove('show'); }
+
+// ── Horizontal bar chart (categorical identity — one color per category) ──
+// Used for "revenue by hub" and doubles as the renderer for "orders by
+// status" via an explicit color map.
+function renderCategoricalBarChart(containerId, data, opts) {
+  const el = document.getElementById(containerId);
+  if (!data.length) { el.innerHTML = '<div class="chart-empty">No data in this range</div>'; return; }
+  const max = Math.max(...data.map(d => d.value), 1);
+  const rowH = 30, gap = 10, leftW = 120, chartW = 320, padTop = 4;
+  const svgH = data.length * (rowH + gap) - gap + padTop * 2;
+  const svgW = leftW + chartW + 70;
+
+  let bars = '';
+  data.forEach((d, i) => {
+    const y = padTop + i * (rowH + gap);
+    const barW = Math.max((d.value / max) * chartW, 2);
+    const labelText = d.value >= 1000 ? compactNumber(d.value) : d.value.toLocaleString('en-IN');
+    bars += `
+      <text x="${leftW - 8}" y="${y + rowH / 2 + 4}" text-anchor="end" font-size="12" fill="var(--text-secondary)">${escapeHtml(d.label.length > 14 ? d.label.slice(0, 13) + '…' : d.label)}</text>
+      <rect class="mark-bar" data-idx="${i}" x="${leftW}" y="${y}" width="${barW}" height="${rowH}" rx="4" fill="${d.color}" style="cursor:pointer"></rect>
+      <text x="${leftW + barW + 8}" y="${y + rowH / 2 + 4}" font-size="12" fill="var(--text-primary)" font-weight="600">${labelText}</text>
+    `;
+  });
+
+  el.innerHTML = `<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" height="${Math.max(svgH, 60)}" role="img">${bars}</svg>`;
+  el.querySelectorAll('.mark-bar').forEach(bar => {
+    const idx = Number(bar.dataset.idx);
+    bar.addEventListener('pointermove', evt => showTooltip(evt, data[idx].label, opts.valueFormatter(data[idx].value)));
+    bar.addEventListener('pointerleave', hideTooltip);
+  });
+}
+
+// ── Single-series vertical bar chart (magnitude ranking, one hue) ──
+function renderMagnitudeBarChart(containerId, data, opts) {
+  const el = document.getElementById(containerId);
+  if (!data.length) { el.innerHTML = '<div class="chart-empty">No data in this range</div>'; return; }
+  const max = Math.max(...data.map(d => d.value), 1);
+  const chartH = 160, barW = 24, gap = 14, padBottom = 34, padTop = 20;
+  const svgW = data.length * (barW + gap) - gap + 20;
+  const svgH = chartH + padBottom + padTop;
+
+  let bars = '';
+  data.forEach((d, i) => {
+    const h = Math.max((d.value / max) * chartH, 2);
+    const x = 10 + i * (barW + gap);
+    const y = padTop + (chartH - h);
+    bars += `
+      <rect class="mark-bar" data-idx="${i}" x="${x}" y="${y}" width="${barW}" height="${h}" rx="4" fill="var(--single)" style="cursor:pointer"></rect>
+      <text x="${x + barW / 2}" y="${y - 6}" text-anchor="middle" font-size="11" fill="var(--text-primary)" font-weight="600">${compactNumber(d.value)}</text>
+      <text x="${x + barW / 2}" y="${padTop + chartH + 16}" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">${escapeHtml(d.label.length > 8 ? d.label.slice(0, 7) + '…' : d.label)}</text>
+    `;
+  });
+  bars += `<line x1="6" y1="${padTop + chartH}" x2="${svgW - 6}" y2="${padTop + chartH}" stroke="var(--baseline)" stroke-width="1"/>`;
+
+  el.innerHTML = `<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" height="${svgH}" role="img">${bars}</svg>`;
+  el.querySelectorAll('.mark-bar').forEach(bar => {
+    const idx = Number(bar.dataset.idx);
+    bar.addEventListener('pointermove', evt => showTooltip(evt, data[idx].label, opts.valueFormatter(data[idx].value)));
+    bar.addEventListener('pointerleave', hideTooltip);
+  });
+}
+
+// ── Donut chart (categorical identity) ──
+function renderDonutChart(containerId, data) {
+  const el = document.getElementById(containerId);
+  if (!data.length) { el.innerHTML = '<div class="chart-empty">No data in this range</div>'; return; }
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+  const cx = 90, cy = 90, r = 70, innerR = 42;
+  let angle = -90;
+  let paths = '';
+  data.forEach((d, i) => {
+    if (data.length === 1) {
+      paths += `<circle class="mark-bar" data-idx="${i}" cx="${cx}" cy="${cy}" r="${(r + innerR) / 2}" fill="none" stroke="${d.color}" stroke-width="${r - innerR}" style="cursor:pointer"></circle>`;
+      return;
+    }
+    const frac = d.value / total;
+    const sweep = frac * 360;
+    const a0 = angle, a1 = angle + sweep;
+    angle = a1;
+    const toRad = a => (a * Math.PI) / 180;
+    const x0 = cx + r * Math.cos(toRad(a0)), y0 = cy + r * Math.sin(toRad(a0));
+    const x1 = cx + r * Math.cos(toRad(a1)), y1 = cy + r * Math.sin(toRad(a1));
+    const ix0 = cx + innerR * Math.cos(toRad(a1)), iy0 = cy + innerR * Math.sin(toRad(a1));
+    const ix1 = cx + innerR * Math.cos(toRad(a0)), iy1 = cy + innerR * Math.sin(toRad(a0));
+    const large = sweep > 180 ? 1 : 0;
+    // 2px surface-color gap between adjacent segments — a hairline stroke in
+    // the card's own background color, not a border drawn around the mark.
+    paths += `<path class="mark-bar" data-idx="${i}" d="M${x0},${y0} A${r},${r} 0 ${large} 1 ${x1},${y1} L${ix0},${iy0} A${innerR},${innerR} 0 ${large} 0 ${ix1},${iy1} Z"
+      fill="${d.color}" stroke="var(--surface-1)" stroke-width="2" style="cursor:pointer"></path>`;
+  });
+  const centerLabel = `<text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="20" font-weight="700" fill="var(--text-primary)" font-family="'Fraunces',serif">${total}</text>
+    <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">orders</text>`;
+
+  const legend = data.map(d => `
+    <div class="legend-item"><span class="legend-swatch" style="background:${d.color}"></span>${escapeHtml(d.label)} (${d.value})</div>
+  `).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <svg viewBox="0 0 180 180" width="180" height="180" role="img">${paths}${centerLabel}</svg>
+      <div class="chart-legend" style="flex-direction:column;margin-top:0">${legend}</div>
+    </div>`;
+  el.querySelectorAll('.mark-bar').forEach(seg => {
+    const idx = Number(seg.dataset.idx);
+    seg.addEventListener('pointermove', evt => showTooltip(evt, data[idx].label, `${data[idx].value} orders`));
+    seg.addEventListener('pointerleave', hideTooltip);
+  });
+}
+
+// ── Line chart (magnitude over time, one hue) ──
+function renderLineChart(containerId, data) {
+  const el = document.getElementById(containerId);
+  if (!data.length) { el.innerHTML = '<div class="chart-empty">No data in this range</div>'; return; }
+  const chartW = 480, chartH = 160, padL = 10, padR = 10, padTop = 16, padBottom = 24;
+  const max = Math.max(...data.map(d => d.value), 1);
+  const stepX = data.length > 1 ? (chartW - padL - padR) / (data.length - 1) : 0;
+  const xAt = i => padL + i * stepX;
+  const yAt = v => padTop + (chartH - padTop - padBottom) * (1 - v / max);
+
+  const linePoints = data.map((d, i) => `${xAt(i)},${yAt(d.value)}`).join(' ');
+  const areaPoints = `${xAt(0)},${yAt(0)} ${linePoints} ${xAt(data.length - 1)},${yAt(0)}`;
+
+  let dots = '';
+  data.forEach((d, i) => {
+    dots += `<circle class="mark-dot" data-idx="${i}" cx="${xAt(i)}" cy="${yAt(d.value)}" r="4" fill="var(--single)" stroke="var(--surface-1)" stroke-width="2" style="cursor:pointer"></circle>`;
+  });
+  // Sparse x-axis labels — first, middle, last only (never one per point).
+  const labelIdxs = new Set([0, data.length - 1, Math.floor((data.length - 1) / 2)]);
+  let xLabels = '';
+  labelIdxs.forEach(i => {
+    xLabels += `<text x="${xAt(i)}" y="${chartH - 4}" text-anchor="middle" font-size="10" fill="var(--text-secondary)">${escapeHtml(data[i].label)}</text>`;
+  });
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${chartW} ${chartH}" width="100%" height="${chartH}" role="img">
+      <line x1="${padL}" y1="${chartH - padBottom}" x2="${chartW - padR}" y2="${chartH - padBottom}" stroke="var(--baseline)" stroke-width="1"/>
+      <polygon points="${areaPoints}" fill="var(--single)" opacity="0.1"></polygon>
+      <polyline points="${linePoints}" fill="none" stroke="var(--single)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      ${dots}
+      ${xLabels}
+    </svg>`;
+  el.querySelectorAll('.mark-dot').forEach(dot => {
+    const idx = Number(dot.dataset.idx);
+    dot.addEventListener('pointermove', evt => showTooltip(evt, data[idx].label, `${data[idx].value} orders`));
+    dot.addEventListener('pointerleave', hideTooltip);
+  });
+}
+
+function renderRevenueByHub(orders) {
+  const byHub = new Map();
+  orders.forEach(o => {
+    const key = o.hubName || 'Unassigned';
+    byHub.set(key, (byHub.get(key) || 0) + (Number(o.finalTotal) || 0));
+  });
+  const sorted = [...byHub.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const data = sorted.slice(0, 8).map(([label, value], i) => ({ label, value, color: CAT_SLOTS[i] }));
+  renderCategoricalBarChart('chartRevenueByHub', data, { valueFormatter: rupees });
+}
+
+function renderOrdersByStatus(orders) {
+  const byStatus = new Map();
+  orders.forEach(o => {
+    const key = o.status || 'Unknown';
+    byStatus.set(key, (byStatus.get(key) || 0) + 1);
+  });
+  const data = Object.keys(ORDER_STATUSES)
+    .filter(s => byStatus.has(s))
+    .map(s => ({ label: s, value: byStatus.get(s), color: STATUS_SLOT[s] }));
+  byStatus.forEach((value, key) => {
+    if (!ORDER_STATUSES[key]) data.push({ label: key, value, color: 'var(--other)' });
+  });
+  renderDonutChart('chartOrdersByStatus', data);
+}
+
+function renderTopProducts() {
+  const byProduct = new Map();
+  rows.forEach(r => {
+    if (!r.productName) return;
+    byProduct.set(r.productName, (byProduct.get(r.productName) || 0) + (Number(r.qty) || 0));
+  });
+  const data = [...byProduct.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([label, value]) => ({ label, value }));
+  renderMagnitudeBarChart('chartTopProducts', data, { valueFormatter: v => `${v} units` });
+}
+
+function renderOrdersOverTime(orders) {
+  const byDay = new Map();
+  orders.forEach(o => {
+    const day = (o.createdAt || '').slice(0, 10);
+    if (!day) return;
+    byDay.set(day, (byDay.get(day) || 0) + 1);
+  });
+  const data = [...byDay.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([iso, value]) => ({ label: isoToDdmmyyyy(iso).slice(0, 5), value }));
+  renderLineChart('chartOrdersOverTime', data);
+}
+
+// One row per order — the financial breakdown fields (discounts, coupon,
+// GST, delivery, totals) live at order level, so this is the de-duped view
+// of them; showing them per-item too would just repeat the same numbers on
+// every line.
+function renderOrdersTable(orders) {
+  const container = document.getElementById('ordersTableContainer');
+  if (!orders.size) {
+    container.innerHTML = `<div class="empty-state"><h3>No orders in this range</h3><p>Widen the date range or clear the filters.</p></div>`;
+    return;
+  }
+  const body = [...orders.values()].map(o => {
+    const st = ORDER_STATUSES[o.status] || { color: '#26241E', bg: '#EFE7D3' };
+    return `<tr>
+      <td class="order-id-cell">${escapeHtml(o.gaplOrderId || o.orderRef)}</td>
+      <td>${o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN') : ''}</td>
+      <td>${escapeHtml(o.customerName)}</td>
+      <td>${escapeHtml(o.hubName)}</td>
+      <td><span class="status-pill" style="color:${st.color};background:${st.bg}">${escapeHtml(o.status)}</span></td>
+      <td>${escapeHtml(o.assignedTo)}</td>
+      <td>${escapeHtml(o.confirmingAdminUpi)}</td>
+      <td>${escapeHtml(o.couponCode)}</td>
+      <td class="num">${o.couponDiscountPercent || 0}%</td>
+      <td class="num">${o.orderDiscountPercent || 0}%</td>
+      <td class="num">${rupees(o.discountAmount)}</td>
+      <td class="num">${rupees(o.subtotalMrp)}</td>
+      <td class="num">${rupees(o.discountBaseAmount)}</td>
+      <td class="num">${rupees(o.taxableValue)}</td>
+      <td class="num">${rupees(o.gstAmount)}</td>
+      <td class="num">${rupees(o.deliveryCharge)}</td>
+      <td>${escapeHtml(o.freeShippingOverride)}</td>
+      <td class="num">${rupees(o.totalPayable)}</td>
+      <td class="num">${rupees(o.finalTotal)}</td>
+    </tr>`;
+  }).join('');
+  container.innerHTML = `
+    <table class="export-table">
+      <thead><tr>
+        <th>GAPL Order ID</th><th>Date</th><th>Customer</th><th>Hub</th><th>Status</th>
+        <th>Assigned To</th><th>Confirming Admin UPI</th><th>Coupon Code</th><th class="num">Coupon Disc</th>
+        <th class="num">Order Disc</th><th class="num">Discount Amt</th><th class="num">Subtotal (MRP)</th>
+        <th class="num">Discount Base</th><th class="num">Taxable Value</th><th class="num">GST Amount</th>
+        <th class="num">Delivery Charge</th><th>Free Shipping</th><th class="num">Total Payable</th><th class="num">Final Total</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
+// One row per product-per-order — "price" is the price actually billed for
+// that line (an admin's price_override if one was set, else the product's
+// catalog MRP at export time), alongside its own discount %.
+function renderItemsTable() {
+  const container = document.getElementById('itemsTableContainer');
+  const itemRows = rows.filter(r => r.productName);
+  if (!itemRows.length) {
+    container.innerHTML = `<div class="empty-state"><h3>No items in this range</h3><p>${rows.length ? 'These orders have no imported product items. Import their original items into td_order_items to populate this table.' : 'Widen the date range or clear the filters.'}</p></div>`;
+    return;
+  }
+  const body = itemRows.map(r => {
+    const price = r.priceOverride != null ? r.priceOverride : r.productMrp;
+    const lineTotal = price * r.qty * (1 - (r.discountPercent || 0) / 100);
+    return `<tr>
+      <td class="order-id-cell">${escapeHtml(r.gaplOrderId || r.orderRef)}</td>
+      <td>${escapeHtml(r.customerName)}</td>
+      <td>${escapeHtml(r.productName)}</td>
+      <td>${escapeHtml(r.packSize)}</td>
+      <td class="num">${r.qty}</td>
+      <td class="num">${rupees(r.productMrp)}</td>
+      <td class="num">${r.priceOverride != null ? rupees(r.priceOverride) : '—'}</td>
+      <td class="num">${r.discountPercent || 0}%</td>
+      <td class="num">${rupees(lineTotal)}</td>
+    </tr>`;
+  }).join('');
+  container.innerHTML = `
+    <table class="export-table">
+      <thead><tr>
+        <th>GAPL Order ID</th><th>Customer</th><th>Product</th><th>Pack</th><th class="num">Qty</th>
+        <th class="num">MRP</th><th class="num">Price Override</th><th class="num">Item Disc</th><th class="num">Line Total</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
+function exportExcel() {
+  if (!rows.length) { toast('No data to export', true); return; }
+  const fromIso = ddmmyyyyToIso(document.getElementById('fromDate').value) || 'all';
+  const toIso = ddmmyyyyToIso(document.getElementById('toDate').value) || 'time';
+  const orders = ordersByRef();
+
+  // Sheet 1 — one row per order, the financial breakdown fields the coupon/
+  // GST/delivery/payment picture needs (each appears once, not once per item).
+  const orderRows = [...orders.values()].map(o => ({
+    'GAPL Order ID': o.gaplOrderId || '',
+    'Order Ref': o.orderRef,
+    'Date': o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN') : '',
+    'Customer Name': o.customerName,
+    'Status': o.status,
+    'Hub': o.hubName,
+    'Assigned To': o.assignedTo,
+    'Confirming Admin UPI': o.confirmingAdminUpi,
+    'Coupon Code': o.couponCode,
+    'Coupon Discount %': o.couponDiscountPercent,
+    'Order Discount %': o.orderDiscountPercent || 0,
+    'Discount Amount': o.discountAmount,
+    'Subtotal (MRP)': o.subtotalMrp,
+    'Discount Base Amount': o.discountBaseAmount,
+    'Taxable Value': o.taxableValue,
+    'GST Amount': o.gstAmount,
+    'Delivery Charge': o.deliveryCharge,
+    'Free Shipping Override': o.freeShippingOverride,
+    'Total Payable': o.totalPayable,
+    'Final Total': o.finalTotal,
+  }));
+
+  // Sheet 2 — one row per product per order: exactly "orderwise product list
+  // with price and discount", keyed by GAPL Order ID/Order Ref so it can be
+  // pivoted or vlookup'd against Sheet 1 in Excel.
+  const itemRows = rows.filter(r => r.productName).map(r => {
+    const price = r.priceOverride != null ? r.priceOverride : r.productMrp;
+    const lineTotal = Math.round(price * r.qty * (1 - (r.discountPercent || 0) / 100) * 100) / 100;
+    return {
+      'GAPL Order ID': r.gaplOrderId || '',
+      'Order Ref': r.orderRef,
+      'Customer Name': r.customerName,
+      'Product': r.productName,
+      'Pack Size': r.packSize,
+      'Qty': r.qty,
+      'MRP': r.productMrp,
+      'Price Override': r.priceOverride ?? '',
+      'Item Discount %': r.discountPercent,
+      'Line Total': lineTotal,
+    };
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(orderRows), 'Orders');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows), 'Order Items');
+  XLSX.writeFile(wb, `Purnavah_OrderExport_${fromIso}_to_${toIso}.xlsx`);
+  toast(`Excel exported — ${orderRows.length} order(s), ${itemRows.length} item(s)`);
+}
+
+document.addEventListener('pointermove', moveTooltip);
+
+window.connect = connect;
+window.applyFilters = applyFilters;
+window.exportExcel = exportExcel;
+window.toast = toast;
+initAdminPage(connect);
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Super Admin</title>
+<link rel="stylesheet" href="admin-shell.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -99,10 +100,6 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
       <div class="brand-tag">Super Admin</div>
     </div>
     <div class="topbar-actions">
-      <a class="nav-link" href="admin.html">Orders →</a>
-      <a class="nav-link" href="products.html">Products →</a>
-      <a class="nav-link" href="invoices.html">Invoices →</a>
-      <a class="nav-link" href="finance.html">Finance →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
       <button class="btn btn-secondary btn-sm" onclick="loadAll()">↻ Refresh</button>
     </div>
@@ -112,14 +109,6 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
 <div class="app">
 
   <div class="setup-bar" id="setupBar">
-    <div style="flex:2;min-width:260px">
-      <label>Orders Apps Script Web App URL</label><br>
-      <input type="text" id="ordersUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
-    </div>
-    <div style="flex:2;min-width:260px">
-      <label>Catalog Apps Script Web App URL</label><br>
-      <input type="text" id="catalogUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
-    </div>
     <div style="flex:1;min-width:180px">
       <label>Password</label><br>
       <input type="password" id="adminKey" placeholder="your password" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
@@ -152,7 +141,7 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
   <div id="listContainer">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter the Orders + Catalog Apps Script URLs and your password above, then click Connect.</p>
+      <p>Enter your password above, then click Connect.</p>
     </div>
   </div>
 
@@ -160,18 +149,14 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script type="module">
+import { callFn } from './supabase-client.js';
+import { pageUrl } from './app-config.js';
+import { initAdminPage, rememberAdmin, showAdminLogin } from './admin-shell.js';
+
 // This page exists only for Super Admin — every request always sends a
 // per-admin "password" (never a shared "key"), same as every other admin
-// page now that §13 is promoted to prod (2026-09-22). Same ?dev=1
-// URL-switch pattern as admin.html/invoices.html/etc: the setup fields
-// default to PROD, and dev=1 carries onto the nav links so navigating to
-// another page keeps ITS dev mode on too.
-const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
-const PROD_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec";
-const PROD_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbwk9RsPnwpUfcEXNW1xRdLL8Wde996xq9KZPKXcize1h_hAgWyzmjXNZ-NFYkLecFZj/exec";
-const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
-const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
+// page now that §13 is promoted to prod (2026-09-22).
 
 let ALL_ORDERS = [];   // every order, unfiltered — from ?action=listAll
 let ALL_ADMINS = [];   // full roster (minus Password) — from ?action=admins
@@ -218,16 +203,14 @@ function escapeHtml(s) {
 }
 function escAttr(s) { return String(s == null ? '' : s).replace(/'/g, "\\'"); }
 
-function ordersUrl() { return document.getElementById('ordersUrl').value.trim(); }
-function catalogUrl() { return document.getElementById('catalogUrl').value.trim(); }
 function apiKey() { return document.getElementById('adminKey').value.trim(); }
-function authQuery() { return 'password=' + encodeURIComponent(apiKey()); }
+function authParam() { return { password: apiKey() }; }
 
 async function loadWhoAmI() {
   try {
-    const res = await fetch(`${catalogUrl()}?action=whoAmI&${authQuery()}`);
-    const data = await res.json();
+    const data = await callFn('admin-auth', 'whoAmI', authParam());
     CURRENT_ADMIN = data.status === 'ok' ? data.admin : null;
+    if (CURRENT_ADMIN) rememberAdmin(apiKey(), CURRENT_ADMIN);
     return data.status === 'ok' ? null : (data.message || 'Invalid password');
   } catch (e) {
     CURRENT_ADMIN = null;
@@ -236,8 +219,8 @@ async function loadWhoAmI() {
 }
 
 async function loadAll() {
-  const oUrl = ordersUrl(), cUrl = catalogUrl(), key = apiKey();
-  if (!oUrl || !cUrl || !key) { toast('Enter both URLs and your password', true); return; }
+  const key = apiKey();
+  if (!key) { toast('Enter your password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -262,12 +245,10 @@ async function loadAll() {
       return;
     }
 
-    const [ordersRes, adminsRes] = await Promise.all([
-      fetch(`${oUrl}?action=listAll&${authQuery()}`),
-      fetch(`${cUrl}?action=admins&${authQuery()}`)
+    const [ordersData, adminsData] = await Promise.all([
+      callFn('orders', 'listAll', authParam()),
+      callFn('admin-auth', 'admins', authParam())
     ]);
-    const ordersData = await ordersRes.json();
-    const adminsData = await adminsRes.json();
     if (ordersData.status !== 'ok') throw new Error(ordersData.message || 'Could not load orders');
     if (adminsData.status !== 'ok') throw new Error(adminsData.message || 'Could not load admins');
 
@@ -283,6 +264,7 @@ async function loadAll() {
   } catch (err) {
     document.getElementById('connDot').className = 'conn-dot err';
     document.getElementById('connText').textContent = 'Connection failed';
+    showAdminLogin();
     toast('Failed to load: ' + err.message, true);
     document.getElementById('listContainer').innerHTML = `
       <div class="empty-state">
@@ -392,7 +374,7 @@ function renderCard(o) {
     </div>
     <div class="order-right">
       <div class="order-total">₹${(o.finalTotal || o.orderTotal || 0).toLocaleString('en-IN')}</div>
-      <select class="assign-select" onchange="assignOrder(this, ${o.rowIndex}, this.value)">
+      <select class="assign-select" onchange="assignOrder(this, '${o.rowIndex}', this.value)">
         <option value="" ${!o.assignedTo ? 'selected' : ''}>Unassigned</option>
         ${active.map(a => `<option value="${escAttr(a.adminId)}" ${o.assignedTo === a.adminId ? 'selected' : ''}>Assign to: ${escapeHtml(a.hubName || a.name)}</option>`).join('')}
       </select>
@@ -409,15 +391,11 @@ async function assignOrder(sel, rowIndex, adminId) {
   const newAdmin = ALL_ADMINS.find(a => a.adminId === adminId);
   if (sel) sel.disabled = true; // re-enabled by the render() call in every branch below
   try {
-    const res = await fetch(ordersUrl(), {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        password: apiKey(), action: 'update', rowIndex,
-        fields: { 'Assigned To': adminId },
-        newAssignedAdminUpi: newAdmin ? newAdmin.upiVpa : ''
-      })
+    const data = await callFn('orders', 'update', {
+      ...authParam(), rowIndex,
+      fields: { 'Assigned To': adminId },
+      newAssignedAdminUpi: newAdmin ? newAdmin.upiVpa : ''
     });
-    const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message);
     o.assignedTo = adminId;
     render();
@@ -438,14 +416,13 @@ async function assignOrder(sel, rowIndex, adminId) {
   }
 }
 
-// Deep link into admin.html (dev=1), scrolled/expanded to this order —
+// Deep link into admin.html in the selected environment, expanded to this order —
 // carries the Orders URL + this admin's own password so the recipient
 // doesn't have to re-enter them, matched by Order Ref (stable across
 // "Update order" versions), never rowIndex.
 function sendAssignmentWhatsApp(o, admin) {
   const itemCount = Object.keys(o.items || {}).length;
-  const params = new URLSearchParams({ dev: '1', webhookUrl: ordersUrl(), key: apiKey(), orderRef: o.orderRef });
-  const deepLink = `${location.origin}${location.pathname.replace(/[^/]*$/, 'admin.html')}?${params.toString()}`;
+  const deepLink = new URL(pageUrl('admin.html', { key: apiKey(), orderRef: o.orderRef }), location.href).href;
   const msg = `📦 *New order assigned to you — please confirm ASAP*
 
 Order: ${o.gaplOrderId || (o.orderRef || '').slice(0, 8)}
@@ -463,7 +440,7 @@ Open it here: ${deepLink}`;
 const HUB_INFO_FIELDS = [
   ['hubName', 'Hub Name'], ['companyName', 'Company Name'], ['companyAddress', 'Company Address'],
   ['gstin', 'GSTIN'], ['companyEmail', 'Company Email'], ['companyWebsite', 'Company Website'],
-  ['companyPhone', 'Company Phone']
+  ['companyPhone', 'Company Phone'], ['fssaiLicenseNo', 'FSSAI Lic No']
 ];
 let hubInfoOpen = false;
 
@@ -497,11 +474,7 @@ async function saveHubInfo(btn, adminId) {
   });
   await withButtonLoading(btn, 'Saving…', async () => {
     try {
-      const res = await fetch(catalogUrl(), {
-        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ password: apiKey(), action: 'updateHubInfo', adminId, fields })
-      });
-      const data = await res.json();
+      const data = await callFn('admin-auth', 'updateHubInfo', { ...authParam(), adminId, fields });
       if (data.status !== 'ok') throw new Error(data.message);
       const a = ALL_ADMINS.find(x => x.adminId === adminId);
       if (a) {
@@ -516,15 +489,13 @@ async function saveHubInfo(btn, adminId) {
   });
 }
 
-(function init() {
-  document.getElementById('ordersUrl').value = DEV_MODE ? DEV_ORDERS_API_URL : PROD_ORDERS_API_URL;
-  document.getElementById('catalogUrl').value = DEV_MODE ? DEV_CATALOG_API_URL : PROD_CATALOG_API_URL;
-  if (DEV_MODE) {
-    document.querySelectorAll('.nav-link[href]').forEach(a => {
-      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-    });
-  }
-})();
+// Inline onclick/onchange attributes resolve against `window`, not this
+// module's own scope — see the equivalent note in index.html/admin.html.
+Object.assign(window, {
+  toast,
+  loadAll, setFilterAdmin, setStatusFilter, assignOrder, toggleHubInfo, saveHubInfo,
+});
+initAdminPage(loadAll);
 </script>
 </body>
 </html>

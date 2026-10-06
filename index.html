@@ -334,7 +334,9 @@ button{touch-action:manipulation}
   <button onclick="jump('sec-review')">Review order</button>
 </div>
 
-<script>
+<script type="module">
+import { supabase, callFn } from './supabase-client.js';
+
 const WA_NUMBER = "918338962474"; // +91 83389 62474
 
 // Delivery charge policy — free above the threshold, flat fee below it.
@@ -360,19 +362,6 @@ function isSameDayDeliverySelected() {
   const el = document.getElementById('sameDayDelivery');
   return !!(el && el.checked);
 }
-
-// DEV MODE — code-only switch, no UI. Append ?dev=1 to the page URL (e.g.
-// index.html?dev=1) to point at the dev Catalog/Orders Apps Script
-// deployments instead of prod, for testing new features before they're
-// copied into the live scripts. Fill in the two DEV_* URLs below once the
-// dev Sheets + deployments exist (see google-apps-script/*_code.dev.gs).
-const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
-const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
-const DEV_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
-
-// Live catalog — pulled from the Catalog Google Sheet on load (Active = Y
-// and Stock > 0 rows only; filtering happens server-side in the Apps Script).
-const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec";
 
 let PRODUCTS = []; // [{id, grid, category, displayName, packSize, unit, mrp, gstPct, waKey, inStock}, ...] — one entry per catalog row (one per pack size)
 let PRODUCT_GROUPS = []; // [{groupId, grid, displayName, variants: [product, ...]}, ...] — variants sharing a Display Name are merged into one tile
@@ -591,14 +580,75 @@ function renderProductGrid() {
   setupCategoryScrollSpy();
 }
 
+// Fallback for rows with no explicit weight_kg — mirrors catalog_code.gs's
+// parseWeightFromPackSize_ (also duplicated server-side in the products
+// Edge Function — small enough not to need a shared module, no build step).
+function parseWeightFromPackSize(packSize) {
+  const s = (packSize || '').toString().trim().toLowerCase();
+  const m = s.match(/([\d.]+)\s*(kg|g|l|ml)\b/);
+  if (!m) return 0;
+  const num = parseFloat(m[1]);
+  if (isNaN(num)) return 0;
+  switch (m[2]) {
+    case 'kg': return num;
+    case 'g':  return num / 1000;
+    case 'l':  return num;
+    case 'ml': return num / 1000;
+    default:   return 0;
+  }
+}
+
+function computeWaKey(displayName, packSize) {
+  displayName = (displayName || '').toString().trim();
+  packSize = (packSize || '').toString().trim();
+  return packSize ? `${displayName} (${packSize})` : displayName;
+}
+
+// Direct supabase-js reads (RLS-scoped to active products/hub-admins/stock
+// only — see "DB_Scripts/Supabase Migration Additions.sql") replacing the
+// old ?action=catalog Apps Script endpoint. Reproduces handlePublicCatalog's
+// exact behavior: only Active products, inStock summed across every active
+// hub-admin's stock row, never exact per-hub counts/HSN/notes.
 async function loadCatalog() {
   const statusEl = document.getElementById('catalogStatus');
   try {
-    const res = await fetch(`${CATALOG_API_URL}?action=catalog`);
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message || 'Unexpected response');
+    // td_admins itself has no anon-read policy (RLS silently returns an
+    // empty set, not an error, if queried directly) — this narrow
+    // security-definer RPC exposes only the active hub-admin ids, nothing
+    // else about the admin. See "DB_Scripts/Supabase Migration Additions.sql".
+    const [{ data: products, error: prodErr }, { data: hubIds, error: hubErr }, { data: stockRows, error: stockErr }] = await Promise.all([
+      supabase.from('td_products').select('*').eq('active', true),
+      supabase.rpc('td_active_hub_admin_ids'),
+      supabase.from('td_product_stock').select('product_id, hub_admin_id, stock_qty'),
+    ]);
+    if (prodErr) throw new Error(prodErr.message);
+    if (hubErr) throw new Error(hubErr.message);
+    if (stockErr) throw new Error(stockErr.message);
 
-    PRODUCTS = data.data.map(toProduct);
+    const activeHubIds = new Set(hubIds || []);
+    const stockByProduct = {};
+    (stockRows || []).forEach(s => {
+      if (!activeHubIds.has(s.hub_admin_id)) return; // deactivated hub's leftover stock must not count
+      stockByProduct[s.product_id] = (stockByProduct[s.product_id] || 0) + (Number(s.stock_qty) || 0);
+    });
+
+    const data = (products || []).map(p => ({
+      productId: p.product_id,
+      productName: p.product_name,
+      category: p.category || '',
+      displayName: p.display_name || p.product_name || '',
+      unit: p.unit || '',
+      packSize: p.pack_size || '',
+      mrp: Number(p.mrp) || 0,
+      gstPct: Number(p.gst_percent) || 0,
+      waKey: p.wa_key || computeWaKey(p.display_name || p.product_name, p.pack_size),
+      inStock: (stockByProduct[p.product_id] || 0) > 0,
+      contents: p.contents || '',
+      weightKg: Number(p.weight_kg) || parseWeightFromPackSize(p.pack_size),
+      maxOrderKg: Number(p.max_order_qty_kg) || 0,
+    }));
+
+    PRODUCTS = data.map(toProduct);
     if (PRODUCTS.length === 0) {
       statusEl.textContent = 'No products available right now — please check back soon.';
       return;
@@ -844,15 +894,21 @@ async function applyCoupon(btn) {
   if (btn) btn.disabled = true; // guard against a double-click firing two lookups while this one is in flight
 
   try {
-    const res = await fetch(`${CATALOG_API_URL}?action=coupon&code=${encodeURIComponent(code)}`);
-    const data = await res.json();
-    if (data.status === 'ok' && data.valid) {
-      appliedCoupon = { code: data.code, value: Number(data.value) || 0 };
-      msgEl.innerHTML = `✓ "${data.code}" applied — ${appliedCoupon.value}% off <a onclick="removeCoupon()">Remove</a>`;
+    // Direct read, never select * across all coupons — .eq() + single-code
+    // lookup only, same anti-enumeration intent as handleCouponValidate_
+    // (see "DB_Scripts/Supabase Migration Additions.sql" for the caveat that
+    // the anon key itself could still be used directly to enumerate codes;
+    // this only prevents this page's own code from doing so).
+    const { data: row, error } = await supabase
+      .from('td_coupons').select('coupon_code, value, active').eq('coupon_code', code).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (row && row.active) {
+      appliedCoupon = { code: row.coupon_code, value: Number(row.value) || 0 };
+      msgEl.innerHTML = `✓ "${row.coupon_code}" applied — ${appliedCoupon.value}% off <a onclick="removeCoupon()">Remove</a>`;
       msgEl.className = 'coupon-msg ok';
     } else {
       appliedCoupon = null;
-      msgEl.textContent = data.message || 'Invalid coupon code';
+      msgEl.textContent = row && !row.active ? 'This coupon is no longer active' : 'Invalid coupon code';
       msgEl.className = 'coupon-msg err';
     }
   } catch (err) {
@@ -872,6 +928,36 @@ function removeCoupon() {
   msgEl.textContent = '';
   msgEl.className = 'coupon-msg';
   updateSummary();
+}
+
+// Same GST-extraction + uniform-coupon-scaling math as updateSummary()'s
+// on-screen bill (kept as a separate small pass here rather than merged into
+// that function, to avoid touching its already-working render logic) — used
+// to persist a real pricing breakdown into td_orders at creation time
+// (discount_base_amount/taxable_value/gst_amount/total_payable), instead of
+// leaving those blank until an admin later generates an invoice. Valid here
+// because the only discount in play at order-creation is a single uniform
+// coupon %, never a per-item override (those only exist in admin.html).
+function computeGstBreakdown(items) {
+  let taxableTotal = 0, gstTotal = 0;
+  items.forEach(p => {
+    const q = qty[p.id];
+    const lineAmount = q * p.mrp; // tax-inclusive
+    const gstPct = p.gstPct || 0;
+    const lineTaxable = lineAmount * 100 / (100 + gstPct); // extract embedded GST
+    taxableTotal += lineTaxable;
+    gstTotal += lineAmount - lineTaxable;
+  });
+  taxableTotal = Math.round(taxableTotal * 100) / 100;
+  gstTotal = Math.round(gstTotal * 100) / 100;
+
+  let discTaxable = taxableTotal, discGst = gstTotal;
+  if (appliedCoupon) {
+    const factor = 1 - appliedCoupon.value / 100;
+    discTaxable = Math.round(taxableTotal * factor * 100) / 100;
+    discGst = Math.round(gstTotal * factor * 100) / 100;
+  }
+  return { taxableTotal, gstTotal, discTaxable, discGst };
 }
 
 // Business's own WhatsApp number, without the country-code prefix — a
@@ -942,6 +1028,12 @@ function sendWhatsApp() {
   payable += sameDayCharge;
   const sameDayLine = sameDayDelivery ? `Same-day delivery: ₹${sameDayCharge.toLocaleString('en-IN')}\n` : '';
 
+  // Pricing breakdown persisted into td_orders at creation time (see
+  // computeGstBreakdown above) — admin.html overwrites these later if the
+  // order's pricing changes (discount edits, invoice generation, etc.).
+  const gstBreakdown = computeGstBreakdown(items);
+  const totalPayable = Math.round((gstBreakdown.discTaxable + gstBreakdown.discGst + deliveryCharge + sameDayCharge) * 100) / 100;
+
   const msg = `🌿 *New Order — Purnavah*
 
 *ORDER DETAILS*
@@ -955,9 +1047,7 @@ Pincode: ${pincode}
 State: ${state}
 Address: ${address}${notes ? `\nNotes: ${notes}` : ''}`;
 
-  // ── GOOGLE SHEETS: silently log order ──────────────────
-  const SHEETS_WEBHOOK_URL = DEV_MODE ? DEV_SHEETS_WEBHOOK_URL : "https://script.google.com/macros/s/AKfycbwk9RsPnwpUfcEXNW1xRdLL8Wde996xq9KZPKXcize1h_hAgWyzmjXNZ-NFYkLecFZj/exec";
-
+  // ── ORDER LOG: silently persist the order via the orders Edge Function ──
   // A fresh id per submission attempt — a genuine retry (e.g. after a
   // network error) gets a new one, but the server can still collapse two
   // deliveries of the *same* click (double-fetch, browser retry, etc.)
@@ -978,6 +1068,10 @@ Address: ${address}${notes ? `\nNotes: ${notes}` : ''}`;
     deliveryCharge: deliveryCharge,
     sameDayDeliveryCharge: sameDayCharge,
     clientOrderId: clientOrderId,
+    discountBaseAmount: gstBreakdown.taxableTotal,
+    taxableValue: gstBreakdown.discTaxable,
+    gstAmount: gstBreakdown.discGst,
+    totalPayable: totalPayable,
     items:   {}
   };
 
@@ -987,15 +1081,11 @@ Address: ${address}${notes ? `\nNotes: ${notes}` : ''}`;
     orderPayload.items[p.waKey] = qty[p.id];
   });
 
-  // Fire and forget — never blocks WhatsApp send even if Sheets fails
-  fetch(SHEETS_WEBHOOK_URL, {
-    method:  "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body:    JSON.stringify(orderPayload)
-  }).then(r => r.json())
-    .then(d => { if (d.status !== "ok") console.warn("Sheets log:", d); })
-    .catch(err => console.warn("Sheets webhook failed (non-blocking):", err));
-  // ── END GOOGLE SHEETS ───────────────────────────────────
+  // Fire and forget — never blocks WhatsApp send even if this fails
+  callFn('orders', 'submitOrder', orderPayload)
+    .then(d => { if (d.status !== "ok") console.warn("Order log:", d); })
+    .catch(err => console.warn("Order log failed (non-blocking):", err));
+  // ── END ORDER LOG ───────────────────────────────────────
 
   // Send to Purnavah — the only WhatsApp tab opened (Issue 4; there used to
   // be a second tab to the customer's own number, gated by a "send me a
@@ -1084,6 +1174,15 @@ function setupCategoryScrollSpy() {
   }, {rootMargin:'-130px 0px -75% 0px'});
   headings.forEach(h => categoryObserver.observe(h));
 }
+
+// Inline onclick/onchange attributes resolve against `window`, not this
+// module's own scope — a type="module" script (needed for the supabase-js
+// import above) never leaks its top-level declarations onto `window` the
+// way a classic script does, so every function referenced from markup must
+// be exposed explicitly here.
+Object.assign(window, {
+  applyCoupon, changeQty, jump, removeCoupon, resetForm, selectVariant, sendWhatsApp, setQty, updateSummary,
+});
 </script>
 </body>
 </html>

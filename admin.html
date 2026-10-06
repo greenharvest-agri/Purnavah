@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Order Admin</title>
+<link rel="stylesheet" href="admin-shell.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -150,6 +151,13 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.error{background:var(--red)}
 
+/* Same fixed-bottom-bar pattern as index.html's #stickybar — keeps "Update
+   changes" reachable without scrolling back up/down through a long expanded
+   order card. */
+.sticky-update-bar{position:fixed;left:0;right:0;bottom:0;z-index:90;background:var(--amber-lt);border-top:1.5px solid var(--amber);color:var(--amber);padding:12px 24px calc(12px + env(safe-area-inset-bottom)) 24px;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 -4px 16px rgba(0,0,0,.12);transform:translateY(100%);transition:transform .25s}
+.sticky-update-bar.show{transform:translateY(0)}
+.sticky-update-bar-label{font-size:13px;font-weight:600}
+
 .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -193,13 +201,6 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
       <div class="brand-tag">Order Admin</div>
     </div>
     <div class="topbar-actions">
-      <a class="nav-link" href="products.html">Products →</a>
-      <a class="nav-link" href="invoices.html">Invoices →</a>
-      <a class="nav-link" href="finance.html">Finance →</a>
-      <!-- Multi-admin workflow (DEV-only) — shown only once whoAmI resolves
-           to Super Admin (see renderIdentityBar()). Exclusive to that role,
-           not even a locked-down view for anyone else (§13). -->
-      <a class="nav-link" href="orderAssignment.html" id="superAdminNavLink" style="display:none">Super Admin →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
       <button class="btn btn-secondary btn-sm" onclick="loadOrders()">↻ Refresh</button>
     </div>
@@ -209,10 +210,6 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
 <div class="app">
 
   <div class="setup-bar" id="setupBar">
-    <div style="flex:2;min-width:260px">
-      <label>Apps Script Web App URL</label><br>
-      <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbwk9RsPnwpUfcEXNW1xRdLL8Wde996xq9KZPKXcize1h_hAgWyzmjXNZ-NFYkLecFZj/exec" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
-    </div>
     <div style="flex:1;min-width:180px">
       <label>Password</label><br>
       <input type="password" id="adminKey" placeholder="your password" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('connectBtn').click();}">
@@ -220,8 +217,8 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
     <button class="btn btn-primary" onclick="loadOrders()" id="connectBtn">Connect</button>
   </div>
 
-  <!-- Multi-admin workflow (DEV-only) — hidden unless DEV_MODE; shows "Logged
-       in as X (Role)" once whoAmI resolves at connect time. Read-only — real
+  <!-- Multi-admin workflow — shows "Logged in as X (Role)" once whoAmI
+       resolves at connect time. Read-only — real
        identity now comes from the password, not a self-picked dropdown (that
        old dropdown/"Assigned to" filter model is superseded, see
        MULTI_ADMIN_WORKFLOW_PLAN.md §13). -->
@@ -246,13 +243,19 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
   <div id="listContainer">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter your Apps Script Web App URL and password above, then click Connect.</p>
+      <p>Enter your password above, then click Connect.</p>
     </div>
   </div>
 
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="sticky-update-bar" id="stickyUpdateBar">
+  <span class="sticky-update-bar-label">⚠ Unsaved changes on this order</span>
+  <button class="btn btn-secondary btn-sm" id="stickyDiscardBtn">Discard changes</button>
+  <button class="btn btn-primary btn-sm" id="stickyUpdateBtn">Update changes</button>
+</div>
 
 <script src="invoice-shared.js"></script>
 
@@ -276,40 +279,29 @@ body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--ink);fon
   </div>
 </div>
 
-<script>
-// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
-// (e.g. admin.html?dev=1) to point at the DEV Catalog/Orders Apps Script
-// deployments instead of prod, and to activate the multi-admin workflow —
-// a real per-admin password (typed into the same field prod calls "Admin
-// Key") resolved server-side to an identity that scopes which orders this
-// page even receives (Super Admin's own bucket here; the full cross-admin
-// picture lives on the separate Super Admin page). With dev mode off, this
-// page behaves exactly as it always has — same shared ADMIN_KEY, full
-// unscoped visibility, no identity concept at all. See
-// MULTI_ADMIN_WORKFLOW_PLAN.md §13.
-const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
-const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
-const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
+<script type="module">
+import { callFn } from './supabase-client.js';
+import { pageUrl } from './app-config.js';
+import { initAdminPage, rememberAdmin, showAdminLogin } from './admin-shell.js';
 
-// Live product catalog — pulled from the Catalog Google Sheet's Apps Script
-// deployment (same one used by products.html / index.html). This is a
-// SEPARATE deployment from the Orders webhook above; both share the same
-// admin key. We hit the admin "list" endpoint (not the public "catalog"
-// endpoint) so pricing for items that have since gone inactive/out-of-stock
-// still resolves correctly on old orders — the public endpoint would drop
-// them and break historical pricing.
-const CATALOG_API_URL = DEV_MODE ? DEV_CATALOG_API_URL : "https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec";
+// Multi-admin workflow (§13, promoted to prod 2026-09-22) — every admin
+// action resolves the submitted password to an identity that scopes which
+// orders this page even receives (Super Admin's own bucket here; the full
+// cross-admin picture lives on the separate Super Admin page).
 
 let CATALOG = [];        // full catalog (admin list) — used for price lookups on any item ever ordered
 let CATALOG_ACTIVE = []; // Active=Y && Stock>0 subset — used for the "Add item" picker
 
+// Hits the products Edge Function's "list" action (not the public catalog
+// read) so pricing for items that have since gone inactive/out-of-stock
+// still resolves correctly on old orders — the public read would drop them
+// and break historical pricing.
 async function loadCatalog() {
   try {
-    const res = await fetch(`${CATALOG_API_URL}?action=list&${authQuery()}`);
-    const data = await res.json();
+    const data = await callFn('products', 'list', authParam());
     if (data.status === 'ok') {
       CATALOG = data.data;
-      CATALOG_ACTIVE = CATALOG.filter(p => String(p.active).trim().toUpperCase() === 'Y' && Number(p.stock) > 0);
+      CATALOG_ACTIVE = CATALOG.filter(p => String(p.active).trim().toUpperCase() === 'Y' && Number(p.totalStock) > 0);
     } else {
       console.warn('Catalog load failed', data.message);
     }
@@ -319,22 +311,20 @@ async function loadCatalog() {
 }
 
 // ─────────────────────────────────────────────
-//  MULTI-ADMIN WORKFLOW (DEV-only) — real per-admin password auth (§13).
-//  The backend now resolves the submitted password to an identity and scopes
-//  every response/write to that admin's own orders server-side — this page
-//  no longer picks an identity from a dropdown (superseded, see §13) or
-//  filters anything client-side; it just displays whatever the backend
-//  already scoped and shows who's logged in. Everything here is a no-op with
-//  DEV_MODE off: CURRENT_ADMIN stays null, the identity bar stays hidden.
+//  MULTI-ADMIN WORKFLOW — real per-admin password auth (§13). The backend
+//  resolves the submitted password to an identity and scopes every
+//  response/write to that admin's own orders server-side — this page never
+//  picks an identity from a dropdown or filters anything client-side; it
+//  just displays whatever the backend already scoped and shows who's
+//  logged in.
 // ─────────────────────────────────────────────
 
-let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at Connect via ?action=whoAmI
+let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at Connect via admin-auth's whoAmI action
 
 async function loadWhoAmI() {
   try {
-    const res = await fetch(`${CATALOG_API_URL}?action=whoAmI&${authQuery()}`);
-    const data = await res.json();
-    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
+    const data = await callFn('admin-auth', 'whoAmI', authParam());
+    if (data.status === 'ok') { CURRENT_ADMIN = data.admin; rememberAdmin(apiKey(), CURRENT_ADMIN); }
     else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
   } catch (e) {
     CURRENT_ADMIN = null;
@@ -371,8 +361,6 @@ function resolveHubInfo(o) {
 
 function renderIdentityBar() {
   const bar = document.getElementById('identityBar');
-  const navLink = document.getElementById('superAdminNavLink');
-  if (navLink) navLink.style.display = (CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? '' : 'none';
   if (!bar) return;
   if (!CURRENT_ADMIN) { bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
@@ -449,8 +437,8 @@ function computeChecklistData(o) {
 async function downloadPackingChecklist(btn, rowIndex) {
   const existing = orders.find(x => x.rowIndex === rowIndex);
   if (!existing) return;
-  const url = apiUrl(), key = apiKey();
-  if (!url || !key) { toast('Connect first', true); return; }
+  const key = apiKey();
+  if (!key) { toast('Connect first', true); return; }
 
   await withButtonLoading(btn, 'Loading…', async () => {
     // Open synchronously so the browser doesn't treat it as a blocked popup
@@ -459,8 +447,7 @@ async function downloadPackingChecklist(btn, rowIndex) {
     if (win) win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">Loading latest order details…</p>');
 
     try {
-      const res = await fetch(`${url}?action=list&${authQuery()}`);
-      const data = await res.json();
+      const data = await callFn('orders', 'list', authParam());
       if (data.status !== 'ok') throw new Error(data.message || 'Could not load latest order data');
       const fresh = data.data.find(x => (existing.orderRef && x.orderRef === existing.orderRef) || x.rowIndex === rowIndex);
       if (!fresh) throw new Error('Order not found — it may have been deleted or moved');
@@ -681,21 +668,11 @@ async function withButtonLoading(btn, loadingLabel, fn) {
   }
 }
 
-function apiUrl() {
-  return document.getElementById('webhookUrl').value.trim();
-}
 function apiKey() {
   return document.getElementById('adminKey').value.trim();
 }
-// Both prod (catalog_code.gs/orders_code.gs) and dev (*.dev.gs) now resolve
-// a per-admin "password" (§13, promoted to prod 2026-09-22) — same input
-// field, same wire field name, regardless of DEV_MODE. DEV_MODE only still
-// controls which deployment (dev vs prod sheet) these functions talk to.
 function authParam() {
   return { password: apiKey() };
-}
-function authQuery() {
-  return 'password=' + encodeURIComponent(apiKey());
 }
 
 // Public entry point (Connect / ↻ Refresh buttons) — guarded, since the real
@@ -707,8 +684,8 @@ async function loadOrders() {
 }
 
 async function loadOrdersConfirmed() {
-  const url = apiUrl(), key = apiKey();
-  if (!url || !key) { toast('Enter both URL and password', true); return; }
+  const key = apiKey();
+  if (!key) { toast('Enter your password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -716,12 +693,11 @@ async function loadOrdersConfirmed() {
   document.getElementById('connText').textContent = 'Connecting…';
 
   try {
-    const [ordersRes] = await Promise.all([
-      fetch(`${url}?action=list&${authQuery()}`),
+    const [data] = await Promise.all([
+      callFn('orders', 'list', authParam()),
       loadCatalog(),
       loadWhoAmI()
     ]);
-    const data = await ordersRes.json();
     if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
 
     orders = data.data.map(o => {
@@ -753,12 +729,13 @@ async function loadOrdersConfirmed() {
   } catch (err) {
     document.getElementById('connDot').className = 'conn-dot err';
     document.getElementById('connText').textContent = 'Connection failed';
-    toast('Failed to load: ' + err.message + ' — check the URL is deployed and the password matches.', true);
+    showAdminLogin();
+    toast('Failed to load: ' + err.message + ' — check the password matches.', true);
     document.getElementById('listContainer').innerHTML = `
       <div class="empty-state">
         <h3>Couldn't connect</h3>
         <p>${err.message}</p>
-        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Apps Script is deployed as a Web App with "Anyone" access, (2) the password matches what's in the Admins tab, (3) the deployment URL is the latest version.</p>
+        <p style="margin-top:10px;font-size:12px">Make sure the password matches an active row in td_admins.</p>
       </div>`;
   } finally {
     document.getElementById('connectBtn').innerHTML = 'Connect';
@@ -929,6 +906,7 @@ function render() {
   });
 
   renderStatusBar();
+  updateStickyUpdateBar();
 
   if (filtered.length === 0) {
     container.innerHTML = `<div class="empty-state"><h3>No orders match</h3><p>Try a different filter or search term.</p></div>`;
@@ -936,6 +914,21 @@ function render() {
   }
 
   container.innerHTML = `<div class="order-list">${filtered.map(renderCard).join('')}</div>`;
+}
+
+// Fixed-bottom-bar echo of the per-card dirty-banner (renderBody) — reachable
+// without scrolling back up/down through a long expanded order card, same
+// pattern as index.html's #stickybar. The dirty guard (requestLeave) already
+// blocks switching to/editing a second order while one has unsaved changes,
+// so at most one order is ever dirty at a time in practice.
+function updateStickyUpdateBar() {
+  const bar = document.getElementById('stickyUpdateBar');
+  if (!bar) return;
+  const dirtyOrder = orders.find(isDirty);
+  if (!dirtyOrder) { bar.classList.remove('show'); return; }
+  bar.classList.add('show');
+  document.getElementById('stickyDiscardBtn').onclick = () => discardChanges(dirtyOrder.rowIndex);
+  document.getElementById('stickyUpdateBtn').onclick = (e) => updateOrderVersion(e.currentTarget, dirtyOrder.rowIndex);
 }
 
 function renderStatusBar() {
@@ -993,7 +986,7 @@ function renderCard(o) {
 
   return `
   <div class="order-card ${o._dup ? 'dup-flag' : ''} ${isExpanded ? 'expanded' : ''}" id="card-${o.rowIndex}">
-    <div class="order-head" onclick="toggleCard(${o.rowIndex})">
+    <div class="order-head" onclick="toggleCard('${o.rowIndex}')">
       <div class="order-id-block">
         <div>
           <div class="order-customer">${escapeHtml(o.customerName || '(no name)')}</div>
@@ -1054,13 +1047,13 @@ function renderBody(o) {
         <td class="${isOos ? 'item-name-oos' : ''}">${escapeHtml(name)}${price === null ? ' <span style="color:var(--red);font-size:11px">(no price set)</span>' : ''}</td>
         <td class="num">
           <input type="number" class="mrp-input" min="0" value="${price !== null ? price : ''}"
-             ${rowLocked ? 'disabled' : ''} onchange="updateItemPrice(${o.rowIndex}, '${escAttr(name)}', this.value)">
+             ${rowLocked ? 'disabled' : ''} onchange="updateItemPrice('${o.rowIndex}', '${escAttr(name)}', this.value)">
           ${isOverridden ? `<div style="font-size:10.5px;color:var(--stone);text-decoration:line-through">₹${catalogPrice.toLocaleString('en-IN')}</div>` : ''}
         </td>
         <td class="num"><input type="number" class="qty-input" min="0" value="${currentQty}"
-             ${rowLocked ? 'disabled' : ''} onchange="updateItemQty(${o.rowIndex}, '${escAttr(name)}', this.value)"></td>
+             ${rowLocked ? 'disabled' : ''} onchange="updateItemQty('${o.rowIndex}', '${escAttr(name)}', this.value)"></td>
         <td class="num"><input type="number" class="disc-input" min="0" max="100" value="${discPct}"
-             ${rowLocked ? 'disabled' : ''} onchange="updateItemDisc(${o.rowIndex}, '${escAttr(name)}', this.value)"></td>
+             ${rowLocked ? 'disabled' : ''} onchange="updateItemDisc('${o.rowIndex}', '${escAttr(name)}', this.value)"></td>
         <td class="disc-cell">
           ${lineGross !== null ? `
             <div class="disc-orig">₹${lineGross.toLocaleString('en-IN')}</div>
@@ -1068,9 +1061,9 @@ function renderBody(o) {
             <div class="disc-net">₹${lineNet.toLocaleString('en-IN')}</div>
           ` : '—'}
         </td>
-        <td><button class="oos-btn ${isOos ? 'active' : ''}" ${isLocked ? 'disabled' : ''} onclick="toggleOos(${o.rowIndex}, '${escAttr(name)}')">
+        <td><button class="oos-btn ${isOos ? 'active' : ''}" ${isLocked ? 'disabled' : ''} onclick="toggleOos('${o.rowIndex}', '${escAttr(name)}')">
           ${isOos ? 'OOS ✓' : 'OOS'}</button></td>
-        <td>${canEditItems ? `<button class="del-item-btn" title="Remove item" onclick="deleteItem(${o.rowIndex}, '${escAttr(name)}')">✕</button>` : ''}</td>
+        <td>${canEditItems ? `<button class="del-item-btn" title="Remove item" onclick="deleteItem('${o.rowIndex}', '${escAttr(name)}')">✕</button>` : ''}</td>
       </tr>`;
   }).join('');
 
@@ -1091,8 +1084,8 @@ function renderBody(o) {
     <div class="dirty-banner">
       <span>⚠ Unsaved changes on this order</span>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-secondary btn-sm" onclick="discardChanges(${o.rowIndex})">Discard changes</button>
-        <button class="btn btn-primary btn-sm" onclick="updateOrderVersion(this, ${o.rowIndex})">Update changes</button>
+        <button class="btn btn-secondary btn-sm" onclick="discardChanges('${o.rowIndex}')">Discard changes</button>
+        <button class="btn btn-primary btn-sm" onclick="updateOrderVersion(this, '${o.rowIndex}')">Update changes</button>
       </div>
     </div>` : ''}
     <div class="body-grid">
@@ -1135,18 +1128,18 @@ function renderBody(o) {
             <label>Discount %</label>
             <input type="number" min="0" max="100"
               value="${effectiveDiscPct(totals)}"
-              onchange="applyOrderDiscount(${o.rowIndex}, this.value)" ${isLocked ? 'disabled' : ''}>
+              onchange="applyOrderDiscount('${o.rowIndex}', this.value)" ${isLocked ? 'disabled' : ''}>
           </div>
           <div class="field-row">
             <label>Free shipping</label>
             <div style="display:flex;gap:14px;align-items:center">
               <label style="display:flex;gap:5px;align-items:center;font-size:12.5px;color:var(--ink);min-width:0;cursor:pointer">
                 <input type="radio" name="freeShip-${o.rowIndex}" ${isFreeShip ? 'checked' : ''}
-                  ${isLocked ? 'disabled' : ''} onchange="setFreeShipping(${o.rowIndex}, 'Y')"> Yes
+                  ${isLocked ? 'disabled' : ''} onchange="setFreeShipping('${o.rowIndex}', 'Y')"> Yes
               </label>
               <label style="display:flex;gap:5px;align-items:center;font-size:12.5px;color:var(--ink);min-width:0;cursor:pointer">
                 <input type="radio" name="freeShip-${o.rowIndex}" ${!isFreeShip ? 'checked' : ''}
-                  ${isLocked ? 'disabled' : ''} onchange="setFreeShipping(${o.rowIndex}, 'N')"> No
+                  ${isLocked ? 'disabled' : ''} onchange="setFreeShipping('${o.rowIndex}', 'N')"> No
               </label>
             </div>
           </div>
@@ -1171,8 +1164,8 @@ function renderBody(o) {
 
         ${status === 'Revised' ? `<div class="locked-note">This is a superseded version — see the latest version for current actions.</div>` : `
         <div class="action-row">
-          <button class="btn btn-secondary btn-sm" onclick="generateInvoice(this, ${o.rowIndex})" ${(canGenerateInvoice && !dirty) ? '' : `disabled title="${dirty ? 'Update order (save your changes) first' : 'Confirm the order before generating an invoice'}"`}>${o.invoiceNo ? 'View / reprint invoice' : 'Generate invoice'}</button>
-          <button class="btn btn-secondary btn-sm" onclick="downloadPackingChecklist(this, ${o.rowIndex})" ${canGenerateInvoice ? 'title="Always fetches the latest saved order details from the sheet"' : `disabled title="Confirm the order before generating a packing checklist"`}>📋 Packing checklist</button>
+          <button class="btn btn-secondary btn-sm" onclick="generateInvoice(this, '${o.rowIndex}')" ${(canGenerateInvoice && !dirty) ? '' : `disabled title="${dirty ? 'Update order (save your changes) first' : 'Confirm the order before generating an invoice'}"`}>${o.invoiceNo ? 'View / reprint invoice' : 'Generate invoice'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadPackingChecklist(this, '${o.rowIndex}')" ${canGenerateInvoice ? 'title="Always fetches the latest saved order details from the sheet"' : `disabled title="Confirm the order before generating a packing checklist"`}>📋 Packing checklist</button>
         </div>`}
       </div>
     </div>
@@ -1191,7 +1184,7 @@ function renderStatusSection(o) {
   const buttons = (orderCfg.next || []).map(next => {
     const label = STATUS_ACTION_LABELS[next] || ('Mark ' + next);
     const cls = next === 'Cancelled' ? 'btn-danger' : 'btn-secondary';
-    return `<button class="btn ${cls} btn-sm" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="changeStatus(this, ${o.rowIndex}, '${next}')">${label}</button>`;
+    return `<button class="btn ${cls} btn-sm" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="changeStatus(this, '${o.rowIndex}', '${next}')">${label}</button>`;
   }).join('');
 
   // Issue A retry path: a prior confirm attempt that failed to decrement
@@ -1200,7 +1193,7 @@ function renderStatusSection(o) {
   // instead of leaving the order stuck.
   const retryStock = (status === 'Confirmed' && !o.stockDecremented)
     ? `<div style="margin-top:8px;font-size:11.5px;color:var(--red)">⚠ Stock was not decremented (a previous confirm attempt failed) —
-        <button class="btn btn-secondary btn-sm" style="margin-top:4px" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="openConfirmModal(${o.rowIndex})">Retry stock decrement</button></div>`
+        <button class="btn btn-secondary btn-sm" style="margin-top:4px" ${dirty ? `disabled title="${dirtyTitle}"` : ''} onclick="openConfirmModal('${o.rowIndex}')">Retry stock decrement</button></div>`
     : '';
 
   return `
@@ -1244,21 +1237,20 @@ function renderInvoiceSection(o) {
         ⚠ Items or discounts changed since this invoice was generated — it shows ₹${(o.finalTotal || 0).toLocaleString('en-IN')}, current total is ₹${totals.grandTotal.toLocaleString('en-IN')}.
       </div>` : ''}
       <div class="action-btn-group">
-        <button class="btn btn-secondary btn-sm" onclick="openInInvoices(${o.rowIndex})">View in Invoices →</button>
-        <button class="btn ${isStale ? 'btn-primary' : 'btn-secondary'} btn-sm" ${dirty ? 'disabled title="Update order (save your changes) first"' : ''} onclick="generateInvoice(this, ${o.rowIndex})">↻ Refresh invoice &amp; totals</button>
+        <button class="btn btn-secondary btn-sm" onclick="openInInvoices('${o.rowIndex}')">View in Invoices →</button>
+        <button class="btn ${isStale ? 'btn-primary' : 'btn-secondary'} btn-sm" ${dirty ? 'disabled title="Update order (save your changes) first"' : ''} onclick="generateInvoice(this, '${o.rowIndex}')">↻ Refresh invoice &amp; totals</button>
       </div>
     </div>`;
 }
 
 // Opens invoices.html in a new tab, scrolled/highlighted to this order's
-// invoice — passes the Orders URL + key through so it connects automatically
-// instead of making the admin re-enter them. The full invoice list still
-// shows (deep link only scrolls/highlights, never filters out other rows).
+// invoice — the shared browser session connects automatically instead
+// of making the admin re-enter it. The full invoice list still shows (deep
+// link only scrolls/highlights, never filters out other rows).
 function openInInvoices(rowIndex) {
   const o = orders.find(x => x.rowIndex === rowIndex);
   if (!o || !o.invoiceNo) return;
-  const params = new URLSearchParams({ invoiceNo: o.invoiceNo, ordersUrl: apiUrl(), key: apiKey() });
-  window.open('invoices.html?' + params.toString(), '_blank');
+  window.open(pageUrl('invoices.html', { invoiceNo: o.invoiceNo }), '_blank');
 }
 
 function renderShippingSection(o) {
@@ -1270,9 +1262,9 @@ function renderShippingSection(o) {
   const row = (label, field, val, type) => {
     if (!editable) return `<div class="field-row"><label>${label}</label><div>${val ? escapeHtml(val) : '—'}</div></div>`;
     if (type === 'date') {
-      return `<div class="field-row"><label>${label}</label><input type="date" value="${ddmmyyyyToIso(val)}" onchange="updateShippingField(${o.rowIndex}, '${field}', isoToDDMMYYYY(this.value))"></div>`;
+      return `<div class="field-row"><label>${label}</label><input type="date" value="${ddmmyyyyToIso(val)}" onchange="updateShippingField('${o.rowIndex}', '${field}', isoToDDMMYYYY(this.value))"></div>`;
     }
-    return `<div class="field-row"><label>${label}</label><input type="text" value="${escAttr(val)}" onchange="updateShippingField(${o.rowIndex}, '${field}', this.value)"></div>`;
+    return `<div class="field-row"><label>${label}</label><input type="text" value="${escAttr(val)}" onchange="updateShippingField('${o.rowIndex}', '${field}', this.value)"></div>`;
   };
 
   return `
@@ -1317,7 +1309,7 @@ function renderPaymentSection(o) {
       <div class="field-hint" style="margin:-4px 0 8px">Added to the ₹${(o.amountPaid || 0).toLocaleString('en-IN')} already recorded — not a running total</div>
       <div class="field-row"><label>UTR / Ref</label><input type="text" id="payRef-${o.rowIndex}" placeholder="Transaction reference"></div>
       <div class="field-row"><label>Payment date</label><input type="date" id="payDate-${o.rowIndex}" value="${todayIso()}"></div>
-      <div class="action-btn-group"><button class="btn btn-primary btn-sm" onclick="recordPayment(this, ${o.rowIndex})">Record payment</button></div>
+      <div class="action-btn-group"><button class="btn btn-primary btn-sm" onclick="recordPayment(this, '${o.rowIndex}')">Record payment</button></div>
     </div>`;
 }
 
@@ -1325,7 +1317,7 @@ function renderAddItemPanel(o) {
   const ed = getEdit(o);
   return `
     <div class="add-item-toggle">
-      <button class="btn btn-ghost btn-sm" onclick="toggleAddItem(${o.rowIndex})">${ed.showAddItem ? '− Hide' : '+ Add item to order'}</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleAddItem('${o.rowIndex}')">${ed.showAddItem ? '− Hide' : '+ Add item to order'}</button>
       ${ed.showAddItem ? renderAddItemForm(o) : ''}
     </div>`;
 }
@@ -1339,8 +1331,8 @@ function renderAddItemForm(o) {
       <datalist id="catalogDL-${o.rowIndex}">${options}</datalist>
       <input type="number" id="addItemQty-${o.rowIndex}" value="1" min="1" title="Qty" placeholder="Qty">
       <input type="number" id="addItemDisc-${o.rowIndex}" value="${ed.discountPct || 0}" min="0" max="100" title="Disc %" placeholder="Disc %">
-      <button class="btn btn-primary btn-sm" onclick="confirmAddItem(this, ${o.rowIndex})">Add item</button>
-      <button class="btn btn-secondary btn-sm" onclick="toggleAddItem(${o.rowIndex})">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmAddItem(this, '${o.rowIndex}')">Add item</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleAddItem('${o.rowIndex}')">Cancel</button>
     </div>`;
 }
 
@@ -1653,11 +1645,7 @@ async function confirmAddItem(btn, rowIndex) {
 
   await withButtonLoading(btn, 'Adding…', async () => {
     try {
-      const res = await fetch(apiUrl(), {
-        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ ...authParam(), action: 'addItemToOrder', rowIndex, itemName: product.waKey, qty: newQty })
-      });
-      const data = await res.json();
+      const data = await callFn('orders', 'addItemToOrder', { ...authParam(), rowIndex, itemName: product.waKey, qty: newQty });
       if (data.status !== 'ok') throw new Error(data.message);
       o.items[product.waKey] = newQty;
       toast('Item added');
@@ -1712,7 +1700,6 @@ async function doConfirmOrder(rowIndex) {
 async function doConfirmOrderInner(rowIndex) {
   const o   = orders.find(x => x.rowIndex === rowIndex);
   const ed  = getEdit(o);
-  const url = apiUrl(), key = apiKey();
 
   // Refresh the catalog right before resolving Product IDs — CATALOG is
   // otherwise loaded once per session on Connect, and a product added/
@@ -1740,11 +1727,7 @@ async function doConfirmOrderInner(rowIndex) {
     // no-op field on prod (no such column exists there) and a no-op value
     // ('') outside dev mode/when unassigned.
     const confirmingAdminUpi = assignedAdminUpi(o);
-    const res = await fetch(url, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ ...authParam(), action: 'confirmOrder', rowIndex, productIdMap, totalQty, estWeight, confirmingAdminUpi })
-    });
-    const data = await res.json();
+    const data = await callFn('orders', 'confirmOrder', { ...authParam(), rowIndex, productIdMap, totalQty, estWeight, confirmingAdminUpi });
     if (data.status !== 'ok') throw new Error(data.message);
 
     o.status = 'Confirmed';
@@ -1813,11 +1796,7 @@ async function changeStatus(btn, rowIndex, newStatus) {
 
   await withButtonLoading(btn, 'Saving…', async () => {
     try {
-      const res = await fetch(apiUrl(), {
-        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ ...authParam(), action: 'update', rowIndex, fields })
-      });
-      const data = await res.json();
+      const data = await callFn('orders', 'update', { ...authParam(), rowIndex, fields });
       if (data.status !== 'ok') throw new Error(data.message);
       o.status = newStatus;
       ed.status = newStatus;
@@ -1850,11 +1829,7 @@ async function recordPayment(btn, rowIndex) {
 
   await withButtonLoading(btn, 'Recording…', async () => {
     try {
-      const res = await fetch(apiUrl(), {
-        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ ...authParam(), action: 'recordPayment', rowIndex, amountPaid: thisPayment, paymentMode, paymentRef, paymentDate })
-      });
-      const data = await res.json();
+      const data = await callFn('orders', 'recordPayment', { ...authParam(), rowIndex, amountPaid: thisPayment, paymentMode, paymentRef, paymentDate });
       if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
 
       o.amountPaid = data.amountPaid; // cumulative total from the backend, not just this payment
@@ -1884,7 +1859,6 @@ async function recordPayment(btn, rowIndex) {
 async function updateOrderVersion(btn, rowIndex) {
   const o = orders.find(x => x.rowIndex === rowIndex);
   const ed = getEdit(o);
-  const url = apiUrl(), key = apiKey();
 
   const totals = computeOrderTotals(o);
   const zeroedItems = {};
@@ -1908,7 +1882,6 @@ async function updateOrderVersion(btn, rowIndex) {
 
   const payload = {
     ...authParam(),
-    action: 'update',
     rowIndex: rowIndex,
     fields: {
       'Status': ed.status || 'New',
@@ -1922,9 +1895,22 @@ async function updateOrderVersion(btn, rowIndex) {
       // an admin edited qty/price/items and the "Recalculated subtotal
       // differs from sheet's Order Total" warning would never clear.
       'Order Total': totals.subtotal,
+      // Persisted pricing breakdown (td_orders' subtotal_mrp/discount_base_
+      // amount/taxable_value/gst_amount/total_payable columns) — kept in
+      // sync with the live recalculated totals on every save, same
+      // "never let this silently go stale" precedent as 'Order Total' above.
+      'Discount Base Amount': totals.taxable + totals.discountAmt,
+      'Taxable Value': totals.taxable,
+      'GST Amount': totals.totalGst,
+      'Total Payable': totals.grandTotal + orderShippingCharge(o, totals) + orderSameDayCharge(o),
       'Item Discounts JSON': JSON.stringify(ed.itemDiscounts),
       'Item Price Overrides JSON': JSON.stringify(ed.itemPriceOverrides),
       'Free Shipping Override': ed.freeShippingOverride || '',
+      // delivery_charge was only ever set once at order creation (index.html)
+      // and never revisited — choosing "Yes" here used to leave the stored
+      // charge stale instead of actually zeroing it out. Synced to the same
+      // live decision orderShippingCharge() already uses for display.
+      'Delivery Charge': orderShippingCharge(o, totals),
       'Courier': ed.courier || '',
       'AWB No': ed.awbNo || '',
       'Shipped Date': ed.shippedDate || '',
@@ -1936,8 +1922,7 @@ async function updateOrderVersion(btn, rowIndex) {
 
   await withButtonLoading(btn, 'Saving…', async () => {
     try {
-      const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
-      const data = await res.json();
+      const data = await callFn('orders', 'update', payload);
       if (data.status !== 'ok') throw new Error(data.message);
 
       Object.assign(o, {
@@ -1950,6 +1935,7 @@ async function updateOrderVersion(btn, rowIndex) {
         itemDiscounts: { ...ed.itemDiscounts },
         itemPriceOverrides: { ...ed.itemPriceOverrides },
         freeShippingOverride: ed.freeShippingOverride || '',
+        deliveryCharge: orderShippingCharge(o, totals),
         courier: ed.courier, awbNo: ed.awbNo, shippedDate: ed.shippedDate, expectedDelivery: ed.expectedDelivery,
         adminNotes: ed.adminNotes
       });
@@ -2225,11 +2211,7 @@ async function generateInvoice(btn, rowIndex) {
   let invoiceNo = o.invoiceNo;
   if (!invoiceNo) {
     try {
-      const res = await fetch(apiUrl(), {
-        method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ ...authParam(), action: 'getNextInvoiceNo' })
-      });
-      const data = await res.json();
+      const data = await callFn('orders', 'getNextInvoiceNo', authParam());
       if (data.status !== 'ok') throw new Error(data.message || 'Could not get invoice number');
       invoiceNo = data.invoiceNo;
     } catch (err) {
@@ -2284,28 +2266,28 @@ async function generateInvoice(btn, rowIndex) {
 
   if (win) { win.document.open(); win.document.write(html); win.document.close(); }
 
-  // Persist invoice fields back to sheet (fire and forget — invoice is already shown)
-  const url = apiUrl(), key = apiKey();
-  fetch(url, {
-    method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({
-      ...authParam(), action: 'update', rowIndex,
-      allowFinalTotalUpdate: true, // generateInvoice() is the one flow allowed to (re)compute Final Total, even on a reprint
-      fields: {
-        'Status': newOrderStatus,
-        'Invoice No': invoiceNo,
-        'Invoice Date': todayDDMMYYYY(),
-        'Invoice Status': newInvoiceStatus,
-        'Invoice Sent Date': o.invoiceSentDate || todayDDMMYYYY(),
-        'Discount %': effectiveDiscPct(totals),
-        'Discount Amount': discountAmt,
-        'Final Total': grandTotal,
-        'Order Total': subTotal, // keep in sync with the recalculated subtotal, same as updateOrderVersion()
-        'Item Discounts JSON': JSON.stringify(ed.itemDiscounts),
-        'Item Price Overrides JSON': JSON.stringify(ed.itemPriceOverrides)
-      }
-    })
-  }).then(r => r.json()).then(d => {
+  // Persist invoice fields back (fire and forget — invoice is already shown)
+  callFn('orders', 'update', {
+    ...authParam(), rowIndex,
+    allowFinalTotalUpdate: true, // generateInvoice() is the one flow allowed to (re)compute Final Total, even on a reprint
+    fields: {
+      'Status': newOrderStatus,
+      'Invoice No': invoiceNo,
+      'Invoice Date': todayDDMMYYYY(),
+      'Invoice Status': newInvoiceStatus,
+      'Invoice Sent Date': o.invoiceSentDate || todayDDMMYYYY(),
+      'Discount %': effectiveDiscPct(totals),
+      'Discount Amount': discountAmt,
+      'Final Total': grandTotal,
+      'Order Total': subTotal, // keep in sync with the recalculated subtotal, same as updateOrderVersion()
+      'Discount Base Amount': subTotal,
+      'Taxable Value': taxableValue,
+      'GST Amount': totalGst,
+      'Total Payable': grandTotal + orderShippingCharge(o, totals) + orderSameDayCharge(o),
+      'Item Discounts JSON': JSON.stringify(ed.itemDiscounts),
+      'Item Price Overrides JSON': JSON.stringify(ed.itemPriceOverrides)
+    }
+  }).then(d => {
     if (d.status === 'ok') {
       o.invoiceNo = invoiceNo; o.invoiceDate = todayDDMMYYYY(); o.invoiceStatus = newInvoiceStatus;
       o.invoiceSentDate = o.invoiceSentDate || todayDDMMYYYY();
@@ -2348,29 +2330,29 @@ function jumpToDeepLinkOrder() {
   }, 50);
 }
 
-// DEV MODE init — mirrors invoices.html's initFromQueryParams(): pre-fills
-// the Orders URL/key from the query string (sent inside an assignment
-// WhatsApp message) and connects automatically, then jumpToDeepLinkOrder()
-// (called from loadOrdersConfirmed once data loads) scrolls to/expands the
-// order. Also defaults the setup-bar URL to the DEV deployment, and carries
-// dev=1 onto the Products/Invoices/Finance nav links so dev mode doesn't
-// silently drop the moment an admin navigates to another page.
-(function initDevModeAndQueryParams() {
-  if (DEV_MODE) {
-    document.getElementById('webhookUrl').value = DEV_ORDERS_API_URL;
-    document.querySelectorAll('.nav-link[href]').forEach(a => {
-      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-    });
-  }
+// Shared login initialization also handles legacy assignment links with a key.
+(function initFromQueryParams() {
   const params = new URLSearchParams(location.search);
   const orderRef = params.get('orderRef');
-  const wUrl = params.get('webhookUrl');
-  const key = params.get('key');
   if (orderRef) deepLinkOrderRef = orderRef;
-  if (wUrl) document.getElementById('webhookUrl').value = wUrl;
-  if (key) document.getElementById('adminKey').value = key;
-  if (wUrl && key) loadOrders();
 })();
+
+// Inline onclick/onchange attributes resolve against `window`, not this
+// module's own scope — see the equivalent note in index.html. escapeHtml is
+// exposed for a second reason: invoice-shared.js is a plain classic
+// (non-module) script that calls escapeHtml(...) expecting it as a global —
+// true when this page's own script was classic too, no longer true now that
+// it's a module (module-scoped declarations never leak onto window).
+Object.assign(window, {
+  toast,
+  escapeHtml,
+  loadOrders, toggleCard, updateItemPrice, updateItemQty, updateItemDisc, toggleOos, deleteItem,
+  discardChanges, updateOrderVersion, applyOrderDiscount, setFreeShipping, generateInvoice,
+  downloadPackingChecklist, changeStatus, openConfirmModal, openInInvoices, updateShippingField,
+  recordPayment, toggleAddItem, confirmAddItem, closeDirtyGuard, dirtyGuardDiscard, dirtyGuardUpdate,
+  toggleVersionHistory, setFilter, closeConfirmModal, render, setConfirmComms, submitConfirmModal,
+});
+initAdminPage(loadOrders);
 </script>
 </body>
 </html>

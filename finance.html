@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Finance</title>
+<link rel="stylesheet" href="admin-shell.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -110,8 +111,6 @@ table.fin-table{width:100%;border-collapse:collapse;font-size:13px;min-width:760
       <div class="brand-tag">Finance</div>
     </div>
     <div class="topbar-actions">
-      <a class="nav-link" href="admin.html">← Orders</a>
-      <a class="nav-link" href="invoices.html">Invoices →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
     </div>
   </div>
@@ -120,29 +119,17 @@ table.fin-table{width:100%;border-collapse:collapse;font-size:13px;min-width:760
 <div class="app">
 
   <div class="setup-bar" id="setupBar">
-    <div style="flex:2;min-width:260px">
-      <label>Script URL</label><br>
-      <input type="text" id="baseUrl" placeholder="http://localhost:8787 or https://script.google.com/.../exec" value="http://localhost:8787">
-    </div>
     <div style="flex:1;min-width:180px">
       <label>Password</label><br>
-      <input type="password" id="adminKey" placeholder="your password" value="purnavah-admin-2026">
+      <input type="password" id="adminKey" placeholder="your password" value="">
     </div>
     <button class="btn btn-primary" onclick="connect()" id="connectBtn">Connect</button>
     <div class="setup-hint">
-      Points at the local mock server (<code>python local-server/server.py</code>) by default, using fictional test
-      orders/expenses — nothing here touches the real Google Sheet. Once the Expenses feature is finalized and added
-      to <code>orders_code.gs</code> + redeployed, switch this URL to the real hosted <code>/exec</code> link (same
-      one used in admin.html/invoices.html) — nothing else on this page needs to change.
+      Uses the same admin login as Orders. Company-wide expenses are available to Super Admin only.
     </div>
   </div>
 
-  <!-- Multi-admin workflow (DEV-only) — hidden unless DEV_MODE; shows "Logged
-       in as X (Role)" once whoAmI resolves at connect time. Read-only — real
-       identity now comes from the password, not a self-picked dropdown (that
-       old dropdown/Super-Admin-only-block model is superseded, see
-       MULTI_ADMIN_WORKFLOW_PLAN.md §13 point 4: Admin A/B now get a
-       revenue-only view instead of being blocked outright). -->
+  <!-- Identity is verified by the shared admin backend. -->
   <div class="setup-bar" id="identityBar" style="display:none;gap:10px;align-items:center"></div>
 
   <div id="mainArea" style="display:none">
@@ -235,7 +222,7 @@ table.fin-table{width:100%;border-collapse:collapse;font-size:13px;min-width:760
   <div id="notConnected">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter the script URL and password above, then click Connect.</p>
+      <p>Enter your password above, then click Connect.</p>
     </div>
   </div>
 
@@ -243,18 +230,9 @@ table.fin-table{width:100%;border-collapse:collapse;font-size:13px;min-width:760
 
 <div class="toast" id="toast"></div>
 
-<script>
-// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
-// to activate the multi-admin workflow — a real per-admin password resolved
-// server-side to an identity. Admin A/B get a revenue-only view (their own
-// assigned orders only, no expenses/net profit — there's no attribution
-// mechanism for company-wide expenses per admin); Super Admin gets the full
-// P&L, same as prod (§13 point 4/8, reversed from the original "Super Admin
-// only" restriction). With dev mode off this page behaves exactly as it
-// always has: no identity concept, full access to whoever has the shared
-// key. See MULTI_ADMIN_WORKFLOW_PLAN.md §13.
-const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
-const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
+<script type="module">
+import { callFn } from './supabase-client.js';
+import { initAdminPage, rememberAdmin, showAdminLogin } from './admin-shell.js';
 
 const EXPENSE_CATEGORIES = [
   "Wholesale Purchase", "Packaging Material", "Packing Labor",
@@ -266,38 +244,30 @@ let creditNotes = [];
 let expenses = [];
 let currentFromIso = '';
 let currentToIso = '';
-let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolved once at connect via ?action=whoAmI
+let CURRENT_ADMIN = null;
 
 async function loadWhoAmI() {
-  if (!DEV_MODE) return;
-  try {
-    const res = await fetch(`${DEV_CATALOG_API_URL}?action=whoAmI&${authQuery()}`);
-    const data = await res.json();
-    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
-    else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
-  } catch (e) {
-    CURRENT_ADMIN = null;
-    console.warn('whoAmI failed', e);
-  }
+  CURRENT_ADMIN = null;
+  const data = await callFn('admin-auth', 'whoAmI', authParam());
+  if (data.status !== 'ok' || !data.admin) throw new Error(data.message || 'Could not verify admin login');
+  CURRENT_ADMIN = data.admin;
+  rememberAdmin(apiKey(), CURRENT_ADMIN);
 }
 function isSuperAdmin() {
-  if (!DEV_MODE) return true;
   return !!CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin';
 }
 function renderIdentityBar() {
   const bar = document.getElementById('identityBar');
   if (!bar) return;
-  if (!DEV_MODE || !CURRENT_ADMIN) { bar.style.display = 'none'; return; }
+  if (!CURRENT_ADMIN) { bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
   bar.innerHTML = `<span style="font-size:12.5px;color:var(--stone)">Logged in as <strong>${escapeHtml(CURRENT_ADMIN.name)}</strong>${CURRENT_ADMIN.role === 'Super Admin' ? ' (Super Admin)' : ''}</span>`;
 }
 // Admin A/B get a revenue-only view — no Expenses/Net Profit tiles, no
 // category breakdown, no expense log (there's no attribution mechanism for
-// company-wide expenses per admin, see MULTI_ADMIN_WORKFLOW_PLAN.md §13
-// point 4/8). Super Admin gets the full P&L, same as prod. Off in prod (dev
-// mode off means isSuperAdmin() always returns true, so this is a no-op).
+// company-wide expenses per admin). Super Admin gets the full P&L.
 function applyAccessGate() {
-  const revenueOnly = DEV_MODE && !isSuperAdmin();
+  const revenueOnly = !isSuperAdmin();
   document.getElementById('financeRestricted').style.display = revenueOnly ? 'block' : 'none';
   ['expensesCard', 'profitCard', 'catBreakdownSection', 'logExpenseSection', 'expenseTableContainer'].forEach(id => {
     const el = document.getElementById(id);
@@ -333,14 +303,8 @@ function escapeHtml(s) {
 }
 function escAttr(s) { return String(s == null ? '' : s).replace(/'/g, "\\'"); }
 
-function baseUrl() { return document.getElementById('baseUrl').value.trim().replace(/\/$/, ''); }
 function apiKey() { return document.getElementById('adminKey').value.trim(); }
-// Prod talks to catalog_code.gs/orders_code.gs, which still check a shared
-// "key" — DEV talks to the *.dev.gs rewrite, which resolves a per-admin
-// "password" instead (§13). Same input field either way; only the wire
-// field name sent to the backend differs, based on DEV_MODE.
-function authParam() { return DEV_MODE ? { password: apiKey() } : { key: apiKey() }; }
-function authQuery() { return (DEV_MODE ? 'password=' : 'key=') + encodeURIComponent(apiKey()); }
+function authParam() { return { password: apiKey() }; }
 
 function parseDdmmyyyy(str) {
   if (!str) return null;
@@ -371,8 +335,8 @@ function populateCategorySelect() {
 }
 
 async function connect() {
-  const url = baseUrl(), key = apiKey();
-  if (!url || !key) { toast('Enter the script URL and password', true); return; }
+  const key = apiKey();
+  if (!key) { toast('Enter your password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -380,26 +344,16 @@ async function connect() {
   document.getElementById('connText').textContent = 'Connecting…';
 
   try {
-    // whoAmI must resolve first — Super Admin needs "listAll" (every order,
-    // for the full company-wide P&L) while Admin A/B need "list" (server
-    // scopes it to their own assigned orders' revenue); prod (DEV_MODE off)
-    // always uses "list", unfiltered there, same as it always has been.
-    // Expenses are Super-Admin-only (§13 point 4/8 — revenue-only for
-    // everyone else, no attribution mechanism per admin) so Admin A/B skip
-    // that fetch entirely rather than pulling full company expense data
-    // they're not shown.
+    // Resolve identity first; the backend also enforces every role restriction.
     await loadWhoAmI();
-    const ordersAction = (DEV_MODE && CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? 'listAll' : 'list';
-    const fetchExpenses = !DEV_MODE || isSuperAdmin();
+    const ordersAction = isSuperAdmin() ? 'listAll' : 'list';
+    const fetchExpenses = isSuperAdmin();
 
-    const [ordersRes, creditNotesRes, expensesRes] = await Promise.all([
-      fetch(`${url}?action=${ordersAction}&${authQuery()}`),
-      fetch(`${url}?action=listCreditNotes&${authQuery()}`),
-      fetchExpenses ? fetch(`${url}?action=listExpenses&${authQuery()}`) : Promise.resolve(null)
+    const [ordersData, creditNotesData, expensesData] = await Promise.all([
+      callFn('orders', ordersAction, authParam()),
+      callFn('orders', 'listCreditNotes', authParam()),
+      fetchExpenses ? callFn('orders', 'listExpenses', authParam()) : Promise.resolve({ status: 'ok', data: [] })
     ]);
-    const ordersData = await ordersRes.json();
-    const creditNotesData = await creditNotesRes.json();
-    const expensesData = expensesRes ? await expensesRes.json() : { status: 'ok', data: [] };
     if (ordersData.status !== 'ok') throw new Error('Orders: ' + (ordersData.message || 'Unknown error'));
     if (creditNotesData.status !== 'ok') throw new Error('Credit Notes: ' + (creditNotesData.message || 'Unknown error'));
     if (fetchExpenses && expensesData.status !== 'ok') throw new Error('Expenses: ' + (expensesData.message || 'Unknown error — has the Expenses action been added yet?'));
@@ -420,13 +374,14 @@ async function connect() {
   } catch (err) {
     document.getElementById('connDot').className = 'conn-dot err';
     document.getElementById('connText').textContent = 'Connection failed';
+    showAdminLogin();
     document.getElementById('mainArea').style.display = 'none';
     document.getElementById('notConnected').style.display = 'block';
     document.getElementById('notConnected').innerHTML = `
       <div class="empty-state">
         <h3>Couldn't connect</h3>
         <p>${escapeHtml(err.message)}</p>
-        <p style="margin-top:10px;font-size:12px">If using the local mock, make sure <code>python local-server/server.py</code> is running on port 8787.</p>
+        <p style="margin-top:10px;font-size:12px">Check your admin password and the shared backend connection.</p>
       </div>`;
     toast('Failed to load: ' + err.message, true);
   } finally {
@@ -556,11 +511,7 @@ async function submitExpense(evt) {
   const btn = document.getElementById('addExpenseBtn');
   await withButtonLoading(btn, 'Adding…', async () => {
     try {
-      const res = await fetch(baseUrl(), {
-        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ ...authParam(), action: 'addExpense', date, category, description, amount, paymentMode, notes })
-      });
-      const data = await res.json();
+      const data = await callFn('orders', 'addExpense', { ...authParam(), date, category, description, amount, paymentMode, notes });
       if (data.status !== 'ok') throw new Error(data.message);
 
       expenses.push(data.expense);
@@ -579,11 +530,7 @@ async function deleteExpense(btn, id) {
   if (!confirm('Delete this expense entry?')) return;
   await withButtonLoading(btn, 'Deleting…', async () => {
   try {
-    const res = await fetch(baseUrl(), {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ ...authParam(), action: 'deleteExpense', id })
-    });
-    const data = await res.json();
+    const data = await callFn('orders', 'deleteExpense', { ...authParam(), id });
     if (data.status !== 'ok') throw new Error(data.message);
 
     expenses = expenses.filter(e => e.id !== id);
@@ -595,14 +542,8 @@ async function deleteExpense(btn, id) {
   });
 }
 
-// DEV MODE init — carries dev=1 onto the Orders/Invoices nav links so dev
-// mode doesn't silently drop when navigating to another page.
-(function initDevMode() {
-  if (!DEV_MODE) return;
-  document.querySelectorAll('.nav-link[href]').forEach(a => {
-    a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-  });
-})();
+Object.assign(window, { toast, connect, applyDateRange, setThisMonth, setAllTime, submitExpense, deleteExpense });
+initAdminPage(connect);
 </script>
 
 </body>

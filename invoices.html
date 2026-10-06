@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Invoices</title>
+<link rel="stylesheet" href="admin-shell.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="invoice-shared.js"></script>
@@ -105,8 +106,6 @@ table.invoice-table{width:100%;border-collapse:collapse;font-size:13px;min-width
       <div class="brand-tag">Invoices</div>
     </div>
     <div class="topbar-actions">
-      <a class="nav-link" href="admin.html">← Orders</a>
-      <a class="nav-link" href="finance.html">Finance →</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
     </div>
   </div>
@@ -115,23 +114,14 @@ table.invoice-table{width:100%;border-collapse:collapse;font-size:13px;min-width
 <div class="app">
 
   <div class="setup-bar" id="setupBar">
-    <div style="flex:2;min-width:260px">
-      <label>Orders Apps Script Web App URL</label><br>
-      <input type="text" id="ordersUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbwk9RsPnwpUfcEXNW1xRdLL8Wde996xq9KZPKXcize1h_hAgWyzmjXNZ-NFYkLecFZj/exec">
-    </div>
-    <div style="flex:2;min-width:260px">
-      <label>Catalog Apps Script Web App URL</label><br>
-      <input type="text" id="catalogUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec">
-    </div>
     <div style="flex:1;min-width:180px">
       <label>Password</label><br>
       <input type="password" id="adminKey" placeholder="your password" value="">
     </div>
     <button class="btn btn-primary" onclick="connect()" id="connectBtn">Connect</button>
-    <div class="setup-hint">The Catalog URL is needed to look up each item's real GST% and HSN code — the Excel export computes exact CGST/SGST/IGST per line item, not an approximation.</div>
   </div>
 
-  <!-- Multi-admin workflow (DEV-only) — hidden unless DEV_MODE; shows "Logged
+  <!-- Multi-admin workflow — shows "Logged
        in as X (Role)" once whoAmI resolves at connect time. Read-only — real
        identity now comes from the password, not a self-picked dropdown (that
        old dropdown/"Assigned to" filter model is superseded, see
@@ -166,7 +156,7 @@ table.invoice-table{width:100%;border-collapse:collapse;font-size:13px;min-width
   <div id="notConnected">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter both Web App URLs and the password above, then click Connect.</p>
+      <p>Enter your password above, then click Connect.</p>
     </div>
   </div>
 
@@ -182,7 +172,10 @@ table.invoice-table{width:100%;border-collapse:collapse;font-size:13px;min-width
   </div>
 </div>
 
-<script>
+<script type="module">
+import { callFn } from './supabase-client.js';
+import { initAdminPage, rememberAdmin, showAdminLogin } from './admin-shell.js';
+
 const HOME_STATE = "Chhattisgarh";
 
 // Simplified from admin.html's PAYMENT_STATES — Overdue is computed the same
@@ -194,17 +187,10 @@ const PAYMENT_STATES = {
   Overdue:          { color:'#B14A3B', bg:'#FEF3C7', label:'Overdue' }
 };
 
-// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
-// to point at the DEV Catalog/Orders deployments instead of prod, and to
-// activate the multi-admin workflow — a real per-admin password resolved
+// Multi-admin workflow — every request resolves a per-admin password
 // server-side to an identity that scopes which invoices this page even
 // receives (own assigned orders for Admin A/B; every invoice for Super
-// Admin, same as prod, since this page exists for GST/CA reporting). With
-// dev mode off this page behaves exactly as it always has — same shared
-// ADMIN_KEY, full unscoped visibility. See MULTI_ADMIN_WORKFLOW_PLAN.md §13.
-const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
-const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
-const DEV_ORDERS_API_URL  = "https://script.google.com/macros/s/AKfycbzg3SBM3RsYi31aa4XWX013Zc24oKYEMxkeTK5pRtGX0lQPx54AQSqZ7YE0g67J-JNU/exec";
+// Admin, since this page exists for GST/CA reporting).
 
 let orders = [];
 let CATALOG = [];
@@ -309,14 +295,8 @@ async function withButtonLoading(btn, loadingLabel, fn) {
   }
 }
 
-function ordersUrl() { return document.getElementById('ordersUrl').value.trim(); }
-function catalogUrl() { return document.getElementById('catalogUrl').value.trim(); }
 function apiKey() { return document.getElementById('adminKey').value.trim(); }
-// Both prod (catalog_code.gs/orders_code.gs) and dev (*.dev.gs) now resolve
-// a per-admin "password" (§13, promoted to prod 2026-09-22) — same input
-// field, same wire field name, regardless of DEV_MODE.
 function authParam() { return { password: apiKey() }; }
-function authQuery() { return 'password=' + encodeURIComponent(apiKey()); }
 
 // ─────────────────────────────────────────────
 //  MULTI-ADMIN WORKFLOW (DEV-only) — real per-admin password auth (§13). The
@@ -331,9 +311,8 @@ let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolve
 
 async function loadWhoAmI() {
   try {
-    const res = await fetch(`${catalogUrl()}?action=whoAmI&${authQuery()}`);
-    const data = await res.json();
-    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
+    const data = await callFn('admin-auth', 'whoAmI', authParam());
+    if (data.status === 'ok') { CURRENT_ADMIN = data.admin; rememberAdmin(apiKey(), CURRENT_ADMIN); }
     else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
   } catch (e) {
     CURRENT_ADMIN = null;
@@ -360,8 +339,7 @@ let ALL_ADMINS = [];
 async function loadAdminsRosterIfSuperAdmin() {
   if (!CURRENT_ADMIN || CURRENT_ADMIN.role !== 'Super Admin') return;
   try {
-    const res = await fetch(`${catalogUrl()}?action=admins&${authQuery()}`);
-    const data = await res.json();
+    const data = await callFn('admin-auth', 'admins', authParam());
     if (data.status === 'ok') ALL_ADMINS = data.data;
     else { ALL_ADMINS = []; console.warn('admins failed', data.message); }
   } catch (e) {
@@ -429,8 +407,8 @@ function isoToDdmmyyyy(iso) {
 }
 
 async function connect() {
-  const oUrl = ordersUrl(), cUrl = catalogUrl(), key = apiKey();
-  if (!oUrl || !cUrl || !key) { toast('Enter both URLs and the password', true); return; }
+  const key = apiKey();
+  if (!key) { toast('Enter your password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -444,15 +422,12 @@ async function connect() {
     await loadWhoAmI();
     const ordersAction = (CURRENT_ADMIN && CURRENT_ADMIN.role === 'Super Admin') ? 'listAll' : 'list';
 
-    const [ordersRes, catalogRes, creditNotesRes] = await Promise.all([
-      fetch(`${oUrl}?action=${ordersAction}&${authQuery()}`),
-      fetch(`${cUrl}?action=list&${authQuery()}`),
-      fetch(`${oUrl}?action=listCreditNotes&${authQuery()}`),
+    const [ordersData, catalogData, creditNotesData] = await Promise.all([
+      callFn('orders', ordersAction, authParam()),
+      callFn('products', 'list', authParam()),
+      callFn('orders', 'listCreditNotes', authParam()),
       loadAdminsRosterIfSuperAdmin() // per-hub invoice identity — see resolveHubInfo
     ]);
-    const ordersData = await ordersRes.json();
-    const catalogData = await catalogRes.json();
-    const creditNotesData = await creditNotesRes.json();
     if (ordersData.status !== 'ok') throw new Error('Orders: ' + (ordersData.message || 'Unknown error'));
     if (catalogData.status !== 'ok') throw new Error('Catalog: ' + (catalogData.message || 'Unknown error'));
 
@@ -472,13 +447,14 @@ async function connect() {
   } catch (err) {
     document.getElementById('connDot').className = 'conn-dot err';
     document.getElementById('connText').textContent = 'Connection failed';
+    showAdminLogin();
     document.getElementById('mainArea').style.display = 'none';
     document.getElementById('notConnected').style.display = 'block';
     document.getElementById('notConnected').innerHTML = `
       <div class="empty-state">
         <h3>Couldn't connect</h3>
         <p>${escapeHtml(err.message)}</p>
-        <p style="margin-top:10px;font-size:12px">Make sure both Apps Scripts are deployed as Web Apps with "Anyone" access and the password matches both.</p>
+        <p style="margin-top:10px;font-size:12px">Make sure the password matches an active row in td_admins.</p>
       </div>`;
     toast('Failed to load: ' + err.message, true);
   } finally {
@@ -802,15 +778,11 @@ async function submitCreditNote(btn) {
 
   await withButtonLoading(btn, 'Creating…', async () => {
     try {
-      const res = await fetch(ordersUrl(), {
-        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          ...authParam(), action: 'createCreditNote', rowIndex: o.rowIndex, invoiceNo: o.invoiceNo,
-          items: preview.items, taxableValue: preview.taxableValue, cgst: preview.cgst, sgst: preview.sgst,
-          igst: preview.igst, totalGst: preview.totalGst, totalAmount: preview.totalAmount, reason
-        })
+      const data = await callFn('orders', 'createCreditNote', {
+        ...authParam(), rowIndex: o.rowIndex, invoiceNo: o.invoiceNo,
+        items: preview.items, taxableValue: preview.taxableValue, cgst: preview.cgst, sgst: preview.sgst,
+        igst: preview.igst, totalGst: preview.totalGst, totalAmount: preview.totalAmount, reason
       });
-      const data = await res.json();
       if (data.status !== 'ok') throw new Error(data.message);
 
       o.finalTotal = data.newFinalTotal;
@@ -1015,8 +987,8 @@ function renderRow(o) {
       <td class="num">₹${(o.finalTotal || o.orderTotal || 0).toLocaleString('en-IN')}</td>
       <td>${cnCount > 0 ? `<button class="cn-link" onclick="openCreditNoteList('${escAttr(o.invoiceNo)}')">${cnCount} note${cnCount !== 1 ? 's' : ''} (₹${cnTotal.toLocaleString('en-IN', {minimumFractionDigits:2})})</button>` : '<span style="color:var(--stone)">—</span>'}</td>
       <td style="display:flex;gap:6px">
-        <button class="btn btn-secondary btn-sm" onclick="toggleInvoiceRow(${o.rowIndex})">${isExpanded ? '▴ Hide' : '▾ View'}</button>
-        <button class="btn btn-secondary btn-sm" onclick="openCreditNoteModal(${o.rowIndex})">+ Credit Note</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleInvoiceRow('${o.rowIndex}')">${isExpanded ? '▴ Hide' : '▾ View'}</button>
+        <button class="btn btn-secondary btn-sm" onclick="openCreditNoteModal('${o.rowIndex}')">+ Credit Note</button>
       </td>
     </tr>`;
 
@@ -1058,7 +1030,7 @@ function renderInvoiceDetailRow(o) {
             <div class="totals-row"><span>Amount Paid</span><span>₹${(o.amountPaid || 0).toLocaleString('en-IN')}</span></div>
             <div class="totals-row"><span>Balance Due</span><span>₹${(o.balanceDue || 0).toLocaleString('en-IN')}</span></div>
             <div class="totals-row final"><span>Final Total</span><span>₹${(o.finalTotal || o.orderTotal || 0).toLocaleString('en-IN')}</span></div>
-            <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="reprintInvoice(${o.rowIndex})">🖨 Print / Reprint invoice</button>
+            <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="reprintInvoice('${o.rowIndex}')">🖨 Print / Reprint invoice</button>
           </div>
         </div>
       </td>
@@ -1184,27 +1156,28 @@ function exportExcel() {
 }
 
 // Deep-link entry from admin.html's "View in Invoices" button:
-// invoices.html?invoiceNo=INV-000123&ordersUrl=...&key=... — pre-fills the
-// Orders URL/key and connects automatically instead of making the admin
-// re-enter them, then jumpToDeepLinkInvoice() (called from connect()) scrolls
-// to and highlights that invoice once data loads.
+// invoices.html?invoiceNo=INV-000123 — uses the shared login, then
+// jumpToDeepLinkInvoice() (called from connect()) scrolls to and highlights
+// that invoice once data loads.
 (function initFromQueryParams() {
-  if (DEV_MODE) {
-    document.getElementById('ordersUrl').value = DEV_ORDERS_API_URL;
-    document.getElementById('catalogUrl').value = DEV_CATALOG_API_URL;
-    document.querySelectorAll('.nav-link[href]').forEach(a => {
-      a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-    });
-  }
   const params = new URLSearchParams(location.search);
   const invoiceNo = params.get('invoiceNo');
-  const oUrl = params.get('ordersUrl');
-  const key = params.get('key');
   if (invoiceNo) deepLinkInvoiceNo = invoiceNo;
-  if (oUrl) document.getElementById('ordersUrl').value = oUrl;
-  if (key) document.getElementById('adminKey').value = key;
-  if (oUrl && key) connect();
 })();
+
+// Inline onclick/onchange attributes resolve against `window`, not this
+// module's own scope — see the equivalent note in index.html/admin.html.
+// escapeHtml is exposed for a second reason: invoice-shared.js is a plain
+// classic (non-module) script that calls escapeHtml(...) expecting it as a
+// global, no longer true now that this page's own script is a module.
+Object.assign(window, {
+  toast,
+  escapeHtml,
+  connect, applyDateRange, exportExcel, setPayFilter, toggleInvoiceRow, openCreditNoteModal,
+  reprintInvoice, closeModal, setCnMode, updateCnManualAmount, updateCnQty, submitCreditNote,
+  openCreditNoteList, reprintCreditNote,
+});
+initAdminPage(connect);
 </script>
 </body>
 </html>

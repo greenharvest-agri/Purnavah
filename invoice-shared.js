@@ -11,7 +11,7 @@
  */
 
 // Update to your live order-form URL — shown as a QR code on every invoice.
-const ORDER_FORM_URL = 'https://purnavah-orders.pages.dev';
+const ORDER_FORM_URL = 'https://greenharvest-agri.github.io/Purnavah/';
 
 // UPI collection details — used to build the "pay via UPI" QR/link on
 // invoices and in the order-confirmation WhatsApp/email messages.
@@ -163,7 +163,8 @@ function buildInvoiceHtml(d) {
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif}
 body{padding:50px 60px;color:#1a1a1a;font-size:13px;position:relative}
-.invoice-badge{position:fixed;top:24px;right:60px;padding:6px 18px;border-radius:6px;font-weight:700;font-size:13px;letter-spacing:.08em;background:${d.invoiceBadge.bg};color:${d.invoiceBadge.color}}
+.invoice-toolbar{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.invoice-badge{padding:6px 18px;border-radius:6px;font-weight:700;font-size:13px;letter-spacing:.08em;background:${d.invoiceBadge.bg};color:${d.invoiceBadge.color}}
 .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px}
 h1{font-size:26px;letter-spacing:.02em}
 .meta{font-size:12px;color:#555;margin-top:8px;line-height:1.6}
@@ -187,12 +188,14 @@ th.num{text-align:right}
 .payment-received{margin-top:20px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:12px 16px;font-size:12.5px;color:#14532D}
 .payment-received-title{font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:10.5px;margin-bottom:6px}
 .notes{margin-top:30px;font-size:11.5px;color:#666;border-top:1px solid #ddd;padding-top:16px;line-height:1.7}
-.print-btn{position:fixed;top:20px;right:20px;background:#3A5428;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-size:13px;cursor:pointer}
+.print-btn{background:#3A5428;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-size:13px;cursor:pointer}
 @media print{.print-btn{display:none}}
 </style></head>
 <body>
-<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+<div class="invoice-toolbar">
 <div class="invoice-badge">${d.invoiceBadge.label}</div>
+<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+</div>
 <div class="top">
   <div>
     <h1>TAX INVOICE</h1>

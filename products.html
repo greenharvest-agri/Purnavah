@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purnavah — Product Catalog Admin</title>
+<link rel="stylesheet" href="admin-shell.css">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -100,7 +101,12 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
 .col-name{min-width:170px;font-weight:600}
 .col-narrow{width:80px}
 .col-mid{width:110px}
-.col-mrp{width:115px}
+.catalog-table .col-mrp{width:130px;min-width:130px}
+.catalog-table .col-gst{width:100px;min-width:100px}
+.catalog-table .col-stock{width:100px;min-width:100px;max-width:100px;padding-left:3px;padding-right:3px}
+.catalog-table th.col-stock{white-space:normal;overflow-wrap:anywhere}
+.catalog-table .col-stock input{min-width:0;padding-left:2px;padding-right:2px;appearance:textfield}
+.catalog-table .col-stock input::-webkit-inner-spin-button,.catalog-table .col-stock input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .col-check{width:34px;text-align:center}
 .col-check input{cursor:pointer;width:16px;height:16px}
 .row-actions{display:flex;gap:6px;white-space:nowrap}
@@ -137,7 +143,6 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
       <div class="brand-tag">Product Catalog Admin</div>
     </div>
     <div class="topbar-actions">
-      <a class="nav-link" href="admin.html">← Orders</a>
       <span class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></span>
       <button class="btn btn-secondary btn-sm" onclick="loadProducts()">↻ Refresh</button>
     </div>
@@ -147,16 +152,12 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
 <div class="app">
 
   <div class="setup-bar" id="setupBar">
-    <div style="flex:2;min-width:260px">
-      <label>Apps Script Web App URL (Catalog sheet)</label><br>
-      <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" value="https://script.google.com/macros/s/AKfycbwSLba0EjXjj3WgoXzHoCpt5l0Y9D9aab181YNuEopbDyFtfREFzDWX6WHtEEfDPDHNrQ/exec">
-    </div>
     <div style="flex:1;min-width:180px">
       <label>Password</label><br>
       <input type="password" id="adminKey" placeholder="your password" value="">
     </div>
     <button class="btn btn-primary" onclick="loadProducts()" id="connectBtn">Connect</button>
-    <div class="setup-hint">Uses the same password as the Orders admin. Deploy <code>google-apps-script/catalog_code.gs</code> against your Catalog sheet and paste its Web App URL here — see the comment header in that file for step-by-step deploy instructions.</div>
+    <div class="setup-hint">Uses the same password as the Orders admin.</div>
   </div>
 
   <!-- Multi-admin workflow — shows "Logged
@@ -274,7 +275,7 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
   <div id="notConnected">
     <div class="empty-state">
       <h3>Not connected yet</h3>
-      <p>Enter your Catalog Apps Script Web App URL and password above, then click Connect.</p>
+      <p>Enter your password above, then click Connect.</p>
     </div>
   </div>
 
@@ -284,19 +285,15 @@ table.catalog-table{width:100%;border-collapse:collapse;font-size:13px;min-width
 
 <div class="toast" id="toast"></div>
 
-<script>
-// DEV MODE — code-only switch, no UI toggle. Append ?dev=1 to the page URL
-// to point at the DEV Catalog deployment instead of prod, and to activate
-// the multi-admin workflow — a real per-admin password. With dev mode off
-// this page behaves exactly as it always has. See
-// MULTI_ADMIN_WORKFLOW_PLAN.md §13.
-const DEV_MODE = new URLSearchParams(window.location.search).get('dev') === '1';
-const DEV_CATALOG_API_URL = "https://script.google.com/macros/s/AKfycbwef6Vo40DhwlQIDXdUXjtrGZUM3IPYI8EVXCad7S3ZmGNvMSL0FE3NucgcxJ-ymN5bHA/exec";
+<script type="module">
+import { callFn } from './supabase-client.js';
+import { initAdminPage, rememberAdmin, showAdminLogin } from './admin-shell.js';
 
 let products = [];
 let editState = {}; // rowIndex -> cloned editable fields
 let currentFilter = 'all';
 let selectedRows = new Set();
+const savingRows = new Set();
 let sortDir = 'asc'; // Product Name sort direction
 
 function toast(msg, isError) {
@@ -311,24 +308,22 @@ function toast(msg, isError) {
 // twice.
 async function withButtonLoading(btn, loadingLabel, fn) {
   if (!btn) return fn();
+  if (btn.disabled) return;
   const original = btn.innerHTML;
   btn.disabled = true;
+  btn.setAttribute('aria-busy', 'true');
   btn.innerHTML = `<span class="spinner"></span> ${loadingLabel}`;
   try {
     return await fn();
   } finally {
     btn.disabled = false;
+    btn.removeAttribute('aria-busy');
     btn.innerHTML = original;
   }
 }
 
-function apiUrl() { return document.getElementById('webhookUrl').value.trim(); }
 function apiKey() { return document.getElementById('adminKey').value.trim(); }
-// Both prod (catalog_code.gs) and dev (catalog_code.dev.gs) now resolve a
-// per-admin "password" (§13, promoted to prod 2026-09-22) — same input
-// field, same wire field name, regardless of DEV_MODE.
 function authParam() { return { password: apiKey() }; }
-function authQuery() { return 'password=' + encodeURIComponent(apiKey()); }
 
 // ─────────────────────────────────────────────
 //  MULTI-ADMIN WORKFLOW (DEV-only) — identity display only, for consistency
@@ -341,9 +336,8 @@ let CURRENT_ADMIN = null; // {adminId, name, role, whatsapp, upiVpa} — resolve
 
 async function loadWhoAmI() {
   try {
-    const res = await fetch(`${apiUrl()}?action=whoAmI&${authQuery()}`);
-    const data = await res.json();
-    if (data.status === 'ok') CURRENT_ADMIN = data.admin;
+    const data = await callFn('admin-auth', 'whoAmI', authParam());
+    if (data.status === 'ok') { CURRENT_ADMIN = data.admin; rememberAdmin(apiKey(), CURRENT_ADMIN); }
     else { CURRENT_ADMIN = null; console.warn('whoAmI failed', data.message); }
   } catch (e) {
     CURRENT_ADMIN = null;
@@ -358,8 +352,7 @@ let HUBS = []; // [{adminId, name}] — active hub-admin roster, from ?action=hu
 
 async function loadHubs() {
   try {
-    const res = await fetch(`${apiUrl()}?action=hubs&${authQuery()}`);
-    const data = await res.json();
+    const data = await callFn('admin-auth', 'hubs', authParam());
     if (data.status === 'ok') HUBS = data.data;
     else { HUBS = []; console.warn('hubs failed', data.message); }
   } catch (e) {
@@ -415,8 +408,8 @@ function computeWaKey(displayName, packSize) {
 }
 
 async function loadProducts() {
-  const url = apiUrl(), key = apiKey();
-  if (!url || !key) { toast('Enter both URL and password', true); return; }
+  const key = apiKey();
+  if (!key) { toast('Enter your password', true); return; }
 
   document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span> Connecting';
   document.getElementById('connectBtn').disabled = true;
@@ -424,11 +417,10 @@ async function loadProducts() {
   document.getElementById('connText').textContent = 'Connecting…';
 
   try {
-    const [res] = await Promise.all([
-      fetch(`${url}?action=list&${authQuery()}`),
+    const [data] = await Promise.all([
+      callFn('products', 'list', authParam()),
       loadWhoAmI().then(loadHubs)
     ]);
-    const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
 
     products = data.data;
@@ -449,13 +441,14 @@ async function loadProducts() {
   } catch (err) {
     document.getElementById('connDot').className = 'conn-dot err';
     document.getElementById('connText').textContent = 'Connection failed';
+    showAdminLogin();
     document.getElementById('mainArea').style.display = 'none';
     document.getElementById('notConnected').style.display = 'block';
     document.getElementById('notConnected').innerHTML = `
       <div class="empty-state">
         <h3>Couldn't connect</h3>
         <p>${escapeHtml(err.message)}</p>
-        <p style="margin-top:10px;font-size:12px">Make sure: (1) the Catalog Apps Script is deployed as a Web App with "Anyone" access, (2) the password matches an active row's Password in the Admins tab, (3) the "Catalog" sheet tab exists with the expected header row.</p>
+        <p style="margin-top:10px;font-size:12px">Make sure the password matches an active row in td_admins.</p>
       </div>`;
     toast('Failed to load: ' + err.message, true);
   } finally {
@@ -551,7 +544,7 @@ function render() {
 
   // Per-hub stock — one column per active hub, always shown regardless of
   // the hub filter, so any admin can compare hubs side by side.
-  const stockHeaderHtml = HUBS.map(h => `<th class="col-narrow">${escapeHtml(h.name)}</th>`).join('');
+  const stockHeaderHtml = HUBS.map(h => `<th class="col-stock">${escapeHtml(h.name)}</th>`).join('');
 
   container.innerHTML = `
     <div class="table-wrap">
@@ -567,7 +560,7 @@ function render() {
             <th class="col-mid">Pack Size</th>
             <th class="col-mrp">MRP</th>
             <th class="col-mid">HSN/SAC</th>
-            <th class="col-narrow">GST%</th>
+            <th class="col-gst">GST%</th>
             ${stockHeaderHtml}
             <th class="col-narrow">Active</th>
             <th class="col-mid">Max Qty (kg)</th>
@@ -589,6 +582,7 @@ function render() {
 
 function renderRow(p) {
   const ed = getEdit(p);
+  const saving = savingRows.has(p.rowIndex);
   // Per-hub stock — editable when this admin owns the hub or is Super
   // Admin, matching handleUpdate's server check; blank cell displays empty,
   // not "0".
@@ -596,32 +590,32 @@ function renderRow(p) {
     const val = ed.stockByHub[h.adminId];
     const displayVal = (val === '' || val === undefined) ? '' : val;
     const editable = canEditHub(h.adminId);
-    return `<td><input type="number" class="num" min="0" placeholder="—" value="${displayVal}" ${editable ? `onchange="updateStockField(${p.rowIndex}, '${escAttr(h.adminId)}', this.value)"` : 'disabled'}></td>`;
+    return `<td class="col-stock"><input type="number" class="num" min="0" placeholder="—" value="${displayVal}" ${editable ? `onchange="updateStockField('${p.rowIndex}', '${escAttr(h.adminId)}', this.value)"` : 'disabled'}></td>`;
   }).join('');
   return `
-    <tr class="${ed.active !== 'Y' ? 'inactive-row' : ''}" id="row-${p.rowIndex}">
-      <td class="col-check"><input type="checkbox" class="row-check" data-row="${p.rowIndex}" ${selectedRows.has(p.rowIndex) ? 'checked' : ''} onchange="toggleRowSelect(${p.rowIndex}, this.checked)"></td>
+    <tr class="${ed.active !== 'Y' ? 'inactive-row' : ''}" id="row-${p.rowIndex}" ${saving ? 'inert aria-busy="true"' : ''}>
+      <td class="col-check"><input type="checkbox" class="row-check" data-row="${p.rowIndex}" ${selectedRows.has(p.rowIndex) ? 'checked' : ''} onchange="toggleRowSelect('${p.rowIndex}', this.checked)"></td>
       <td class="col-narrow" style="font-family:monospace;font-size:11px;color:var(--stone)" title="Auto-generated — not editable">${escapeHtml(p.productId || '—')}</td>
       <td class="col-name" title="Internal key — not editable to avoid breaking existing order history">${escapeHtml(p.productName)}</td>
-      <td><input type="text" list="categoryList" value="${escAttr(ed.category)}" onchange="updateField(${p.rowIndex}, 'category', this.value)"></td>
-      <td><input type="text" value="${escAttr(ed.displayName)}" onchange="updateField(${p.rowIndex}, 'displayName', this.value)"></td>
-      <td><input type="text" value="${escAttr(ed.unit)}" onchange="updateField(${p.rowIndex}, 'unit', this.value)"></td>
-      <td><input type="text" value="${escAttr(ed.packSize)}" onchange="updateField(${p.rowIndex}, 'packSize', this.value)"></td>
-      <td class="col-mrp"><input type="number" class="num" min="0" step="0.01" value="${ed.mrp}" onchange="updateField(${p.rowIndex}, 'mrp', this.value)"></td>
-      <td><input type="text" value="${escAttr(ed.hsn)}" onchange="updateField(${p.rowIndex}, 'hsn', this.value)"></td>
-      <td><input type="number" class="num" min="0" step="0.01" value="${ed.gstPct}" onchange="updateField(${p.rowIndex}, 'gstPct', this.value)"></td>
+      <td><input type="text" list="categoryList" value="${escAttr(ed.category)}" onchange="updateField('${p.rowIndex}', 'category', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.displayName)}" onchange="updateField('${p.rowIndex}', 'displayName', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.unit)}" onchange="updateField('${p.rowIndex}', 'unit', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.packSize)}" onchange="updateField('${p.rowIndex}', 'packSize', this.value)"></td>
+      <td class="col-mrp"><input type="number" class="num" min="0" step="0.01" value="${ed.mrp}" onchange="updateField('${p.rowIndex}', 'mrp', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.hsn)}" onchange="updateField('${p.rowIndex}', 'hsn', this.value)"></td>
+      <td class="col-gst"><input type="number" class="num" min="0" step="0.01" value="${ed.gstPct}" onchange="updateField('${p.rowIndex}', 'gstPct', this.value)"></td>
       ${stockCellsHtml}
       <td>
-        <select onchange="updateField(${p.rowIndex}, 'active', this.value)">
+        <select onchange="updateField('${p.rowIndex}', 'active', this.value)">
           <option value="Y" ${ed.active === 'Y' ? 'selected' : ''}>Y</option>
           <option value="N" ${ed.active !== 'Y' ? 'selected' : ''}>N</option>
         </select>
       </td>
-      <td><input type="number" class="num" min="0" step="0.01" value="${ed.maxOrderKg}" placeholder="No limit" onchange="updateField(${p.rowIndex}, 'maxOrderKg', this.value)"></td>
-      <td><input type="text" value="${escAttr(ed.notes)}" onchange="updateField(${p.rowIndex}, 'notes', this.value)"></td>
-      <td><input type="text" value="${escAttr(ed.contents)}" placeholder="e.g. Turmeric 50g, Red Chilli 50g…" onchange="updateField(${p.rowIndex}, 'contents', this.value)"></td>
+      <td><input type="number" class="num" min="0" step="0.01" value="${ed.maxOrderKg}" placeholder="No limit" onchange="updateField('${p.rowIndex}', 'maxOrderKg', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.notes)}" onchange="updateField('${p.rowIndex}', 'notes', this.value)"></td>
+      <td><input type="text" value="${escAttr(ed.contents)}" placeholder="e.g. Turmeric 50g, Red Chilli 50g…" onchange="updateField('${p.rowIndex}', 'contents', this.value)"></td>
       <td class="row-actions">
-        <button class="btn btn-primary btn-sm" onclick="saveRow(this, ${p.rowIndex})">Save</button>
+        <button class="btn btn-primary btn-sm" onclick="saveRow(this, '${p.rowIndex}')" ${saving ? 'disabled' : ''}>${saving ? '<span class="spinner" aria-hidden="true"></span> Saving...' : 'Save'}</button>
       </td>
     </tr>`;
 }
@@ -634,7 +628,7 @@ function updateField(rowIndex, field, val) {
   } else {
     ed[field] = val;
   }
-  render();
+  if (field === 'active') render();
 }
 
 // Per-hub stock (DEV-only, PER_HUB_INVENTORY_PLAN.md) — blank stays blank
@@ -645,7 +639,6 @@ function updateStockField(rowIndex, hubId, val) {
   const ed = getEdit(p);
   const trimmed = String(val).trim();
   ed.stockByHub[hubId] = trimmed === '' ? '' : Math.max(0, parseFloat(trimmed) || 0);
-  render();
 }
 
 function toggleRowSelect(rowIndex, checked) {
@@ -662,7 +655,7 @@ function toggleRowSelect(rowIndex, checked) {
 
 function toggleSelectAll(checked) {
   document.querySelectorAll('.row-check').forEach(chk => {
-    const rowIndex = parseInt(chk.dataset.row, 10);
+    const rowIndex = chk.dataset.row; // productId (string) — never a numeric sheet row anymore
     chk.checked = checked;
     if (checked) selectedRows.add(rowIndex); else selectedRows.delete(rowIndex);
   });
@@ -681,9 +674,9 @@ function updateBulkBar() {
 }
 
 async function saveRow(btn, rowIndex) {
+  if (savingRows.has(rowIndex)) return;
   const p = products.find(x => x.rowIndex === rowIndex);
   const ed = getEdit(p);
-  const url = apiUrl(), key = apiKey();
 
   const fields = {
     'Category': ed.category, 'Display Name': ed.displayName, 'Unit': ed.unit,
@@ -700,30 +693,27 @@ async function saveRow(btn, rowIndex) {
     fields['Stock: ' + h.adminId] = (val === '' || val === undefined) ? '' : val;
   });
 
-  await withButtonLoading(btn, 'Saving…', async () => {
-    try {
-      // Identified by Product ID, not rowIndex — a row can shift position
-      // (another admin's add/delete) between page load and this save, and
-      // Product ID is the same stable identifier confirmOrder_/decrementStock_
-      // already rely on for stock updates.
-      const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ ...authParam(), action: 'update', productId: p.productId, fields }) });
-      const data = await res.json();
-      if (data.status !== 'ok') throw new Error(data.message);
-      const { stockByHub, ...rest } = ed;
-      Object.assign(p, rest);
-      p.stockByHub = HUBS.map(h => ({
-        adminId: h.adminId, name: h.name,
-        stock: (stockByHub[h.adminId] === '' || stockByHub[h.adminId] === undefined) ? null : stockByHub[h.adminId]
-      }));
-      p.totalStock = p.stockByHub.reduce((sum, h) => sum + (h.stock || 0), 0);
-      p.waKey = computeWaKey(ed.displayName, ed.packSize);
-      populateCategoryOptions();
-      toast('✅ ' + p.productName + ' saved successfully');
-      render();
-    } catch (err) {
-      toast('Save failed: ' + err.message, true);
-    }
-  });
+  savingRows.add(rowIndex);
+  render();
+  try {
+    const data = await callFn('products', 'update', { ...authParam(), productId: p.productId, fields });
+    if (data.status !== 'ok') throw new Error(data.message);
+    const { stockByHub, ...rest } = ed;
+    Object.assign(p, rest);
+    p.stockByHub = HUBS.map(h => ({
+      adminId: h.adminId, name: h.name,
+      stock: (stockByHub[h.adminId] === '' || stockByHub[h.adminId] === undefined) ? null : stockByHub[h.adminId]
+    }));
+    p.totalStock = p.stockByHub.reduce((sum, h) => sum + (h.stock || 0), 0);
+    p.waKey = computeWaKey(ed.displayName, ed.packSize);
+    populateCategoryOptions();
+    toast('✅ ' + p.productName + ' saved successfully');
+  } catch (err) {
+    toast('Save failed: ' + err.message, true);
+  } finally {
+    savingRows.delete(rowIndex);
+    render();
+  }
 }
 
 async function bulkDelete(btn) {
@@ -731,13 +721,11 @@ async function bulkDelete(btn) {
   if (rows.length === 0) return;
   if (!confirm(`Permanently delete ${rows.length} product${rows.length === 1 ? '' : 's'} from the catalog sheet? This can't be undone.`)) return;
 
-  const url = apiUrl(), key = apiKey();
   await withButtonLoading(btn, 'Deleting…', async () => {
     let okCount = 0, failCount = 0;
     for (const p of rows) {
       try {
-        const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ ...authParam(), action: 'delete', productId: p.productId }) });
-        const data = await res.json();
+        const data = await callFn('products', 'delete', { ...authParam(), productId: p.productId });
         if (data.status !== 'ok') throw new Error(data.message);
         okCount++;
       } catch (err) {
@@ -808,11 +796,9 @@ async function addProduct(btn) {
     fields['Stock: ' + h.adminId] = val === '' ? '' : (parseInt(val, 10) || 0);
   });
 
-  const url = apiUrl(), key = apiKey();
   await withButtonLoading(btn, 'Saving…', async () => {
     try {
-      const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ ...authParam(), action: 'add', fields }) });
-      const data = await res.json();
+      const data = await callFn('products', 'add', { ...authParam(), fields });
       if (data.status !== 'ok') throw new Error(data.message);
       toast('✅ ' + productName + ' added successfully');
       toggleAddPanel(false);
@@ -823,23 +809,21 @@ async function addProduct(btn) {
   });
 }
 
-// Per-hub stock is the standard UI now (promoted to prod 2026-09-22) —
-// always shown regardless of DEV_MODE. DEV_MODE still only controls which
-// deployment URL this page defaults to and whether dev=1 carries onto nav
-// links, for testing future changes against the dev sheet.
+// Per-hub stock is the standard UI now (promoted to prod 2026-09-22).
 (function initPerHubUi() {
   document.getElementById('add-stock-single').style.display = 'none';
   document.getElementById('add-stock-hubs').style.display = 'block';
   document.getElementById('hubFilter').style.display = '';
 })();
 
-(function initDevMode() {
-  if (!DEV_MODE) return;
-  document.getElementById('webhookUrl').value = DEV_CATALOG_API_URL;
-  document.querySelectorAll('.nav-link[href]').forEach(a => {
-    a.setAttribute('href', a.getAttribute('href') + '?dev=1');
-  });
-})();
+// Inline onclick/onchange attributes resolve against `window`, not this
+// module's own scope — see the equivalent note in index.html/admin.html.
+Object.assign(window, {
+  toast,
+  loadProducts, setFilter, toggleSort, updateField, updateStockField, toggleRowSelect,
+  toggleSelectAll, clearSelection, saveRow, bulkDelete, toggleAddPanel, updateWaPreview, addProduct, render,
+});
+initAdminPage(loadProducts);
 </script>
 </body>
 </html>
