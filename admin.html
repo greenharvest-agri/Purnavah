@@ -563,7 +563,9 @@ const NON_PRODUCT_COLUMNS = new Set([
 // partially-paid since Invoice Date), same rule the old invoice-status
 // lifecycle used.
 function computePaymentState(o) {
-  const raw = (o.invoiceStatus === 'Paid' || o.invoiceStatus === 'Partially Paid') ? o.invoiceStatus : 'Unpaid';
+  const raw = o.invoiceNo
+    ? (getOrderBalanceDue(o) <= 0 ? 'Paid' : (o.amountPaid > 0 ? 'Partially Paid' : 'Unpaid'))
+    : 'Unpaid';
   if (raw !== 'Paid' && o.invoiceDate) {
     const issued = parseDate_(o.invoiceDate); // dd/MM/yyyy
     const due = new Date(issued.getTime() + 15 * 24 * 60 * 60 * 1000);
@@ -983,6 +985,7 @@ function renderCard(o) {
   const isExpanded = expandedRow === o.rowIndex;
   const itemCount = Object.keys(o.items).length;
   const { orderCfg, payCfg } = getStatusCfg(o);
+  const shippingCharge = o.invoiceNo ? getOrderShippingCharge(o) : orderShippingCharge(o, computeOrderTotals(o));
 
   return `
   <div class="order-card ${o._dup ? 'dup-flag' : ''} ${isExpanded ? 'expanded' : ''}" id="card-${o.rowIndex}">
@@ -990,7 +993,7 @@ function renderCard(o) {
       <div class="order-id-block">
         <div>
           <div class="order-customer">${escapeHtml(o.customerName || '(no name)')}</div>
-          <div class="order-meta">${o.phone} · ${o.timestamp} · ${itemCount} item${itemCount !== 1 ? 's' : ''}${o.version > 1 ? ` · v${o.version}` : ''}</div>
+          <div class="order-meta">${o.phone} · ${itemCount} item${itemCount !== 1 ? 's' : ''}${o.version > 1 ? ` · v${o.version}` : ''}</div>
           <div class="order-flags">
             ${o._dup ? '<span class="flag flag-dup">⚠ Possible duplicate</span>' : ''}
             ${o.couponCode ? `<span class="flag flag-coupon">🏷 ${escapeHtml(o.couponCode)} (${o.couponDiscountPct}%)</span>` : ''}
@@ -1002,6 +1005,7 @@ function renderCard(o) {
       <div class="order-right">
         <div class="order-total-block">
           <div class="order-total">₹${amountDue(o).toLocaleString('en-IN')}</div>
+          ${shippingCharge > 0 ? `<div style="font-size:11px;color:var(--stone)">Includes ₹${shippingCharge.toLocaleString('en-IN')} shipping</div>` : ''}
           ${o.orderTotal && Math.round(amountDue(o)) !== Math.round(o.orderTotal) ? `<div class="order-total-orig">₹${o.orderTotal.toLocaleString('en-IN')}</div>` : ''}
         </div>
         <div class="chevron">⌄</div>
@@ -1300,7 +1304,7 @@ function renderPaymentSection(o) {
   return `
     <div class="payment-section" id="paySection-${o.rowIndex}">
       <div class="section-mini-label">Payment</div>
-      ${o.amountPaid > 0 ? `<div class="locked-note" style="font-style:normal;margin-bottom:8px">Already paid ₹${o.amountPaid.toLocaleString('en-IN')} — balance due ₹${(o.balanceDue || remaining).toLocaleString('en-IN')}</div>` : ''}
+      ${o.amountPaid > 0 ? `<div class="locked-note" style="font-style:normal;margin-bottom:8px">Already paid ₹${o.amountPaid.toLocaleString('en-IN')} — balance due ₹${Math.max(0, remaining).toLocaleString('en-IN')}</div>` : ''}
       <div class="field-row"><label>Mode</label>
         <select id="payMode-${o.rowIndex}">
           ${['UPI','Bank Transfer','Cash','COD','Other'].map(m => `<option ${o.paymentMode === m ? 'selected' : ''}>${m}</option>`).join('')}
@@ -1416,11 +1420,11 @@ function computeOrderTotals(o) {
 // re-generating the invoice (generateInvoice() is the only thing allowed to
 // move Final Total once invoiceNo is set — see the backend guard in
 // updateOrder()). Before invoicing, this is the live
-// GST-inclusive total so the pricing panel and the eventual invoice always
-// agree.
+// GST-inclusive item total plus applicable delivery charges.
 function amountDue(o) {
-  if (o.invoiceNo) return o.finalTotal || 0;
-  return computeOrderTotals(o).grandTotal;
+  if (o.invoiceNo) return getOrderPayableTotal(o);
+  const totals = computeOrderTotals(o);
+  return Math.round((totals.grandTotal + orderShippingCharge(o, totals) + orderSameDayCharge(o)) * 100) / 100;
 }
 
 // Free-shipping decision for this order — an explicit admin override (Yes/No
@@ -1430,7 +1434,7 @@ function amountDue(o) {
 // updates the default without needing a separate resave. Deliberately kept
 // out of computeOrderTotals()/grandTotal — same as the pre-existing Delivery
 // Charge column, this is shown to the admin as a separate pricing line, not
-// folded into the GST-invoiced Final Total.
+// folded into the item GST calculation. Invoices add it as a separate line.
 function effectiveFreeShipping(o, totals) {
   const ed = getEdit(o);
   if (ed.freeShippingOverride === 'Y') return true;
@@ -1446,8 +1450,8 @@ function orderShippingCharge(o, totals) {
 // checkbox (currently hidden behind a launch flag there), persisted as a
 // flat ₹ amount rather than a Yes/No + rate pair since it's never
 // recomputed/overridden the way shipping is. Same treatment as shipping:
-// excluded from computeOrderTotals()/grandTotal (not part of the GST
-// invoice), but it's real money the customer already agreed to pay, so it
+// excluded from computeOrderTotals()/grandTotal (not part of item GST),
+// but it's real money the customer already agreed to pay, so it
 // must be added wherever the admin quotes/collects "Total Payable".
 function orderSameDayCharge(o) {
   return Number(o.sameDayDeliveryCharge) || 0;
@@ -2245,11 +2249,13 @@ async function generateInvoice(btn, rowIndex) {
   const totalIgst = totals.igst;
   const totalGst = totals.totalGst;
   const grandTotal = totals.grandTotal;
+  const shippingCharge = orderShippingCharge(o, totals);
+  const sameDayCharge = orderSameDayCharge(o);
 
-  // Don't downgrade an already Paid/Partially Paid invoice just because it was reprinted.
-  const newInvoiceStatus = ['Paid','Partially Paid'].includes(o.invoiceStatus) ? o.invoiceStatus : 'Unpaid';
+  const invoiceTotal = Math.round((grandTotal + shippingCharge + sameDayCharge) * 100) / 100;
+  const newInvoiceStatus = (o.amountPaid || 0) >= invoiceTotal ? 'Paid' : (o.amountPaid > 0 ? 'Partially Paid' : 'Unpaid');
   const payCfg = PAYMENT_STATES[newInvoiceStatus] || PAYMENT_STATES.Unpaid;
-  const paymentReceived = (computePaymentState(o) === 'Paid') ? { mode: o.paymentMode, ref: o.paymentRef, date: o.paymentDate, amount: o.amountPaid } : null;
+  const paymentReceived = (newInvoiceStatus === 'Paid') ? { mode: o.paymentMode, ref: o.paymentRef, date: o.paymentDate, amount: o.amountPaid } : null;
   // Reprinting an invoice for an order that's already moved past "Invoiced"
   // (Packed & Shipped / Delivered) must not regress it back to "Invoiced".
   const newOrderStatus = ['Packed & Shipped','Delivered','Cancelled'].includes(o.status) ? o.status : 'Invoiced';
@@ -2257,7 +2263,7 @@ async function generateInvoice(btn, rowIndex) {
   const html = buildInvoiceHtml({
     invoiceNo, date: fmt(today), dueDate: fmt(dueDate),
     customer: o, lineItems, oosLineItems, subTotal, discountAmt, taxableValue,
-    totalCgst, totalSgst, totalIgst, totalGst, grandTotal, isIntraState,
+    totalCgst, totalSgst, totalIgst, totalGst, grandTotal, shippingCharge, sameDayCharge, isIntraState,
     invoiceBadge: { label: payCfg.label.toUpperCase(), bg: payCfg.bg, color: payCfg.color },
     paymentReceived,
     confirmingAdminUpi: o.confirmingAdminUpi, // multi-admin workflow (DEV-only); blank on every other order, see invoice-shared.js
@@ -2283,7 +2289,8 @@ async function generateInvoice(btn, rowIndex) {
       'Discount Base Amount': subTotal,
       'Taxable Value': taxableValue,
       'GST Amount': totalGst,
-      'Total Payable': grandTotal + orderShippingCharge(o, totals) + orderSameDayCharge(o),
+      'Total Payable': invoiceTotal,
+      'Delivery Charge': shippingCharge,
       'Item Discounts JSON': JSON.stringify(ed.itemDiscounts),
       'Item Price Overrides JSON': JSON.stringify(ed.itemPriceOverrides)
     }
@@ -2293,11 +2300,16 @@ async function generateInvoice(btn, rowIndex) {
       o.invoiceSentDate = o.invoiceSentDate || todayDDMMYYYY();
       o.discountPct = effectiveDiscPct(totals); o.discountAmount = discountAmt;
       o.finalTotal = grandTotal;
+      o.deliveryCharge = shippingCharge;
+      o.totalPayable = invoiceTotal;
+      o.balanceDue = Math.max(0, Math.round((invoiceTotal - (o.amountPaid || 0)) * 100) / 100);
       o.orderTotal = subTotal;
       o.status = newOrderStatus; ed.status = newOrderStatus;
       syncSavedState(o);
       toast('Invoice ' + invoiceNo + ' generated');
       render(); reExpand(rowIndex);
+    } else {
+      toast('Invoice opened, but failed to save: ' + (d.message || 'Unknown server error'), true);
     }
   }).catch(() => toast('Invoice opened, but failed to save status to sheet', true));
   });

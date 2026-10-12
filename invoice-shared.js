@@ -37,6 +37,22 @@ function buildUpiPayLink(amount, note, vpa, payeeName) {
   return `upi://pay?${params.toString().replace(/\+/g, '%20')}`;
 }
 
+function getOrderShippingCharge(o) {
+  if (o.freeShippingOverride === 'Y') return 0;
+  if (o.freeShippingOverride === 'N') return 199;
+  return Number(o.deliveryCharge) || 0;
+}
+
+// Final Total stores the GST-inclusive items only; delivery is added once.
+function getOrderPayableTotal(o) {
+  return Math.round(((o.finalTotal ?? o.orderTotal ?? 0) +
+    getOrderShippingCharge(o) + (Number(o.sameDayDeliveryCharge) || 0)) * 100) / 100;
+}
+
+function getOrderBalanceDue(o) {
+  return Math.max(0, Math.round((getOrderPayableTotal(o) - (o.amountPaid || 0)) * 100) / 100);
+}
+
 function numberToWords(num) {
   const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
   const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
@@ -56,7 +72,8 @@ function numberToWords(num) {
 
 // d: { invoiceNo, date, dueDate, customer, lineItems, oosLineItems, subTotal,
 //      discountAmt, taxableValue, totalCgst, totalSgst, totalIgst, totalGst,
-//      grandTotal, isIntraState, invoiceBadge:{label,bg,color}, paymentReceived,
+//      grandTotal (items only), shippingCharge, sameDayCharge, isIntraState,
+//      invoiceBadge:{label,bg,color}, paymentReceived,
 //      confirmingAdminUpi, hub }
 // confirmingAdminUpi is optional (multi-admin workflow, DEV-only) — the
 // assigned admin's own UPI VPA snapshotted at order-confirm time; omitted/
@@ -67,12 +84,15 @@ function numberToWords(num) {
 // and any dev order with no resolvable assignee) falls back to the
 // hardcoded Greenharvest block below, byte-for-byte identical to today.
 // lineItems entries: { sn, name, qty, price, rate, hsn, discPct, discAmt, cgstRate,
-//      cgstAmt, sgstRate, sgstAmt, igstRate, igstAmt, totalTaxAmt, amount, grossAmount }
+// cgstAmt, sgstRate, sgstAmt, igstRate, igstAmt, totalTaxAmt, amount, grossAmount }
 // `rate` is the ex-GST per-unit rate (drives the "Rate" column below) —
 // `price` (tax-inclusive MRP) is carried on the object but not rendered here,
 // since showing it as "Rate" would make Qty × Rate not equal Amount, and
 // Sub Total − Discount not equal Taxable Value, on the printed page itself.
 function buildInvoiceHtml(d) {
+  const shippingCharge = d.shippingCharge || 0;
+  const sameDayCharge = d.sameDayCharge || 0;
+  const invoiceTotal = Math.round((d.grandTotal + shippingCharge + sameDayCharge) * 100) / 100;
   const itemRows = d.lineItems.map(li => d.isIntraState ? `
     <tr>
       <td>${li.sn}</td>
@@ -126,10 +146,10 @@ function buildInvoiceHtml(d) {
     </div>` : '';
 
   // Outstanding amount = this invoice's total minus whatever's already been
-  // recorded as paid — not just d.grandTotal, so a QR on a reprinted/
+  // recorded as paid, including delivery, so a QR on a reprinted/
   // partially-paid invoice doesn't ask the customer to pay the full amount again.
   const amountPaid = d.customer.amountPaid || 0;
-  const payableAmount = Math.max(0, Math.round((d.grandTotal - amountPaid) * 100) / 100);
+  const payableAmount = Math.max(0, Math.round((invoiceTotal - amountPaid) * 100) / 100);
   // d.confirmingAdminUpi (multi-admin workflow, DEV-only) is only ever
   // populated for an order confirmed through the dev-gated assignment flow —
   // blank/undefined here falls back to the company UPI_VPA, so this is a
@@ -233,9 +253,11 @@ th.num{text-align:right}
   ${d.discountAmt > 0 ? `<div class="totals-row"><span>Discount</span><span>− ₹${d.discountAmt.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>` : ''}
   <div class="totals-row"><span>Taxable Value</span><span>₹${d.taxableValue.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
   ${gstTotalsRows}
-  <div class="totals-row grand"><span>Total</span><span>₹${d.grandTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
+  ${shippingCharge > 0 ? `<div class="totals-row"><span>Shipping</span><span>₹${shippingCharge.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>` : ''}
+  ${sameDayCharge > 0 ? `<div class="totals-row"><span>Same-day delivery</span><span>₹${sameDayCharge.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>` : ''}
+  <div class="totals-row grand"><span>Total</span><span>₹${invoiceTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
 </div>
-<div class="words">Total In Words: ${numberToWords(d.grandTotal)}</div>
+<div class="words">Total In Words: ${numberToWords(invoiceTotal)}</div>
 ${qrSection}
 ${paymentSection}
 <div class="notes">
